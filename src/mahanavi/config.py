@@ -1,4 +1,4 @@
-﻿"""
+"""
 Application configuration.
 
 All runtime configuration is centralized here and loaded from environment
@@ -103,7 +103,16 @@ class Settings(BaseSettings):
     # shruti, suhani, mohit, kavitha, rehan, soham, rupali. Override
     # this if you prefer a different voice after previewing options.
     sarvam_voice: str = Field(default="priya")
+    sarvam_pace: float = Field(default=0.92, ge=0.5, le=2.0)
+    sarvam_temperature: float = Field(default=0.75, ge=0.01, le=2.0)
+    sarvam_speech_sample_rate: int = Field(default=24000)
     alert_short_duration_seconds: float = Field(default=10.0, gt=0)
+
+    # fal.ai (AI-generated Purana scene visuals: FLUX.1 [dev] stills +
+    # Kling 2.5 Turbo Pro image-to-video animation) -- get a key at
+    # fal.ai/dashboard/keys. Pay-as-you-go, no plan to pick; add a
+    # payment method on that same billing page before this will work.
+    fal_api_key: str | None = Field(default=None)
 
     # --- Image rendering ---
     canvas_width: int = Field(default=1080, gt=0)
@@ -122,6 +131,8 @@ class Settings(BaseSettings):
     # Prokerala dashboard under Integration -> App IDs.
     prokerala_client_id: str | None = Field(default=None)
     prokerala_client_secret: str | None = Field(default=None)
+    prokerala_client_id_2: str | None = Field(default=None)
+    prokerala_client_secret_2: str | None = Field(default=None)
 
     # --- YouTube ---
     # client_secrets.json: downloaded from Google Cloud Console

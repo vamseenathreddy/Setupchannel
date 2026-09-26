@@ -14,6 +14,7 @@ from mahanavi.core.interfaces import PanchangProvider
 from mahanavi.exceptions import ConfigError
 from mahanavi.panchang.api_provider import ApiPanchangProvider
 from mahanavi.panchang.dummy_provider import DummyPanchangProvider
+from mahanavi.panchang.fallback_provider import FallbackPanchangProvider
 from mahanavi.panchang.prokerala_provider import ProkeralaPanchangProvider
 from mahanavi.panchang.scraper_provider import ScraperPanchangProvider
 
@@ -49,13 +50,23 @@ def get_panchang_provider(settings: Settings) -> PanchangProvider:
                 "MAHANAVI_PANCHANG_PROVIDER=prokerala requires "
                 "MAHANAVI_PROKERALA_CLIENT_ID and MAHANAVI_PROKERALA_CLIENT_SECRET."
             )
-        return ProkeralaPanchangProvider(
+        primary = ProkeralaPanchangProvider(
             client_id=settings.prokerala_client_id,
             client_secret=settings.prokerala_client_secret,
             latitude=settings.panchang_latitude,
             longitude=settings.panchang_longitude,
             token_cache_path=settings.output_dir.parent / "prokerala_token.json",
         )
+        if settings.prokerala_client_id_2 and settings.prokerala_client_secret_2:
+            secondary = ProkeralaPanchangProvider(
+                client_id=settings.prokerala_client_id_2,
+                client_secret=settings.prokerala_client_secret_2,
+                latitude=settings.panchang_latitude,
+                longitude=settings.panchang_longitude,
+                token_cache_path=settings.output_dir.parent / "prokerala_token_2.json",
+            )
+            return FallbackPanchangProvider([primary, secondary])
+        return primary
 
     if provider_name == "scraper":
         if not _DEFAULT_SCRAPER_SELECTORS:
