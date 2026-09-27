@@ -25,7 +25,9 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import random
 import sys
+import time
 from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -133,6 +135,22 @@ _SHUBHA_GHADIYALU_SUBSCRIBE_LINES = [
 ]
 
 
+def _wait_for_natural_slot(run_start: float, min_seconds: float, max_seconds: float, label: str) -> None:
+    """Sleeps until a random point within [min_seconds, max_seconds),
+    measured from run_start (time.monotonic()). Calling this once per
+    upload with non-overlapping ranges (e.g. 0-1800 then 1800-3600)
+    spreads the two Shorts across two clean halves of the posting
+    window instead of them landing back-to-back at virtually the same
+    timestamp every single day -- explicit request, since that pattern
+    is a much more obvious automation signature than the exact second
+    within the hour ever was."""
+    target = random.uniform(min_seconds, max_seconds)
+    elapsed = time.monotonic() - run_start
+    remaining = max(target - elapsed, 0.0)
+    print(f"Waiting {remaining:.0f}s (~{remaining / 60:.1f}m) before {label}...")
+    time.sleep(remaining)
+
+
 def _pick_subscribe_text(pool: list[str], for_date: date) -> str:
     """Deterministic rotation through a subscribe-line pool -- the same
     date always gets the same line (reproducible), varying day to day."""
@@ -193,7 +211,14 @@ def main() -> int:
         "--public", action="store_true",
         help="Upload as public instead of unlisted. Omit this until you've reviewed the results yourself.",
     )
+    parser.add_argument(
+        "--no-delay", action="store_true",
+        help="Skip the natural-timing delays that normally spread the two Shorts across the "
+             "12:00-12:30 / 12:30-1:00 AM halves of the posting window. Use this for local/manual "
+             "testing -- the scheduled GitHub Actions workflow never passes it.",
+    )
     args = parser.parse_args()
+    run_start = time.monotonic()
 
     settings = get_settings()
     # Uses settings.timezone (Asia/Kolkata) explicitly, matching main.py's
@@ -212,6 +237,9 @@ def main() -> int:
     panchang_provider = get_panchang_provider(settings)
     renderer = AlertCardRenderer(settings)
     uploader = YouTubeShortsUploader(settings)
+
+    if not args.no_delay:
+        _wait_for_natural_slot(run_start, 0, 1800, "the first Short (12:00-12:30 AM slot)")
 
     print(f"Fetching Panchang for {for_date.isoformat()}...")
     try:
@@ -234,6 +262,9 @@ def main() -> int:
     )
     rahu_seo = build_rahu_kalam_seo(panchang.rahu_kalam, for_date_ordinal=for_date.toordinal())
     rahu_ok = _process_one("Rahu Kalam", rahu_card, rahu_seo, renderer, settings, for_date, uploader, privacy_status)
+
+    if not args.no_delay:
+        _wait_for_natural_slot(run_start, 1800, 3600, "the second Short (12:30-1:00 AM slot)")
 
     shubha_lines = _shubha_lines(panchang)
     shubha_card = AlertCard(

@@ -11,7 +11,7 @@ permissions:
 jobs:
   post-shorts:
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
@@ -40,18 +40,13 @@ jobs:
         id: gate
         run: python scripts/ci/drive_state_sync.py check-date
 
-      - name: Random delay within the 12:00-1:00 AM IST window
-        # Posting at the exact same second every day is a giveaway that
-        # this is automated. The cron above fires precisely at 00:00 IST;
-        # this sleeps a random 0-59 minutes so the actual upload lands
-        # somewhere between 12:00 AM and 1:00 AM IST, varying day to day.
-        if: steps.gate.outputs.run == 'true'
-        run: |
-          DELAY=$(( RANDOM % 3600 ))
-          echo "Sleeping ${DELAY}s ($((DELAY / 60))m $((DELAY % 60))s) before posting..."
-          sleep "$DELAY"
-
       - name: Run Shorts pipeline
+        # Natural-timing note: the script itself now posts the first
+        # Short at a random point in the first half of this hour
+        # (12:00-12:30 AM IST) and the second at a random point in the
+        # second half (12:30-1:00 AM IST) -- see post_alert_shorts.py's
+        # --no-delay flag / _wait_for_natural_slot(). No separate
+        # sleep step needed here anymore.
         if: steps.gate.outputs.run == 'true'
         env:
           MAHANAVI_IMAGES_ROOT: ./Images
