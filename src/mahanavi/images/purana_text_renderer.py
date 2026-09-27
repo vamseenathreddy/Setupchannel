@@ -102,7 +102,7 @@ class PuranaTextRenderer:
         ]
 
         total_lines = sum(len(wrapped) for wrapped, _ in wrapped_paragraphs)
-        total_height = (
+        total_height = int(
             total_lines * (line_height + line_gap)
             + max(len(wrapped_paragraphs) - 1, 0) * paragraph_gap
             + line_height * 4  # top/bottom padding so text starts/ends off-frame smoothly

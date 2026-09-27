@@ -135,15 +135,15 @@ class AlertCardRenderer:
             )
 
             title_bbox = draw.textbbox((0, 0), card.title, font=title_font)
-            title_h = title_bbox[3] - title_bbox[1]
+            title_h = int(title_bbox[3] - title_bbox[1])
 
             date_h = 0
             if card.date_text:
                 date_bbox = draw.textbbox((0, 0), card.date_text, font=date_font)
-                date_h = date_bbox[3] - date_bbox[1]
+                date_h = int(date_bbox[3] - date_bbox[1])
 
             subscribe_bbox = draw.textbbox((0, 0), card.subscribe_text, font=subscribe_font)
-            subscribe_h = subscribe_bbox[3] - subscribe_bbox[1]
+            subscribe_h = int(subscribe_bbox[3] - subscribe_bbox[1])
             # Real evidence from the actual mobile app (a screenshot showed
             # our own content overlapping YouTube's channel handle, caption
             # text, and visibility badge) -- those occupy roughly the
@@ -317,7 +317,7 @@ class AlertCardRenderer:
         self, draw: ImageDraw.ImageDraw, wrapped: list[str], font: "ImageFont.FreeTypeFont",
     ) -> int:
         """Total rendered height of a wrapped multi-line block."""
-        line_height = draw.textbbox((0, 0), "Ag", font=font)[3]
+        line_height = int(draw.textbbox((0, 0), "Ag", font=font)[3])
         return line_height * len(wrapped)
 
     def _draw_centered_block(
@@ -326,7 +326,7 @@ class AlertCardRenderer:
     ) -> int:
         """Draw each wrapped line centered horizontally, stacked from
         `top`. Returns the y-coordinate just below the block."""
-        line_height = draw.textbbox((0, 0), "Ag", font=font)[3]
+        line_height = int(draw.textbbox((0, 0), "Ag", font=font)[3])
         y = top
         for line in wrapped:
             bbox = draw.textbbox((0, 0), line, font=font)
