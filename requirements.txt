@@ -12,6 +12,9 @@ Pillow>=10.3
 
 # --- Module 6: Publishers ---
 playwright>=1.44,<2.0
+google-api-python-client>=2.130,<3.0
+google-auth>=2.29,<3.0
+google-auth-oauthlib>=1.2,<2.0
 
 # --- Module 8: Scheduling ---
 APScheduler>=3.10,<4.0
