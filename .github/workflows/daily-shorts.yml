@@ -28,6 +28,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install google-auth google-api-python-client
+          pip install -e .
 
       - name: Restore persistent state from Google Drive
         env:
