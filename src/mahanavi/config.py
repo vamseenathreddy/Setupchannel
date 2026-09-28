@@ -87,8 +87,13 @@ class Settings(BaseSettings):
     alert_icon_lakshmi_path: Path | None = Field(default=PROJECT_ROOT / "assets" / "icons" / "lakshmi.png")
     alert_icon_ganesha_path: Path | None = Field(default=PROJECT_ROOT / "assets" / "icons" / "ganesha.png")
     alert_icon_kubera_path: Path | None = Field(default=PROJECT_ROOT / "assets" / "icons" / "kubera.png")
-    # Royalty-free background music baked into each Short.
-    alert_short_music_path: Path | None = Field(default=None)
+    # Royalty-free background music baked into each Short. Committed to
+    # the repo (assets/music/) rather than driven by an env var, since
+    # it is not a secret -- this way it just works in CI with no extra
+    # workflow wiring, and a real file has to exist here or
+    # audio/mixer.py raises MahanaviError rather than silently shipping
+    # a silent-audio-track Short.
+    alert_short_music_path: Path | None = Field(default=PROJECT_ROOT / "assets" / "music" / "alert_bgm.mp3")
 
     # Sarvam AI Telugu voiceover (long-form Puranam videos) -- get a key
     # at sarvam.ai/try/tts-api. "meera" is Sarvam's own recommended
