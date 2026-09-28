@@ -29,6 +29,7 @@ import random
 import sys
 import time
 from datetime import date, datetime
+from datetime import time as dt_time
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -135,18 +136,38 @@ _SHUBHA_GHADIYALU_SUBSCRIBE_LINES = [
 ]
 
 
-def _wait_for_natural_slot(run_start: float, min_seconds: float, max_seconds: float, label: str) -> None:
-    """Sleeps until a random point within [min_seconds, max_seconds),
-    measured from run_start (time.monotonic()). Calling this once per
-    upload with non-overlapping ranges (e.g. 0-1800 then 1800-3600)
-    spreads the two Shorts across two clean halves of the posting
-    window instead of them landing back-to-back at virtually the same
-    timestamp every single day -- explicit request, since that pattern
-    is a much more obvious automation signature than the exact second
-    within the hour ever was."""
-    target = random.uniform(min_seconds, max_seconds)
-    elapsed = time.monotonic() - run_start
-    remaining = max(target - elapsed, 0.0)
+def _wait_until_wall_clock_slot(
+    tz: ZoneInfo, window_start: dt_time, window_end: dt_time, label: str,
+) -> None:
+    """Sleeps until a random point within TODAY's [window_start, window_end)
+    wall-clock window in `tz` (e.g. 00:00-00:30 IST, then 00:30-01:00 IST),
+    spreading the two Shorts across two clean halves of the posting window
+    instead of them landing back-to-back at virtually the same timestamp
+    every single day.
+
+    Deliberately WALL-CLOCK based, not elapsed-time-from-process-start:
+    Rahu Kalam / Shubha Ghadiyalu are time-sensitive -- the whole point is
+    reaching viewers before/around those periods, early in their day. The
+    previous version measured its delay from whenever the process itself
+    happened to start, so a late-firing GitHub Actions cron (observed
+    ~2h53m late once already) or a manual test run in the middle of the
+    day would add ANOTHER up-to-60-minute random delay on top of that,
+    with no idea what the actual clock time was. This version targets the
+    real 12:00-1:00 AM IST window directly: if we're already past it (a
+    late cron fire, or a manual run during the day), it posts immediately
+    with no further wait, instead of compounding the delay or waiting for
+    a slot that's already gone."""
+    now = datetime.now(tz)
+    start_dt = datetime.combine(now.date(), window_start, tzinfo=tz)
+    end_dt = datetime.combine(now.date(), window_end, tzinfo=tz)
+
+    if now >= end_dt:
+        print(f"Already past the {label} window ({window_start}-{window_end} {tz.key}) -- posting now, no wait.")
+        return
+
+    lower_bound = max(start_dt, now)
+    target = lower_bound + (end_dt - lower_bound) * random.random()
+    remaining = max((target - now).total_seconds(), 0.0)
     print(f"Waiting {remaining:.0f}s (~{remaining / 60:.1f}m) before {label}...")
     time.sleep(remaining)
 
@@ -218,7 +239,6 @@ def main() -> int:
              "testing -- the scheduled GitHub Actions workflow never passes it.",
     )
     args = parser.parse_args()
-    run_start = time.monotonic()
 
     settings = get_settings()
     # Uses settings.timezone (Asia/Kolkata) explicitly, matching main.py's
@@ -239,7 +259,7 @@ def main() -> int:
     uploader = YouTubeShortsUploader(settings)
 
     if not args.no_delay:
-        _wait_for_natural_slot(run_start, 0, 1800, "the first Short (12:00-12:30 AM slot)")
+        _wait_until_wall_clock_slot(tz, dt_time(0, 0), dt_time(0, 30), "the first Short (12:00-12:30 AM slot)")
 
     print(f"Fetching Panchang for {for_date.isoformat()}...")
     try:
@@ -264,7 +284,7 @@ def main() -> int:
     rahu_ok = _process_one("Rahu Kalam", rahu_card, rahu_seo, renderer, settings, for_date, uploader, privacy_status)
 
     if not args.no_delay:
-        _wait_for_natural_slot(run_start, 1800, 3600, "the second Short (12:30-1:00 AM slot)")
+        _wait_until_wall_clock_slot(tz, dt_time(0, 30), dt_time(1, 0), "the second Short (12:30-1:00 AM slot)")
 
     shubha_lines = _shubha_lines(panchang)
     shubha_card = AlertCard(
