@@ -39,32 +39,13 @@ CREATE TABLE IF NOT EXISTS purana_usage (
     created_at    TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE(purana_name, used_on)
 );
-
-CREATE TABLE IF NOT EXISTS post_log (
-    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
-    run_date              TEXT NOT NULL UNIQUE,   -- ISO date string, one row per day
-    image_path            TEXT,
-    generated_image_path  TEXT,
-    folder_name           TEXT,
-    panchang_json         TEXT,
-    caption               TEXT,
-    status                TEXT NOT NULL DEFAULT 'pending',  -- pending|success|partial|failed
-    error_log             TEXT,
-    created_at            TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at            TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS upload_log (
-    id             INTEGER PRIMARY KEY AUTOINCREMENT,
-    post_log_id    INTEGER NOT NULL REFERENCES post_log(id) ON DELETE CASCADE,
-    target         TEXT NOT NULL,          -- youtube|telegram|facebook|instagram
-    success        INTEGER NOT NULL,       -- 0/1
-    post_url       TEXT,
-    error_message  TEXT,
-    screenshot_path TEXT,
-    created_at     TEXT NOT NULL DEFAULT (datetime('now'))
-);
 """
+# Note: post_log and upload_log tables (one row per Daily Community Post
+# run, plus its per-platform upload results) were removed along with the
+# Daily Community Post pipeline -- that feature got no engagement and was
+# fully decommissioned. Alert Shorts and the Purana video scripts never
+# used these tables (confirmed by grep before removal); they don't keep
+# a post-log at all.
 
 
 class DatabaseManager:

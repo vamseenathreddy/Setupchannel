@@ -1,8 +1,7 @@
 """
 AlertCardRenderer: renders simple, punchy single-message cards — e.g.
 "రాహు కాలం today" (red background, avoid this time) or "శుభ ఘడియలు today"
-(green background, auspicious moments). Much simpler than
-PillowImageRenderer's full branded card: solid color background, a
+(green background, auspicious moments). A solid color background, a
 small icon row, a title, and a short list of time/mantra lines, all
 large and readable, centered, and filling the available space.
 
@@ -36,11 +35,12 @@ a horizontal row near the top, in the order given in
 AlertCard.icon_paths. Caller supplies real image files — this module
 does not generate devotional artwork itself.
 
-Deliberately its OWN small renderer rather than extending
-PillowImageRenderer — the two have almost nothing in common visually
-(no deity image, no Panchang panel, no logo/watermark), so sharing code
-would mean threading a lot of "skip this part" conditionals through the
-existing class instead of just... not doing that.
+Deliberately its OWN small renderer rather than a shared base class with
+the (since-removed) Daily Community Post renderer — the two had almost
+nothing in common visually (no deity image, no Panchang panel, no
+logo/watermark), so sharing code would have meant threading a lot of
+"skip this part" conditionals through one class instead of just...
+not doing that.
 """
 
 from __future__ import annotations

@@ -55,22 +55,6 @@ class PanchangData:
     source: str = "unknown"   # which provider produced this (for auditing)
 
 
-@dataclass(frozen=True, slots=True)
-class SeoContent:
-    """Generated SEO/caption content for a post."""
-    title_telugu: str
-    description_telugu: str
-    keywords_english: list[str]
-    hashtags_telugu: list[str]
-    hashtags_trending: list[str]
-    alt_text: str
-
-    def full_caption(self) -> str:
-        """Compose the final caption text used across platforms."""
-        tags = " ".join(self.hashtags_telugu + self.hashtags_trending)
-        return f"{self.title_telugu}\n\n{self.description_telugu}\n\n{tags}"
-
-
 class PublishTarget(str, Enum):
     YOUTUBE = "youtube"
     TELEGRAM = "telegram"
@@ -86,20 +70,3 @@ class UploadResult:
     post_url: str | None = None
     error_message: str | None = None
     screenshot_path: Path | None = None
-
-
-@dataclass(slots=True)
-class DailyRunResult:
-    """Aggregate result of one full day's pipeline run — what gets logged/notified."""
-    run_date: date
-    selected_image: SelectedImage | None = None
-    panchang: PanchangData | None = None
-    seo: SeoContent | None = None
-    generated_image_path: Path | None = None
-    upload_results: list[UploadResult] = field(default_factory=list)
-
-    @property
-    def overall_success(self) -> bool:
-        if not self.upload_results:
-            return False
-        return all(r.success for r in self.upload_results)

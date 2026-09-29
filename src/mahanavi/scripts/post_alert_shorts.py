@@ -1,8 +1,7 @@
 """
 post_alert_shorts.py: the full pipeline for the Rahu Kalam (red) and
-Shubha Ghadiyalu (green) Shorts, mirroring how main.py orchestrates the
-daily Community Post -- but this is deliberately its OWN script rather
-than folded into DailyPipeline, since the shape is different enough
+Shubha Ghadiyalu (green) Shorts. This is deliberately its OWN script
+rather than a shared orchestrator class, since the shape is different enough
 (no image selection, no multi-platform publisher list, no post-log
 database entry) that forcing it into the same class would mean a lot
 of "this doesn't apply here" conditionals.

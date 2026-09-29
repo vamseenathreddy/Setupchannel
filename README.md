@@ -1,101 +1,143 @@
-# Mahanavi Spirituals — Daily Devotional Content Pipeline
+# Mahanavi Spirituals — Devotional YouTube Shorts Automation
 
-Automated system that, every day at 5:00 AM IST, selects a devotional
-image for the day's deity (based on weekday), fetches Telugu Panchang
-data, renders a branded image, generates Telugu SEO content, and
-publishes it as a YouTube Community Post, Telegram channel post, and
-(optionally) Facebook/Instagram posts — then sends you a Telegram
-notification with the result.
+Automated content pipelines for the Telugu devotional YouTube channel
+**Mahanavi Spirituals** (@MahanaviSpirituals). Everything ships as a
+GitHub Actions workflow — nothing needs a laptop or server running 24/7.
 
-## Table of contents
+> **Note:** this repo previously also ran a "Daily Community Post"
+> pipeline (image + text, no video, 5 AM IST). It was fully removed —
+> it got no engagement, and every module built for it (its own
+> composition root, scheduler, DB tables, and Telegram/Facebook/
+> Instagram publishers) was decommissioned along with it. If you're
+> looking for that code, it's still in git history before this cleanup.
 
-- [Architecture](#architecture)
-- [Prerequisites](#prerequisites)
-- [Setup](#setup)
-- [Configuration reference](#configuration-reference)
-- [Running it](#running-it)
-- [Testing](#testing)
-- [Docker](#docker)
-- [Extending the system](#extending-the-system)
-- [Known limitations — read before relying on this daily](#known-limitations--read-before-relying-on-this-daily)
+## What's actually running
 
-## Architecture
+### Alert Shorts — Rahu Kalam / Shubha Ghadiyalu (`daily-shorts.yml`)
 
-Every external dependency (Panchang source, publish target, notifier) sits
-behind an abstract interface in `core/interfaces.py`. `bootstrap.py` is
-the *only* file that wires concrete implementations together — swapping
-any component means changing one line there, nothing else.
+Two YouTube Shorts every night, targeting the real **12:00–1:00 AM IST**
+window:
+
+- **Rahu Kalam** (red card) — today's inauspicious period to avoid
+  starting anything important, posted in a random slot within
+  12:00–12:30 AM IST.
+- **Shubha Ghadiyalu** (green card) — today's auspicious moments,
+  posted in a random slot within 12:30–1:00 AM IST.
+
+Both are 10-second vertical Shorts: a rendered alert card
+(`images/alert_card_renderer.py`) turned into an `.mp4`
+(`video/assembler.py`) with background music baked in
+(`assets/music/alert_bgm.mp3`), uploaded via the official YouTube Data
+API v3 (`publishers/youtube_shorts_uploader.py`).
+
+Entry point: `src/mahanavi/scripts/post_alert_shorts.py`.
+
+**Timing design, deliberately wall-clock based, not elapsed-time-based:**
+the pipeline targets real IST clock times for each of the two posting
+windows. If the GitHub Actions cron itself fires late (a known,
+documented GitHub limitation — scheduled workflows queue up most at
+round times of the hour) or the workflow is triggered manually well
+outside the window, it posts immediately with no further wait instead
+of compounding the delay or waiting for a slot that's already gone.
+
+**State persistence across runs** (GitHub Actions runners are ephemeral,
+so nothing survives between runs on the runner itself): a Google Drive
+folder holds `mahanavi.db`, `youtube_token.json`, and
+`last_run_date.txt`, pulled at the start of each run and pushed back at
+the end (`scripts/ci/drive_state_sync.py`), authenticated via a Google
+service account. The "skip if already posted today" gate reads
+`last_run_date.txt` so a late-firing scheduled run never double-posts
+after a manual trigger already covered the day.
+
+### Purana video scripts (not yet automated)
+
+`scripts/post_purana_video.py`, `post_kurma_purana_video.py`,
+`post_panini_video.py`, `post_samudrika_video.py` — long-form landscape
+(16:9) devotional story videos with Sarvam AI Telugu voiceover
+(`audio/telugu_voiceover.py`) and/or fal.ai-generated scene visuals
+(`images/fal_client.py`, `video/scene_visuals.py`). These exist in the
+repo and have their own SEO/content modules
+(`content/purana_video_seo.py`, `content/purana_selector.py`), but
+**there is no GitHub Actions workflow wiring any of them up yet** — they
+currently only run if you invoke them manually.
+
+## Repository layout
 
 ```
 src/mahanavi/
-├── config.py              # Settings — loaded from .env, validated at startup
-├── logging_config.py      # Rotating file + console logging
-├── exceptions.py          # Exception hierarchy used across the whole app
-├── retry.py                # Generic exponential-backoff decorator
-├── text_utils.py           # Shared text-fitting helper (Telegram char limits)
-├── pipeline.py              # DailyPipeline — the orchestrator
-├── scheduler.py             # APScheduler cron wiring
-├── bootstrap.py              # Composition root: builds DailyPipeline from Settings
-├── main.py                    # CLI entrypoint (--run-now or the scheduler loop)
+├── config.py                 # Settings — loaded from .env, validated at startup
+├── logging_config.py         # Rotating file + console logging
+├── exceptions.py              # Exception hierarchy used across the whole app
+├── retry.py                   # Generic exponential-backoff decorator
+├── text_utils.py               # Shared text-fitting helper
 ├── core/
-│   ├── models.py            # Domain dataclasses (PanchangData, SeoContent, ...)
-│   └── interfaces.py         # ABCs every concrete component implements
+│   ├── models.py                # Domain dataclasses (PanchangData, UploadResult, ...)
+│   └── interfaces.py             # ABCs: PanchangProvider, ImageSelector
 ├── database/
-│   ├── db.py                 # SQLite connection + schema
-│   └── repositories.py        # ImageHistoryRepository, PostLogRepository
+│   ├── db.py                      # SQLite connection + schema (image_usage, purana_usage)
+│   └── repositories.py             # ImageHistoryRepository, PuranaHistoryRepository
 ├── images/
-│   ├── selector.py            # RandomImageSelector — non-repeating rotation
-│   ├── renderer.py             # PillowImageRenderer — the branded image
-│   ├── fonts.py                 # Telugu font loading (RAQM shaping)
-│   ├── layout.py                 # Low-level Pillow drawing helpers
-│   └── telugu_text.py             # Telugu weekday/month/deity vocabulary
+│   ├── selector.py                  # RandomImageSelector — non-repeating rotation
+│   ├── alert_card_renderer.py        # Renders the Rahu Kalam / Shubha Ghadiyalu cards
+│   ├── purana_text_renderer.py        # Renders scrolling Puranam story text
+│   ├── fonts.py                        # Telugu font loading (RAQM shaping)
+│   ├── layout.py                       # Low-level Pillow drawing helpers
+│   └── telugu_text.py                   # Telugu weekday/month/deity vocabulary
 ├── panchang/
-│   ├── dummy_provider.py          # Offline, deterministic — for dev/testing
-│   ├── api_provider.py             # Generic REST API client
-│   ├── scraper_provider.py          # BeautifulSoup scraper (config-driven selectors)
-│   └── factory.py                    # Picks a provider based on Settings
+│   ├── dummy_provider.py                 # Offline, deterministic — for dev/testing
+│   ├── api_provider.py                    # Generic REST API client
+│   ├── scraper_provider.py                 # BeautifulSoup scraper (config-driven selectors)
+│   ├── prokerala_provider.py                # Prokerala Astrology API (forever-free tier)
+│   ├── fallback_provider.py                  # Falls back to a 2nd Prokerala account on quota exhaustion
+│   └── factory.py                             # Picks a provider based on Settings
 ├── content/
-│   ├── data.py                        # Deity-specific Telugu phrases/hashtags/keywords
-│   └── generator.py                    # Assembles the final SEO content
+│   ├── data.py                                 # Deity-specific Telugu phrases/hashtags/keywords
+│   ├── alert_seo.py                             # SEO for the Alert Shorts
+│   ├── purana_video_seo.py                       # SEO for the Purana videos
+│   └── purana_selector.py                        # Non-repeating Purana rotation
 ├── publishers/
-│   ├── telegram_uploader.py            # Official Bot API
-│   ├── facebook_uploader.py             # Official Graph API
-│   ├── instagram_uploader.py             # Official Graph API (2-step publish)
-│   ├── youtube_playwright_uploader.py     # Browser automation (no API exists)
-│   ├── youtube_selectors.py                # Studio UI selectors — verify these!
-│   └── factory.py                            # Builds the enabled publisher list
-├── notifications/
-│   ├── telegram_notifier.py                  # Real operator alerts
-│   └── logging_notifier.py                    # Fallback if not configured
+│   ├── youtube_shorts_uploader.py                 # Official Data API v3 — Alert Shorts
+│   └── youtube_selectors.py                        # (legacy) Studio UI selectors
+├── audio/
+│   ├── mixer.py                                     # Loops/fades background music under a voiceover
+│   └── telugu_voiceover.py                           # Sarvam AI TTS
+├── video/
+│   ├── assembler.py                                  # Static image + audio -> .mp4 (Alert Shorts)
+│   └── scroll_assembler.py                            # Scrolling text overlay (Purana videos)
 └── scripts/
-    └── youtube_login_setup.py                  # One-time manual login capture
+    ├── post_alert_shorts.py                           # Alert Shorts entry point (automated)
+    ├── post_purana_video.py, post_kurma_purana_video.py,
+    │   post_panini_video.py, post_samudrika_video.py      # Purana video entry points (manual only)
+    ├── youtube_shorts_auth_setup.py                        # One-time OAuth setup for the Data API uploader
+    └── check_festival_today.py                             # Ad-hoc festival lookup helper
+
+.github/workflows/
+├── daily-shorts.yml    # Runs Alert Shorts nightly, targeting 12:00-1:00 AM IST
+└── ci.yml               # Tests + mypy on every push/PR
+
+scripts/ci/
+└── drive_state_sync.py  # Pull/check-date/mark-done/push against the Google Drive state folder
 ```
-
-## Prerequisites
-
-- Python 3.13
-- A Telegram bot (via [@BotFather](https://t.me/BotFather)) — required
-- A YouTube channel you can log into — required for the YouTube target
-- (Optional) A Meta Developer App — only if you enable Facebook/Instagram
-- Docker, if you want to deploy that way (see [Docker](#docker))
 
 ## Setup
 
 ### 1. Clone and install
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/vamseenathreddy/mahanavi-spirituals
 cd mahanavi-spirituals
 python3.13 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-playwright install --with-deps chromium
 ```
+
+`ffmpeg` must be on `PATH` (used by `video/assembler.py` and
+`video/scroll_assembler.py`) — the GitHub Actions workflow installs it
+via `apt-get`; install it locally too if you want to run things by hand.
 
 ### 2. Add your devotional images
 
-Drop your actual images into the matching weekday folder (the `.gitkeep`
-files are just placeholders — delete them once you've added real images):
+Drop your actual images into the matching weekday folder:
 
 ```
 Images/
@@ -108,125 +150,68 @@ Images/
 └── Sunday_Surya/
 ```
 
-Folder names must stay in this exact `Weekday_DeityName` format — the
-image selector and content generator both parse the deity from it.
-
 ### 3. Configure
 
 ```bash
 cp .env.example .env
 ```
 
-Then edit `.env` — see [Configuration reference](#configuration-reference)
-below for what each section needs. **Leave a variable blank rather than
-setting it to a placeholder string** — blank is treated as "not set";
-this is safer than a fake value that might pass validation but fail at
-runtime.
+Edit `.env` — see [Configuration reference](#configuration-reference)
+below. **Leave a variable blank rather than setting it to a placeholder
+string** — blank is treated as "not set."
 
-### 4. Set up Telegram (required)
+### 4. Set up YouTube (official Data API v3)
 
-1. Message [@BotFather](https://t.me/BotFather), create a bot, copy its
-   token into `MAHANAVI_TELEGRAM_BOT_TOKEN`.
-2. Add the bot as an **admin** of your channel (needed to post there).
-   Set `MAHANAVI_TELEGRAM_CHANNEL_ID` to your channel's `@username`.
-3. For notifications: message your bot once from your own account (or a
-   private ops group), then visit
-   `https://api.telegram.org/bot<TOKEN>/getUpdates` to find that chat's
-   ID. Set that as `MAHANAVI_TELEGRAM_ADMIN_CHAT_ID`. (Bots can't message
-   a chat that hasn't contacted them first — this step is why.)
+```bash
+python -m mahanavi.scripts.youtube_shorts_auth_setup
+```
 
-### 5. Set up YouTube (required, and the one to slow down for)
+Opens a browser window for one-time OAuth consent; saves a refreshable
+token to `MAHANAVI_YOUTUBE_TOKEN_FILE`. In CI, this token is stored in
+the Google Drive state folder and restored at the start of each run
+(see `scripts/ci/drive_state_sync.py`).
 
-The YouTube Data API has no endpoint for creating Community posts (true
-as of when this was built — worth re-confirming, since Google does
-occasionally expand API coverage). Because of that, publishing uses
-Playwright browser automation instead, which means:
+### 5. Set up real Panchang data
 
-- Run the one-time login capture **before your first real run**:
-  ```bash
-  python -m mahanavi.scripts.youtube_login_setup
-  ```
-  This opens a real browser window — log in by hand, then press Enter in
-  the terminal. It saves your session to
-  `MAHANAVI_YOUTUBE_SESSION_STATE_FILE` for reuse. Re-run this whenever
-  the session expires.
-- **Read the docstring at the top of
-  `publishers/youtube_playwright_uploader.py` before relying on this.**
-  It automates your personal YouTube/Google account, which sits in a gray
-  area of YouTube's Terms of Service around automated access — this can
-  trigger security challenges or, rarely, account restrictions. That risk
-  exists independent of how carefully the code is written.
-- The CSS/role selectors in `publishers/youtube_selectors.py` are a
-  best-effort template — Studio's UI changes without notice, and I had no
-  way to browse it live while writing this. **Do a manual `--run-now`
-  test and watch it happen** before trusting the unattended 5 AM schedule.
-  On failure, it captures a screenshot to help you fix the selectors.
-
-### 6. (Optional) Facebook and Instagram
-
-Both use official Graph API endpoints (no browser automation needed).
-
-- **Facebook**: create a Meta App, get a long-lived Page Access Token
-  with `pages_manage_posts` + `pages_read_engagement`. Set
-  `MAHANAVI_ENABLE_FACEBOOK=true` and the `FACEBOOK_*` variables.
-- **Instagram**: same Meta App, an Instagram Business/Creator account
-  linked to a Facebook Page. **Real API constraint**: Instagram's Graph
-  API only accepts a *publicly reachable image URL* — not a file upload.
-  You need to host `data/generated/` somewhere public (nginx, S3,
-  Cloudflare R2, etc.) and set `MAHANAVI_INSTAGRAM_IMAGE_PUBLIC_BASE_URL`
-  to that public base URL. Set `MAHANAVI_ENABLE_INSTAGRAM=true` and the
-  `INSTAGRAM_*` variables.
-
-### 7. (Optional) Real Panchang data
-
-By default, `MAHANAVI_PANCHANG_PROVIDER=dummy` uses offline, deterministic
-placeholder data — good for testing the pipeline, **not astronomically
-accurate**, do not use it for real posts. To go live:
-
-- **API**: set `MAHANAVI_PANCHANG_PROVIDER=api` and
-  `MAHANAVI_PANCHANG_API_BASE_URL` (+ `_API_KEY` if needed). If your
-  provider's JSON field names differ from what's expected, adjust
-  `_FIELD_MAP` in `panchang/api_provider.py` — nothing else needs to change.
-- **Scraper**: set `MAHANAVI_PANCHANG_PROVIDER=scraper` and construct
-  `ScraperPanchangProvider` directly in `bootstrap.py` with your target
-  site's URL template and CSS selectors (see the docstring in
-  `panchang/scraper_provider.py`). Confirm scraping is permitted by that
-  site's terms of service first.
+By default, `MAHANAVI_PANCHANG_PROVIDER=dummy` uses offline,
+deterministic placeholder data — fine for testing, **not for real
+posts**. For production, set `MAHANAVI_PANCHANG_PROVIDER=prokerala` and
+`MAHANAVI_PROKERALA_CLIENT_ID`/`_SECRET` (get these from your Prokerala
+dashboard, forever-free tier). A second client id/secret pair
+(`_ID_2`/`_SECRET_2`) is optional and used as an automatic fallback if
+the first account's daily quota is exhausted.
 
 ## Configuration reference
 
 Every setting lives in `.env` (copy from `.env.example`), all prefixed
 `MAHANAVI_`. Full list and defaults are in `src/mahanavi/config.py`.
-Key ones you'll actually touch:
 
 | Variable | Purpose |
 |---|---|
-| `IMAGES_ROOT`, `OUTPUT_DIR`, `DATABASE_PATH`, `LOG_DIR` | Paths — defaults are fine for local dev |
-| `TIMEZONE`, `POST_HOUR`, `POST_MINUTE` | When the scheduler posts |
-| `CHANNEL_NAME`, `WATERMARK_TEXT`, `TELUGU_FONT_PATH`, `LOGO_PATH` | Branding |
-| `PANCHANG_PROVIDER` | `dummy` / `api` / `scraper` |
-| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL_ID`, `TELEGRAM_ADMIN_CHAT_ID` | Telegram (posting + notifications) |
-| `YOUTUBE_SESSION_STATE_FILE` | Where the login setup script saves your session |
-| `ENABLE_FACEBOOK`, `ENABLE_INSTAGRAM` + their credentials | Optional extra platforms |
+| `IMAGES_ROOT`, `ASSETS_DIR`, `OUTPUT_DIR`, `DATABASE_PATH`, `LOG_DIR` | Paths — defaults are fine for local dev |
+| `TIMEZONE` | Used for "today" everywhere: Panchang, and the Alert Shorts posting windows |
+| `PANCHANG_PROVIDER` | `dummy` / `api` / `scraper` / `prokerala` |
+| `PROKERALA_CLIENT_ID`, `_SECRET`, `_ID_2`, `_SECRET_2` | Prokerala Astrology API, with optional 2nd-account fallback |
+| `ALERT_SHORT_DURATION_SECONDS`, `ALERT_ICON_*_PATH`, `ALERT_SHORT_MUSIC_PATH` | Alert Shorts card/video content — all have real committed defaults |
+| `SARVAM_API_KEY`, `SARVAM_VOICE`, `SARVAM_PACE`, `SARVAM_TEMPERATURE` | Telugu voiceover for Purana videos |
+| `FAL_API_KEY` | AI-generated scene visuals for Purana videos |
+| `YOUTUBE_CLIENT_SECRETS_FILE`, `YOUTUBE_TOKEN_FILE` | Official YouTube Data API v3 auth |
 | `MAX_RETRIES`, `RETRY_BACKOFF_SECONDS` | Retry behavior for every network call |
 
 ## Running it
 
-**Manual test run (recommended before trusting the schedule):**
+**Alert Shorts, manual test run:**
 
 ```bash
-python -m mahanavi.main --run-now
-python -m mahanavi.main --run-now --date 2026-07-20   # test a specific date
+python -m mahanavi.scripts.post_alert_shorts --date 2026-09-16   # unlisted by default
+python -m mahanavi.scripts.post_alert_shorts --public            # only once you're happy with the results
+python -m mahanavi.scripts.post_alert_shorts --no-delay          # skip the wall-clock wait, for local testing
 ```
 
-Runs the full pipeline once and exits — the fastest way to see what
-actually happens without waiting for 5 AM.
-
-**Start the scheduler (runs forever):**
-
-```bash
-python -m mahanavi.main
-```
+**In production**, this runs on GitHub's schedule via
+`.github/workflows/daily-shorts.yml` — no manual invocation needed. You
+can also trigger it on demand from the Actions tab
+(`workflow_dispatch`).
 
 ## Testing
 
@@ -237,60 +222,31 @@ PYTHONPATH=src pytest --cov=mahanavi --cov-report=term-missing
 PYTHONPATH=src mypy src/mahanavi --ignore-missing-imports    # type checking
 ```
 
-CI (`.github/workflows/ci.yml`) runs both automatically on every push/PR,
-plus a job that builds the Docker image.
-
-## Docker
-
-```bash
-docker compose up -d                                    # start the scheduler
-docker compose run --rm app python -m mahanavi.main --run-now
-docker compose logs -f
-```
-
-Run `scripts/youtube_login_setup.py` **outside Docker** first (it needs a
-visible browser window), then make sure the saved session file lands in
-the `data/` volume so the container can use it.
-
-**Honest note:** the Dockerfile is carefully constructed (built on
-Playwright's official base image specifically to avoid the usual
-"chromium won't launch in prod" dependency problems) but was written in
-an environment without Docker or network access to verify the build. The
-`docker-build` CI job is the first real test of it — if it fails, start
-there, and check that the base image tag still matches the `playwright`
-version pinned in `requirements.txt`.
+CI (`.github/workflows/ci.yml`) runs both automatically on every push/PR.
 
 ## Extending the system
 
 - **New Panchang source**: implement `PanchangProvider` in `panchang/`,
   wire it into `panchang/factory.py`.
-- **New publish target**: implement `Uploader` in `publishers/`, add it
-  to `publishers/factory.py`.
-- **New notification channel**: implement `Notifier`, swap it in
-  `bootstrap.py`'s `_build_notifier`.
 - **New deity/day**: add a folder under `Images/`, an entry to
   `WEEKDAY_FOLDER_MAP` in `config.py`, a `Deity` enum value in
   `core/models.py`, a Telugu name in `images/telugu_text.py`, and content
   in `content/data.py`.
-- **LLM-generated captions instead of templates**: replace
-  `TemplateContentGenerator` with a new `ContentGenerator` implementation
-  — `DailyPipeline` only depends on the interface.
+- **Automate the Purana video scripts**: they currently have no
+  scheduled workflow — add a new `.github/workflows/*.yml` following the
+  pattern in `daily-shorts.yml` (Drive state pull/gate/push) once you're
+  ready to run them unattended.
 
 ## Known limitations — read before relying on this daily
 
-- **YouTube automation risk**: see the Setup section above. This is the
-  single biggest operational risk in the system, not a code defect.
-- **YouTube selectors need live verification**: Studio's UI changes
-  without notice; the selectors here are a best-effort starting point.
-- **Telugu content should get a native-speaker review**: the devotional
-  phrasing in `content/data.py` follows standard conventions but wasn't
-  written by a native Telugu speaker.
-- **Trending hashtags are a static curated list**: real hashtag trends
-  shift — revisit `TRENDING_DEVOTIONAL_HASHTAGS` periodically.
-- **Instagram requires public image hosting** — it's a real API
-  constraint, not something this codebase can work around.
 - **Dummy Panchang data is not astronomically accurate** — fine for
   testing the pipeline, not for real posts.
-- **Caption length limits are soft-configured**, not verified against
-  each platform's *current* limit — confirm those before relying on the
-  defaults, especially YouTube's Community Post caption limit.
+- **Prokerala's free tier has a daily quota** — the fallback second
+  account buys headroom, but both can still be exhausted on a heavy day.
+- **GitHub Actions scheduled triggers are best-effort** — GitHub's own
+  docs note delays are more likely at round times of the hour; the
+  workflow's cron is deliberately set to an odd minute to reduce this,
+  and the pipeline's wall-clock timing logic means a late fire never
+  compounds into an even later post.
+- **Purana video scripts have no scheduled trigger** — they're
+  functional code, not yet wired into an automated daily run.

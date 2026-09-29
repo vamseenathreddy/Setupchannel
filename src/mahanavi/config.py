@@ -56,28 +56,14 @@ class Settings(BaseSettings):
 
     # --- Scheduling ---
     timezone: str = Field(default="Asia/Kolkata")
-    post_hour: int = Field(default=5, ge=0, le=23)
-    post_minute: int = Field(default=0, ge=0, le=59)
 
     # --- Branding ---
-    channel_name: str = Field(default="Mahanavi Spirituals")
-    watermark_text: str = Field(default="Mahanavi Spirituals")
     # Primary font: needs BOTH Telugu and Latin glyph coverage, since the
     # Panchang panel mixes Telugu labels with content that's often in
     # English (tithi/nakshatram names, "AM"/"PM" in times) — Noto Sans
     # Telugu covers both; a Telugu-only display font would render tofu
     # boxes for any Latin content (confirmed via a real render test).
     telugu_font_path: Path = Field(default=PROJECT_ROOT / "assets" / "fonts" / "NotoSansTelugu-Variable.ttf")
-    # Decorative font: used ONLY for elements that are guaranteed pure
-    # Telugu with no mixed Latin content (the header date, the deity
-    # banner) — Ponnala (SIL OFL, by Appaji Ambarisha Darbha / Silicon
-    # Andhra), a bolder, more traditional/devotional-poster calligraphic
-    # style than Noto. It has no Latin glyphs at all, so it must never be
-    # used anywhere Latin text could appear (the Panchang panel's mixed
-    # content, or the watermark, which defaults to the English channel
-    # name).
-    decorative_font_path: Path = Field(default=PROJECT_ROOT / "assets" / "fonts" / "Ponnala-Regular.ttf")
-    logo_path: Path | None = Field(default=PROJECT_ROOT / "assets" / "logo" / "logo.png")
 
     # --- Alert Shorts (Rahu Kalam / Shubha Ghadiyalu) ---
     # Icons shown in a row at the top of each card, in this left-to-right
@@ -120,8 +106,6 @@ class Settings(BaseSettings):
     fal_api_key: str | None = Field(default=None)
 
     # --- Image rendering ---
-    canvas_width: int = Field(default=1080, gt=0)
-    canvas_height: int = Field(default=1350, gt=0)
     image_output_format: str = Field(default="JPEG")
     image_output_quality: int = Field(default=95, ge=1, le=100)
 
@@ -142,45 +126,21 @@ class Settings(BaseSettings):
     # --- YouTube ---
     # client_secrets.json: downloaded from Google Cloud Console
     # (APIs & Services -> Credentials -> OAuth client ID -> Desktop app).
-    # Used only by the official Data API v3 Shorts uploader -- the
-    # existing Community Post automation (youtube_playwright_uploader.py)
-    # doesn't need this at all, since Community Posts have no API.
+    # Used by the official Data API v3 Shorts uploader (Alert Shorts).
     youtube_client_secrets_file: Path | None = Field(default=PROJECT_ROOT / "client_secrets.json")
     youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token.json")
-    youtube_channel_id: str | None = Field(default=None)
-    youtube_community_post_method: str = Field(default="playwright")  # "api" | "playwright"
-    youtube_session_state_file: Path = Field(default=PROJECT_ROOT / "data" / "yt_session_state.json")
-
-    # --- Telegram ---
-    telegram_bot_token: str | None = Field(default=None)
-    telegram_channel_id: str | None = Field(default=None)   # e.g. "@mahanavispirituals"
-    telegram_admin_chat_id: str | None = Field(default=None)  # for operator notifications
-
-    # --- Facebook / Instagram (optional) ---
-    facebook_page_id: str | None = Field(default=None)
-    facebook_page_access_token: str | None = Field(default=None)
-    instagram_business_account_id: str | None = Field(default=None)
-    instagram_access_token: str | None = Field(default=None)
-    instagram_image_public_base_url: str | None = Field(default=None)
-
-    # --- Content / SEO ---
-    seo_max_caption_length: int = Field(default=1500, gt=0)
 
     max_retries: int = Field(default=3, ge=0)
     retry_backoff_seconds: float = Field(default=5.0, ge=0)
-
-    # --- Feature toggles ---
-    enable_facebook: bool = Field(default=False)
-    enable_instagram: bool = Field(default=False)
 
     @model_validator(mode="before")
     @classmethod
     def _blank_env_vars_mean_unset(cls, data: object) -> object:
         """Treat an empty-string env var as 'not set' rather than a real value.
 
-        Without this, MAHANAVI_LOGO_PATH= (present but empty) coerces to
-        Path('.') — the current directory — instead of None, and the
-        renderer would then try to open the working directory as an image.
+        Without this, MAHANAVI_FAL_API_KEY= (present but empty) coerces to
+        an empty string instead of None, which then fails an API call with
+        a confusing auth error instead of a clear "not configured" one.
         Any optional field left blank in .env should behave as if it were
         omitted entirely.
         """

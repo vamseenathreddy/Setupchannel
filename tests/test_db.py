@@ -14,7 +14,7 @@ def test_schema_created(tmp_path: Path) -> None:
                 "SELECT name FROM sqlite_master WHERE type='table'"
             ).fetchall()
         }
-    assert {"image_usage", "post_log", "upload_log"}.issubset(tables)
+    assert {"image_usage", "purana_usage"}.issubset(tables)
 
 
 def test_connection_is_idempotent_across_instances(tmp_path: Path) -> None:

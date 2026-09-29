@@ -49,19 +49,3 @@ jobs:
           name: coverage-report
           path: coverage.xml
 
-  docker-build:
-    runs-on: ubuntu-latest
-    # This is the first REAL validation of the Dockerfile — it could not be
-    # built or tested in the environment that originally wrote it, since
-    # that sandbox had neither Docker nor network access to
-    # mcr.microsoft.com. If this job fails, start here.
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Build Docker image
-        run: docker build -t mahanavi-spirituals:ci .
-
-      - name: Verify the image's Python version
-        run: docker run --rm --entrypoint python3 mahanavi-spirituals:ci --version
-
