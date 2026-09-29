@@ -134,6 +134,68 @@ _SHUBHA_GHADIYALU_SUBSCRIBE_LINES = [
     "మీ విజయానికి తొలి అడుగు - ప్రతిరోజు శుభ సమయాలు చూడండి",
 ]
 
+# On-screen comment-engagement line, drawn directly above the subscribe
+# line (AlertCard.comment_prompt_text). Generic devotional prompts, not
+# tied to Rahu Kalam/Shubha Ghadiyalu specifically -- explicit goal is
+# just getting the ~3k+ daily viewers who watch but don't comment to
+# leave ANY comment, non-controversial (no politics, no sect-vs-sect
+# framing, nothing beyond a city name for personal info). Reviewed and
+# trimmed by hand from a larger draft pool. No emoji -- the Telugu font
+# used for on-screen rendering (Noto Sans Telugu, see module docstring
+# in images/alert_card_renderer.py) has no emoji glyphs, so an emoji
+# character rendered as a broken tofu box in a real render; confirmed
+# and removed rather than pulling in a second emoji-capable font just
+# for this. Rotates daily like the subscribe lines, but Rahu Kalam and
+# Shubha Ghadiyalu deliberately pick DIFFERENT lines on the same day
+# (see _pick_comment_prompt's `offset`) so the two Shorts never show an
+# identical prompt.
+_COMMENT_PROMPT_LINES = [
+    "మీ ఇష్టదైవం ఎవరో కామెంట్‌లో చెప్పండి",
+    "ఈరోజు మీరు ఏ దేవుడిని/దేవతను స్మరించుకున్నారు? కామెంట్ చేయండి",
+    "మీకు ఇష్టమైన మంత్రం ఏమిటి? కామెంట్‌లో రాయండి",
+    "మీరు రోజూ ఏ పూజ చేస్తారు? కామెంట్ చేయండి",
+    "మీ ఊరు/నగరం పేరు కామెంట్‌లో రాయండి",
+    "ఈ వీడియో నచ్చితే కామెంట్ చేయండి",
+    "మీరు ఎప్పుడూ వెళ్లే దేవాలయం పేరు చెప్పండి",
+    "మీ కులదైవం ఎవరో కామెంట్ చేయండి",
+    "మీకు నచ్చిన శ్లోకం ఒకటి కామెంట్‌లో రాయండి",
+    "ఈరోజు ఎవరైనా కుటుంబ సభ్యులను ట్యాగ్ చేయండి",
+    "మీరు ఏ వారం రోజు ఏ దేవుడిని పూజిస్తారు?",
+    "ఓం అని కామెంట్ చేసి మీ భక్తిని తెలియజేయండి",
+    "మీకు ఇష్టమైన మంత్రం ఏమిటి? కామెంట్‌లో పంచుకోండి",
+    "మీ ఇంట్లో ఏ దేవుడి ఫోటో ఉంది? కామెంట్‌లో చెప్పండి",
+    "ఈరోజు మీ మనసులో ఏముంది? కామెంట్‌లో పంచుకోండి",
+    "మీరు వేకువజామున లేచి దేవుడిని తలుచుకుంటారా? చెప్పండి",
+    "మీకు నచ్చిన పండుగ ఏది? కామెంట్ చేయండి",
+    "మీ తాత-అమ్మమ్మల నుంచి విన్న భక్తి కథ ఏమిటి?",
+    "ఈరోజు మీరు దేనికి కృతజ్ఞత చెప్పాలనుకుంటున్నారు?",
+    "మీ ఇష్టమైన ఆలయ యాత్ర గురించి కామెంట్ చేయండి",
+    "మీకు నచ్చిన భజన లేదా కీర్తన ఏది?",
+    "మీరు ఈరోజు ఎవరి కోసం ప్రార్థిస్తున్నారు?",
+    "మీ దైనందిన పూజా విధానం ఏమిటి? పంచుకోండి",
+    "మీ దగ్గరలో ఉన్న ప్రసిద్ధ దేవాలయం పేరు చెప్పండి",
+    "ఈరోజు ఏ శుభ సమయంలో మీరు ఏం చేయాలనుకుంటున్నారు?",
+    "మీరు ఏ నక్షత్రంలో పుట్టారు? కామెంట్‌లో చెప్పండి",
+    "మీకు నచ్చిన దేవుడి పేరుతో కామెంట్ చేయండి",
+    "ఈ ఛానల్ మీకు ఎలా ఉపయోగపడుతుంది? చెప్పండి",
+    "మీ ఇంటి పేరు దేవుడి పేరు మీదుగా ఉందా? చెప్పండి",
+    "మీరు ఈరోజు ఎవరికి శుభాకాంక్షలు చెప్పాలనుకుంటున్నారు?",
+    "మీరు ఏ పండుగకు ఎక్కువ ఎదురుచూస్తారు?",
+    "మీ మనసుకు నచ్చిన ఒక్క మాట కామెంట్‌లో రాయండి",
+    "మీకు తెలిసిన ఒక పురాణ కథ పేరు చెప్పండి",
+    "మీరు ఏ దేవాలయంలో ప్రశాంతత పొందారు?",
+    "ఈ వీడియో మీకు నచ్చితే ఒక కామెంట్ వదలండి",
+    "మీరు ఈరోజు ఏ మంచి పని మొదలుపెట్టబోతున్నారు?",
+    "మీ కుటుంబంలో ఎవరు ఎక్కువ భక్తిగా ఉంటారు?",
+    "మీకు నచ్చిన దేవుడి ఆలయ నిర్మాణ శైలి ఏమిటి?",
+    "మీరు ఏ సమయంలో పూజ చేయడం ఇష్టపడతారు?",
+    "మీ దైవభక్తి ప్రయాణం ఎలా మొదలైంది?",
+    "ఈరోజు మీకు లభించిన ఒక చిన్న ఆశీర్వాదం గురించి చెప్పండి",
+    "మీరు ఏ దేవుడి మంత్రాన్ని రోజూ జపిస్తారు?",
+    "మీకు నచ్చిన ఒక భక్తి పాట పేరు చెప్పండి",
+    "ఈ ఛానల్‌ను సబ్‌స్క్రైబ్ చేసి, మీ అభిప్రాయం కామెంట్‌లో చెప్పండి",
+]
+
 
 def _wait_until_wall_clock_slot(
     tz: ZoneInfo, window_start: dt_time, window_end: dt_time, label: str,
@@ -175,6 +237,16 @@ def _pick_subscribe_text(pool: list[str], for_date: date) -> str:
     """Deterministic rotation through a subscribe-line pool -- the same
     date always gets the same line (reproducible), varying day to day."""
     return pool[for_date.toordinal() % len(pool)]
+
+
+def _pick_comment_prompt(pool: list[str], for_date: date, offset: int) -> str:
+    """Deterministic rotation through the comment-prompt pool, same
+    reproducible-by-date pattern as _pick_subscribe_text. `offset` lets
+    Rahu Kalam and Shubha Ghadiyalu pick different indices on the same
+    date -- called with offset=0 and offset=len(pool)//2 respectively,
+    which guarantees two different lines (for any pool longer than 1
+    item, a half-length shift never lands back on the same index)."""
+    return pool[(for_date.toordinal() + offset) % len(pool)]
 
 
 def _mantra_lines(for_date: date) -> list[tuple[str, str]]:
@@ -278,6 +350,7 @@ def main() -> int:
         filename_suffix="rahu_kalam", icon_paths=icon_paths,
         date_text=date_text, secondary_info=_other_inauspicious_periods(panchang),
         subscribe_text=_pick_subscribe_text(_RAHU_KALAM_SUBSCRIBE_LINES, for_date),
+        comment_prompt_text=_pick_comment_prompt(_COMMENT_PROMPT_LINES, for_date, offset=0),
     )
     rahu_seo = build_rahu_kalam_seo(panchang.rahu_kalam, for_date_ordinal=for_date.toordinal())
     rahu_ok = _process_one("Rahu Kalam", rahu_card, rahu_seo, renderer, settings, for_date, uploader, privacy_status)
@@ -293,6 +366,9 @@ def main() -> int:
         filename_suffix="shubha_ghadiyalu", icon_paths=icon_paths,
         date_text=date_text,
         subscribe_text=_pick_subscribe_text(_SHUBHA_GHADIYALU_SUBSCRIBE_LINES, for_date),
+        comment_prompt_text=_pick_comment_prompt(
+            _COMMENT_PROMPT_LINES, for_date, offset=len(_COMMENT_PROMPT_LINES) // 2,
+        ),
     )
     shubha_seo = build_shubha_ghadiyalu_seo(shubha_lines, for_date_ordinal=for_date.toordinal())
     shubha_ok = _process_one(

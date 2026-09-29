@@ -102,6 +102,7 @@ class AlertCard:
     icon_paths: list[Path] = field(default_factory=list)  # e.g. [Lakshmi, Ganesha, Kubera], left-to-right order
     date_text: str = ""  # e.g. "17 సెప్టెంబర్ 2026, గురువారం" -- shown below the title
     secondary_info: str = ""  # compact extra info shown in a smaller font below the main lines
+    comment_prompt_text: str = ""  # optional engagement line, drawn directly ABOVE subscribe_text
 
 
 class AlertCardRenderer:
@@ -144,16 +145,38 @@ class AlertCardRenderer:
 
             subscribe_bbox = draw.textbbox((0, 0), card.subscribe_text, font=subscribe_font)
             subscribe_h = int(subscribe_bbox[3] - subscribe_bbox[1])
+
+            # Optional engagement line (e.g. "comment your ishta daivam"),
+            # drawn directly above subscribe_text -- same single-line,
+            # shrink-to-fit treatment as the subscribe line itself.
+            comment_font = None
+            comment_bbox = None
+            comment_h = 0
+            if card.comment_prompt_text:
+                comment_font = self._fit_font_to_width(
+                    draw, card.comment_prompt_text, max_width=content_width,
+                    start_size=int(width * SUBSCRIBE_FONT_FRAC), weight="Bold",
+                )
+                comment_bbox = draw.textbbox((0, 0), card.comment_prompt_text, font=comment_font)
+                comment_h = int(comment_bbox[3] - comment_bbox[1])
+
             # Real evidence from the actual mobile app (a screenshot showed
             # our own content overlapping YouTube's channel handle, caption
             # text, and visibility badge) -- those occupy roughly the
             # bottom 25% of the frame, not the ~14% originally assumed.
             # Moved up substantially so ALL our content, not just the
-            # subscribe line, finishes well clear of that zone.
-            subscribe_zone_top = int(height * 0.68)
+            # subscribe line, finishes well clear of that zone. This is the
+            # BOTTOM edge of the footer block (subscribe line, plus the
+            # comment line above it when present) -- kept fixed regardless
+            # of whether comment_prompt_text is set, so the subscribe line
+            # always lands in the same already-validated-safe spot.
+            footer_bottom = int(height * 0.68)
+            footer_line_gap = int(height * 0.015)
+            footer_block_h = subscribe_h + (comment_h + footer_line_gap if card.comment_prompt_text else 0)
+            footer_top = footer_bottom - footer_block_h
 
             content_top = icons_bottom + int(height * 0.05) if icons_bottom else int(height * 0.30)
-            available_bottom = subscribe_zone_top - int(height * 0.03)
+            available_bottom = footer_top - int(height * 0.03)
             available_height = max(available_bottom - content_top, 0)
 
             n_gaps = len(card.lines) + 1 + (1 if card.date_text else 0) + (1 if card.secondary_info else 0)
@@ -238,12 +261,20 @@ class AlertCardRenderer:
                 cursor_y = self._draw_centered_block(draw, secondary_wrapped, secondary_font, width, cursor_y)
                 cursor_y += gap
 
+            subscribe_top = footer_bottom - subscribe_h
             subscribe_w = subscribe_bbox[2] - subscribe_bbox[0]
-            subscribe_y = subscribe_zone_top - subscribe_h // 2
             draw.text(
-                ((width - subscribe_w) // 2, subscribe_y - subscribe_bbox[1]),
+                ((width - subscribe_w) // 2, subscribe_top - subscribe_bbox[1]),
                 card.subscribe_text, font=subscribe_font, fill=COLOR_TEXT_LIGHT,
             )
+
+            if card.comment_prompt_text and comment_font is not None and comment_bbox is not None:
+                comment_top = subscribe_top - footer_line_gap - comment_h
+                comment_w = comment_bbox[2] - comment_bbox[0]
+                draw.text(
+                    ((width - comment_w) // 2, comment_top - comment_bbox[1]),
+                    card.comment_prompt_text, font=comment_font, fill=COLOR_TEXT_LIGHT,
+                )
 
             output_path = self._build_output_path(card, for_date)
             final = canvas.convert("RGB")
