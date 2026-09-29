@@ -75,9 +75,11 @@ _ENGLISH_WEEKDAYS: dict[int, str] = {
     4: "Friday", 5: "Saturday", 6: "Sunday",
 }
 
-# Each title pool has 6 real variations, rotated deterministically by
+# Each title pool has 18 real variations, rotated deterministically by
 # date -- avoids literally identical text every day while keeping every
-# variant on-brand and equally accurate.
+# variant on-brand and equally accurate. Kept to the researched 30-40
+# char Shorts sweet spot (module docstring) -- a few run a touch longer
+# for the bilingual ones, matching the original 6's own range.
 _RAHU_KALAM_TITLES = [
     "ఈరోజు రాహు కాలం - Rahu Kalam Today",
     "రాహు కాలం Timing - ఈరోజు జాగ్రత్త!",
@@ -85,6 +87,18 @@ _RAHU_KALAM_TITLES = [
     "Today's Rahu Kalam - ఈరోజు సమయం",
     "రాహు కాలం Alert - నేటి సమయం",
     "Avoid This Time - ఈరోజు రాహు కాలం",
+    "ఈరోజు రాహు కాలం సమయం చూడండి",
+    "Rahu Kalam Alert - Today's Timing",
+    "జాగ్రత్త! ఈరోజు రాహు కాలం సమయం",
+    "Rahu Kalam Today - ఈరోజు వేళ ఇదే",
+    "నేటి రాహు కాలం - Don't Miss This",
+    "Rahu Kalam Warning - ఈరోజు టైమింగ్",
+    "ఈరోజు రాహు కాలం ఎప్పటి వరకు?",
+    "Know Today's Rahu Kalam Time",
+    "రాహు కాలం - ఈ సమయం గుర్తుంచుకోండి",
+    "Today's Inauspicious Time - రాహు కాలం",
+    "రాహు కాలం Update - ఈరోజు సమయం ఇదే",
+    "Check Rahu Kalam Before You Start",
 ]
 
 _SHUBHA_GHADIYALU_TITLES = [
@@ -94,6 +108,18 @@ _SHUBHA_GHADIYALU_TITLES = [
     "Auspicious Time - శుభకార్యాలకు ఇదే సమయం",
     "అభిజిత్/అమృత కాలం - Abhijit/Amrit Kaal - ఈరోజు టైమింగ్స్",
     "Pooja Time Today - ఈరోజు పూజకు మంచి సమయం",
+    "ఈరోజు శుభ సమయాలు చూడండి",
+    "Shubha Ghadiyalu Alert - Today's Timing",
+    "నేటి శుభ ముహూర్తాలు ఇవే",
+    "Best Time Today - ఈరోజు శుభ ఘడియలు",
+    "శుభకార్యాలకు నేటి మంచి సమయం",
+    "Auspicious Timings - ఈరోజు కోసం",
+    "ఈరోజు పూజలకు, శుభకార్యాలకు మంచి సమయం",
+    "Today's Good Muhurtam - శుభ సమయం",
+    "శుభ ఘడియలు Update - ఈరోజు సమయం ఇదే",
+    "Perfect Time Today - శుభ ముహూర్తం",
+    "ఈరోజు అభిజిత్ ముహూర్తం సమయం",
+    "Know Today's Auspicious Timings",
 ]
 
 # Closing CTA sentence in the description also rotates. English pools
