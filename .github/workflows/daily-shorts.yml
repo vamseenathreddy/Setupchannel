@@ -2,7 +2,12 @@ name: Daily Shorts Post
 
 on:
   schedule:
-    - cron: '30 18 * * *'   # fires at 00:00 IST daily (18:30 UTC previous day); actual post time is randomized within the hour below
+    - cron: '37 18 * * *'   # targets 00:07 IST daily (18:37 UTC previous day) -- GitHub's own docs
+    # note scheduled workflows queue up most at round times (top/half of the hour); 18:30 was
+    # exactly one of those congested slots and a real cause of the multi-hour delays we saw.
+    # An odd minute like :37 avoids that queue. The 12:00-1:00 AM IST posting window logic in
+    # post_alert_shorts.py is wall-clock based regardless of when this actually fires, so a
+    # few minutes' offset here changes nothing about when the Shorts themselves get posted.
   workflow_dispatch: {}
 
 permissions:
