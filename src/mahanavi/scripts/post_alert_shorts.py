@@ -51,6 +51,7 @@ from zoneinfo import ZoneInfo
 from mahanavi.config import Settings, get_settings
 from mahanavi.content.alert_seo import (
     ShortSeoContent,
+    build_durmuhurtham_seo,
     build_rahu_kalam_seo,
     build_shubha_ghadiyalu_seo,
 )
@@ -58,6 +59,8 @@ from mahanavi.content.data import DEITY_CONTENT, WEEKDAY_DEITY_MAP, pick_beeja_m
 from mahanavi.core.models import PanchangData
 from mahanavi.exceptions import MahanaviError
 from mahanavi.images.alert_card_renderer import (
+    COLOR_DURMUHURTHAM_BOTTOM,
+    COLOR_DURMUHURTHAM_TOP,
     COLOR_RAHU_BOTTOM,
     COLOR_RAHU_TOP,
     COLOR_SHUBHA_BOTTOM,
@@ -148,6 +151,25 @@ _SHUBHA_GHADIYALU_SUBSCRIBE_LINES = [
     "ఈ మంచి క్షణాలను వదులుకోకండి - సబ్‌స్క్రైబ్ చేయండి",
     "రోజూ శుభారంభం కోసం ఈ సమయాలు తెలుసుకోండి",
     "మీ విజయానికి తొలి అడుగు - ప్రతిరోజు శుభ సమయాలు చూడండి",
+]
+
+# Durmuhurtham reuses the Rahu Kalam pool's tone (serious/protective,
+# not manufactured panic) since it's the same category of "avoid this
+# time" content -- added because real analytics showed a standalone
+# Durmuhurtham Short outperforming most of the channel's other content,
+# while this pipeline previously only showed it as small secondary text
+# on the Rahu Kalam card (see _other_inauspicious_periods below).
+_DURMUHURTHAM_SUBSCRIBE_LINES = [
+    "ప్రతిరోజు దుర్ముహూర్తం తెలుసుకోండి - సబ్‌స్క్రైబ్ చేయండి",
+    "చెడు సమయాన్ని తప్పకుండా తెలుసుకోండి - ప్రతిరోజు సబ్‌స్క్రైబ్ చేయండి",
+    "ప్రతిరోజు దుర్ముహూర్త అప్‌డేట్ కోసం సబ్‌స్క్రైబ్ చేయండి",
+    "చాలా జాగ్రత్తగా ఉండవలసిన సమయం - ప్రతిరోజు సబ్‌స్క్రైబ్ చేయండి",
+    "ముఖ్యమైన పని మొదలుపెట్టే ముందు ఈ సమయం చూడండి",
+    "ప్రతిరోజు దుర్ముహూర్త సమయం తెలుసుకోండి - సబ్‌స్క్రైబ్ చేయండి",
+    "మీ పనులు వాయిదా వేయాల్సిన సమయం కోసం రోజూ చూడండి",
+    "ఈ సమయాన్ని నిర్లక్ష్యం చేయకండి - సబ్‌స్క్రైబ్ చేయండి",
+    "రోజూ నష్టం నివారించడానికి ఈ సమయాలు తెలుసుకోండి",
+    "మీ కుటుంబ భద్రత కోసం ఈరోజు దుర్ముహూర్తం చూసుకోండి",
 ]
 
 # On-screen comment-engagement line, drawn directly above the subscribe
@@ -326,7 +348,7 @@ def main() -> int:
              "--only is NOT given (legacy both-in-one-run mode) -- used for local/manual testing.",
     )
     parser.add_argument(
-        "--only", choices=["rahu_kalam", "shubha_ghadiyalu"], default=None,
+        "--only", choices=["rahu_kalam", "shubha_ghadiyalu", "durmuhurtham"], default=None,
         help="Post just this one Short and exit -- no wait, posts immediately. This is what the "
              "production hourly-tick workflow always passes (see module docstring); omit it for "
              "the legacy both-Shorts-with-natural-timing-wait local/manual mode.",
@@ -353,6 +375,7 @@ def main() -> int:
 
     want_rahu = args.only in (None, "rahu_kalam")
     want_shubha = args.only in (None, "shubha_ghadiyalu")
+    want_durmuhurtham = args.only in (None, "durmuhurtham")
     # --only always fires immediately (the outer hourly-tick gate already
     # confirmed the timing); the wait is only for the legacy no-args
     # "post both Shorts back to back" local/manual mode.
@@ -401,7 +424,7 @@ def main() -> int:
     if want_shubha:
         shubha_lines = _shubha_lines(panchang)
         shubha_comment_prompt = _pick_comment_prompt(
-            _COMMENT_PROMPT_LINES, for_date, offset=len(_COMMENT_PROMPT_LINES) // 2,
+            _COMMENT_PROMPT_LINES, for_date, offset=len(_COMMENT_PROMPT_LINES) // 3,
         )
         shubha_card = AlertCard(
             title="ఈరోజు శుభ ఘడియలు",
@@ -419,10 +442,38 @@ def main() -> int:
             "Shubha Ghadiyalu", shubha_card, shubha_seo, renderer, settings, for_date, uploader, privacy_status,
         )
 
+    if want_durmuhurtham and should_wait:
+        _wait_until_wall_clock_slot(tz, dt_time(1, 0), dt_time(1, 30), "the third Short (1:00-1:30 AM slot)")
+
+    durmuhurtham_ok = True
+    if want_durmuhurtham:
+        durmuhurtham_comment_prompt = _pick_comment_prompt(
+            _COMMENT_PROMPT_LINES, for_date, offset=(2 * len(_COMMENT_PROMPT_LINES)) // 3,
+        )
+        durmuhurtham_card = AlertCard(
+            title="ఈరోజు దుర్ముహూర్తం",
+            lines=[(PANCHANG_LABELS["durmuhurtham"], panchang.durmuhurtham), *mantra_lines],
+            top_color=COLOR_DURMUHURTHAM_TOP, bottom_color=COLOR_DURMUHURTHAM_BOTTOM,
+            filename_suffix="durmuhurtham", icon_paths=icon_paths,
+            date_text=date_text,
+            subscribe_text=_pick_subscribe_text(_DURMUHURTHAM_SUBSCRIBE_LINES, for_date),
+            comment_prompt_text=durmuhurtham_comment_prompt,
+        )
+        durmuhurtham_seo = build_durmuhurtham_seo(
+            panchang.durmuhurtham, for_date_ordinal=for_date.toordinal(), comment_prompt_te=durmuhurtham_comment_prompt,
+        )
+        durmuhurtham_ok = _process_one(
+            "Durmuhurtham", durmuhurtham_card, durmuhurtham_seo, renderer, settings, for_date, uploader, privacy_status,
+        )
+
     rahu_status = "skipped (not requested)" if not want_rahu else ("OK" if rahu_ok else "FAILED")
     shubha_status = "skipped (not requested)" if not want_shubha else ("OK" if shubha_ok else "FAILED")
-    print(f"\n=== Done. Rahu Kalam: {rahu_status}, Shubha Ghadiyalu: {shubha_status} ===")
-    return 0 if (rahu_ok and shubha_ok) else 1
+    durmuhurtham_status = "skipped (not requested)" if not want_durmuhurtham else ("OK" if durmuhurtham_ok else "FAILED")
+    print(
+        f"\n=== Done. Rahu Kalam: {rahu_status}, Shubha Ghadiyalu: {shubha_status}, "
+        f"Durmuhurtham: {durmuhurtham_status} ==="
+    )
+    return 0 if (rahu_ok and shubha_ok and durmuhurtham_ok) else 1
 
 
 if __name__ == "__main__":

@@ -21,15 +21,20 @@ RULES (explicit product decision, not just an engineering default):
   - NEVER fire before 12:00 AM IST. Firing early would fetch and post
     TODAY's Panchang under what is meant to be the next day's post --
     i.e. it would show yesterday's timings in a Short dated today.
-  - Only fire inside the 12:00 AM - 2:00 AM IST window. Two hourly
-    ticks land inside it (12:00 AM and 1:00 AM IST), which also
-    naturally gives Rahu Kalam and Shubha Ghadiyalu their own separate
-    tick each -- similar spacing to the old design's 30-minute halves,
-    just resilient to a single missed tick instead of depending on
-    exactly one cron fire succeeding.
-  - Rahu Kalam is attempted first (earlier in the window); Shubha
-    Ghadiyalu only once Rahu Kalam's marker for today is already set.
-  - If the window closes (2:00 AM IST) with one or both Shorts still
+  - Only fire inside the 12:00 AM - 3:00 AM IST window. Three hourly
+    ticks land inside it (12:00 AM, 1:00 AM, 2:00 AM IST), giving Rahu
+    Kalam, Shubha Ghadiyalu, and Durmuhurtham their own separate tick
+    each -- resilient to a single missed tick instead of depending on
+    exactly one cron fire succeeding. Extended from the original
+    12:00-2:00 AM / two-Short window when Durmuhurtham was added as a
+    third standalone alert Short (2026-09-30) -- real channel analytics
+    showed a standalone "avoid this time" Durmuhurtham video as one of
+    the channel's best performers, previously only shown as small
+    secondary text on the Rahu Kalam card.
+  - Posting order: Rahu Kalam first, then Shubha Ghadiyalu once Rahu
+    Kalam's marker for today is set, then Durmuhurtham once both of
+    those are set.
+  - If the window closes (3:00 AM IST) with any Short(s) still
     unposted, that day's post for the still-missing Short(s) is
     skipped entirely rather than firing late in the afternoon --
     intentional per explicit product decision: a very late post reads
@@ -37,11 +42,14 @@ RULES (explicit product decision, not just an engineering default):
 
 MANUAL OVERRIDE: workflow_dispatch can set FORCE_TARGET (via the
 workflow's `force_target` input) to "rahu_kalam", "shubha_ghadiyalu",
-or "both" to fire immediately regardless of the time-of-day window and
+"durmuhurtham", or "both" (rahu_kalam + shubha_ghadiyalu only, kept for
+backward compatibility -- durmuhurtham must be requested explicitly by
+name) to fire immediately regardless of the time-of-day window and
 today's markers -- e.g. for testing or a deliberate manual re-post.
 Never set by the scheduled ticks themselves.
 
-Prints exactly one of: none | rahu_kalam | shubha_ghadiyalu | both
+Prints exactly one of: none | rahu_kalam | shubha_ghadiyalu |
+durmuhurtham | both
 and, if running under GitHub Actions, also writes it as `target=...`
 to $GITHUB_OUTPUT for the workflow's `if:` conditions to use.
 """
@@ -58,7 +66,7 @@ from zoneinfo import ZoneInfo
 IST = ZoneInfo("Asia/Kolkata")
 DATA_DIR = Path("data")
 WINDOW_START = dt_time(0, 0)  # 12:00 AM IST -- never fire before this
-WINDOW_END = dt_time(2, 0)  # 2:00 AM IST -- exclusive upper bound
+WINDOW_END = dt_time(3, 0)  # 3:00 AM IST -- exclusive upper bound (extended for the 3rd Short, Durmuhurtham)
 
 
 def _posted_today(which: str, today: str) -> bool:
@@ -69,7 +77,7 @@ def _posted_today(which: str, today: str) -> bool:
 def _decide(now: datetime, force_target: str) -> str:
     today = now.date().isoformat()
 
-    if force_target in ("rahu_kalam", "shubha_ghadiyalu", "both"):
+    if force_target in ("rahu_kalam", "shubha_ghadiyalu", "durmuhurtham", "both"):
         return force_target
 
     if not (WINDOW_START <= now.time() < WINDOW_END):
@@ -79,6 +87,8 @@ def _decide(now: datetime, force_target: str) -> str:
         return "rahu_kalam"
     if not _posted_today("shubha_ghadiyalu", today):
         return "shubha_ghadiyalu"
+    if not _posted_today("durmuhurtham", today):
+        return "durmuhurtham"
     return "none"
 
 

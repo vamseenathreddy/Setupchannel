@@ -57,6 +57,7 @@ from datetime import date
 # 3-5 total formula.
 _RAHU_KALAM_HASHTAGS = ["#రాహుకాలం", "#RahuKalam", "#పంచాంగం"]
 _SHUBHA_GHADIYALU_HASHTAGS = ["#శుభముహూర్తం", "#అభిజిత్ముహూర్తం", "#పంచాంగం"]
+_DURMUHURTHAM_HASHTAGS = ["#దుర్ముహూర్తం", "#Durmuhurtham", "#పంచాంగం"]
 
 # Rotating pool of established devotional/Telugu hashtags -- reviewed
 # periodically (same pattern as the Telugu translation dictionaries),
@@ -157,6 +158,34 @@ _SHUBHA_GHADIYALU_TITLES = [
     "Shubha Timing Alert - ఈరోజు",
 ]
 
+# Title pool for the Durmuhurtham alert -- leads with the exact "Avoid
+# This Time" framing that (per real channel analytics, 2026-09-30) was
+# the channel's single best-performing title pattern alongside the
+# Abhijit/Amrit Kaal combo, so this pool is built around that phrasing
+# rather than inventing a new one from scratch.
+_DURMUHURTHAM_TITLES = [
+    "Avoid This Time - దుర్ముహూర్తం కాలం",
+    "ఈరోజు దుర్ముహూర్తం - Avoid This Time",
+    "Durmuhurtham Alert - ఈరోజు సమయం",
+    "జాగ్రత్త! దుర్ముహూర్తం ఈరోజు సమయం",
+    "Today's Durmuhurtham - ఈరోజు వేళ ఇదే",
+    "దుర్ముహూర్తం Timing - ఈరోజు జాగ్రత్త!",
+    "Durmuhurtham Today - Don't Start Anything",
+    "నేటి దుర్ముహూర్తం - Avoid Starting Work",
+    "Durmuhurtham Warning - ఈరోజు టైమింగ్",
+    "ఈరోజు దుర్ముహూర్తం Time చూడండి",
+    "Know Today's దుర్ముహూర్తం Time",
+    "దుర్ముహూర్తం Alert - ఈ సమయం గుర్తుంచుకోండి",
+    "Today's Inauspicious Window - దుర్ముహూర్తం",
+    "దుర్ముహూర్తం Update - ఈరోజు సమయం ఇదే",
+    "Check దుర్ముహూర్తం Before You Start",
+    "దుర్ముహూర్తం ఈరోజు - Full Details",
+    "Today's Durmuhurtham Time - ఈరోజు తేదీ",
+    "దుర్ముహూర్తం Start ఎప్పుడు? ఈరోజు",
+    "Durmuhurtham Ends At - ఈరోజు సమయం",
+    "ఈరోజు దుర్ముహూర్తం - Plan Your Day",
+]
+
 # Opening hook line, prepended to each description -- this is the part
 # that shows in the high-visibility snippet before YouTube's "...more"
 # cutoff on mobile, so it earns a real hook rather than starting cold
@@ -204,6 +233,27 @@ _SHUBHA_GHADIYALU_HOOKS_EN = [
     "Quick Update: Here are today's Shubha Ghadiyalu timings",
 ]
 
+_DURMUHURTHAM_HOOKS_TE = [
+    "ఈరోజు ఈ సమయంలో కొత్త పని మొదలుపెట్టకండి — Durmuhurtham Alert",
+    "Durmuhurtham Alert: ఈరోజు ఈ సమయం జాగ్రత్తగా గమనించండి",
+    "ముఖ్యమైన పనులు మొదలుపెట్టేముందు ఈ సమయం చూడండి",
+    "Save This Time: ఈరోజు దుర్ముహూర్తం వివరాలు ఇక్కడ",
+    "ప్రతిరోజు దుర్ముహూర్తం తెలుసుకోవడం ఎందుకు ముఖ్యమో మీకు తెలుసా?",
+    "Durmuhurtham Reminder: ఈరోజు ఈ సమయం పాటించండి",
+    "ఈరోజు శుభ కార్యాలు మొదలుపెట్టే ముందు ఇది చదవండి",
+    "Quick Alert: ఈరోజు దుర్ముహూర్తం సమయం ఇదే",
+]
+_DURMUHURTHAM_HOOKS_EN = [
+    "Don't start anything new during this time today — Durmuhurtham Alert",
+    "Durmuhurtham Alert: Please note this time carefully today",
+    "Check this time before starting anything important",
+    "Save This Time: Today's Durmuhurtham details here",
+    "Do you know why checking Durmuhurtham every day matters?",
+    "Durmuhurtham Reminder: Follow this time today",
+    "Read this before starting any auspicious task today",
+    "Quick Alert: Here's today's Durmuhurtham time",
+]
+
 # English half of the comment-engagement line appended to every
 # description, right after the CTA -- echoes the same on-screen
 # comment prompt (passed in by the caller as `comment_prompt_te`,
@@ -240,6 +290,16 @@ _SHUBHA_GHADIYALU_CTAS_EN = [
     "You can perform auspicious activities during these times.",
     "Starting important tasks during these times is considered auspicious.",
     "These are good times for poojas and other auspicious activities.",
+]
+_DURMUHURTHAM_CTAS = [
+    "ఈ సమయంలో శుభకార్యాలు మొదలుపెట్టకండి.",
+    "ఈ సమయంలో కొత్త పనులు ప్రారంభించడం మంచిది కాదు.",
+    "ఈ సమయాన్ని గమనించి ముఖ్యమైన పనులు వాయిదా వేసుకోండి.",
+]
+_DURMUHURTHAM_CTAS_EN = [
+    "Avoid starting auspicious activities during this time.",
+    "It's not advisable to start new tasks during this period.",
+    "Please note this time and postpone important tasks accordingly.",
 ]
 
 # Two specific past videos, given directly -- see module docstring.
@@ -359,6 +419,39 @@ def build_shubha_ghadiyalu_seo(
     description = f"{description_te}\n\n{_CHANNEL_FOOTER_TE}\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
 
     hashtags = ["#Shorts", *_SHUBHA_GHADIYALU_HASHTAGS]
+    if festival:
+        hashtags.append(f"#{festival.replace(' ', '')}")
+    hashtags.append(_pick_rotating(_ROTATING_POOL, for_date_ordinal))
+
+    return ShortSeoContent(title=title, description=description, hashtags=hashtags)
+
+
+def build_durmuhurtham_seo(
+    durmuhurtham_range: str, for_date_ordinal: int, comment_prompt_te: str, festival: str | None = None,
+) -> ShortSeoContent:
+    """SEO content for the Durmuhurtham alert Short -- same structure as
+    build_rahu_kalam_seo (another "avoid this time" inauspicious-period
+    alert), added because real channel analytics (2026-09-30) showed a
+    standalone "Avoid This Time - దుర్ముహూర్తం" video as one of the
+    channel's two best performers, while this pipeline had only ever
+    shown Durmuhurtham as small secondary text on the Rahu Kalam card,
+    never as its own titled Short."""
+    title = _pick_rotating(_DURMUHURTHAM_TITLES, for_date_ordinal)
+    d = date.fromordinal(for_date_ordinal)
+    weekday_te, weekday_en = _TELUGU_WEEKDAYS[d.weekday()], _ENGLISH_WEEKDAYS[d.weekday()]
+    cta_te, cta_en = _pick_rotating_pair(_DURMUHURTHAM_CTAS, _DURMUHURTHAM_CTAS_EN, for_date_ordinal, offset=1)
+    hook_te, hook_en = _pick_rotating_pair(_DURMUHURTHAM_HOOKS_TE, _DURMUHURTHAM_HOOKS_EN, for_date_ordinal, offset=2)
+    comment_en = _pick_rotating(_COMMENT_ENGAGEMENT_EN, for_date_ordinal, offset=3)
+
+    description_te = (
+        f"{hook_te}\n\nఈరోజు {weekday_te} దుర్ముహూర్తం: {durmuhurtham_range} — {cta_te}\n\n{comment_prompt_te}"
+    )
+    description_en = (
+        f"{hook_en}\n\nToday's ({weekday_en}) Durmuhurtham: {durmuhurtham_range} — {cta_en}\n\n{comment_en}"
+    )
+    description = f"{description_te}\n\n{_CHANNEL_FOOTER_TE}\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
+
+    hashtags = ["#Shorts", *_DURMUHURTHAM_HASHTAGS]
     if festival:
         hashtags.append(f"#{festival.replace(' ', '')}")
     hashtags.append(_pick_rotating(_ROTATING_POOL, for_date_ordinal))

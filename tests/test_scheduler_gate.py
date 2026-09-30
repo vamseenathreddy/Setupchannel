@@ -55,8 +55,12 @@ class TestWindowBoundaries:
         now = _ist(2026, 9, 30, 1, 59)
         assert scheduler_gate._decide(now, "") == "rahu_kalam"
 
-    def test_at_exactly_two_am_stops_firing(self, isolated_data_dir: Path) -> None:
-        now = _ist(2026, 9, 30, 2, 0)
+    def test_at_two_fifty_nine_am_can_fire(self, isolated_data_dir: Path) -> None:
+        now = _ist(2026, 9, 30, 2, 59)
+        assert scheduler_gate._decide(now, "") == "rahu_kalam"
+
+    def test_at_exactly_three_am_stops_firing(self, isolated_data_dir: Path) -> None:
+        now = _ist(2026, 9, 30, 3, 0)
         assert scheduler_gate._decide(now, "") == "none"
 
     def test_daytime_tick_never_fires(self, isolated_data_dir: Path) -> None:
@@ -74,10 +78,17 @@ class TestOrdering:
         now = _ist(2026, 9, 30, 1, 5)
         assert scheduler_gate._decide(now, "") == "shubha_ghadiyalu"
 
-    def test_none_once_both_done(self, isolated_data_dir: Path) -> None:
+    def test_durmuhurtham_once_rahu_and_shubha_done(self, isolated_data_dir: Path) -> None:
         _mark(isolated_data_dir, "rahu_kalam", "2026-09-30")
         _mark(isolated_data_dir, "shubha_ghadiyalu", "2026-09-30")
-        now = _ist(2026, 9, 30, 1, 30)
+        now = _ist(2026, 9, 30, 2, 5)
+        assert scheduler_gate._decide(now, "") == "durmuhurtham"
+
+    def test_none_once_all_three_done(self, isolated_data_dir: Path) -> None:
+        _mark(isolated_data_dir, "rahu_kalam", "2026-09-30")
+        _mark(isolated_data_dir, "shubha_ghadiyalu", "2026-09-30")
+        _mark(isolated_data_dir, "durmuhurtham", "2026-09-30")
+        now = _ist(2026, 9, 30, 2, 30)
         assert scheduler_gate._decide(now, "") == "none"
 
     def test_yesterdays_marker_does_not_count_as_done_today(self, isolated_data_dir: Path) -> None:
@@ -99,6 +110,10 @@ class TestForceOverride:
     def test_force_both(self, isolated_data_dir: Path) -> None:
         now = _ist(2026, 9, 30, 15, 0)
         assert scheduler_gate._decide(now, "both") == "both"
+
+    def test_force_durmuhurtham(self, isolated_data_dir: Path) -> None:
+        now = _ist(2026, 9, 30, 15, 0)
+        assert scheduler_gate._decide(now, "durmuhurtham") == "durmuhurtham"
 
     def test_empty_force_target_falls_back_to_normal_rules(self, isolated_data_dir: Path) -> None:
         now = _ist(2026, 9, 30, 15, 0)

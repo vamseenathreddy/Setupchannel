@@ -70,6 +70,12 @@ COLOR_RAHU_TOP = (120, 15, 15)      # deep red
 COLOR_RAHU_BOTTOM = (70, 5, 5)
 COLOR_SHUBHA_TOP = (20, 90, 45)     # deep green
 COLOR_SHUBHA_BOTTOM = (10, 55, 25)
+# Deep amber/orange -- deliberately distinct from Rahu Kalam's red so the
+# two "avoid this time" cards don't look identical in the channel's video
+# grid, while still reading as a caution color rather than Shubha
+# Ghadiyalu's green.
+COLOR_DURMUHURTHAM_TOP = (130, 70, 10)
+COLOR_DURMUHURTHAM_BOTTOM = (75, 38, 5)
 COLOR_TEXT_LIGHT = (255, 250, 240)
 
 ICON_SIZE = int(ALERT_CARD_WIDTH * 0.16)

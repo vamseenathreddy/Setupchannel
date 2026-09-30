@@ -17,9 +17,11 @@ on:
       force_target:
         description: >-
           Force-post ignoring the time-of-day window and today's
-          marker: rahu_kalam, shubha_ghadiyalu, or both. Leave blank
-          for normal tick behavior (only posts if it's 12:00-2:00 AM
-          IST and today's post is still missing).
+          marker: rahu_kalam, shubha_ghadiyalu, durmuhurtham, or both
+          (rahu_kalam + shubha_ghadiyalu only -- durmuhurtham must be
+          named explicitly). Leave blank for normal tick behavior (only
+          posts if it's 12:00-3:00 AM IST and today's post is still
+          missing).
         required: false
         default: ''
 
@@ -126,6 +128,32 @@ jobs:
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
         run: |
           python scripts/ci/drive_state_sync.py mark-done shubha_ghadiyalu
+          python scripts/ci/drive_state_sync.py push
+
+      - name: Run Shorts pipeline (Durmuhurtham)
+        if: steps.gate.outputs.target == 'durmuhurtham'
+        env:
+          MAHANAVI_IMAGES_ROOT: ./Images
+          MAHANAVI_ASSETS_DIR: ./assets
+          MAHANAVI_OUTPUT_DIR: ./data/generated
+          MAHANAVI_DATABASE_PATH: ./data/mahanavi.db
+          MAHANAVI_LOG_DIR: ./data/logs
+          MAHANAVI_TIMEZONE: Asia/Kolkata
+          MAHANAVI_PANCHANG_PROVIDER: prokerala
+          MAHANAVI_PROKERALA_CLIENT_ID: ${{ secrets.MAHANAVI_PROKERALA_CLIENT_ID }}
+          MAHANAVI_PROKERALA_CLIENT_SECRET: ${{ secrets.MAHANAVI_PROKERALA_CLIENT_SECRET }}
+          MAHANAVI_PROKERALA_CLIENT_ID_2: ${{ secrets.MAHANAVI_PROKERALA_CLIENT_ID_2 }}
+          MAHANAVI_PROKERALA_CLIENT_SECRET_2: ${{ secrets.MAHANAVI_PROKERALA_CLIENT_SECRET_2 }}
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+        run: python3 -m mahanavi.scripts.post_alert_shorts --public --only durmuhurtham
+
+      - name: Mark Durmuhurtham done and push state to Drive
+        if: steps.gate.outputs.target == 'durmuhurtham'
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: |
+          python scripts/ci/drive_state_sync.py mark-done durmuhurtham
           python scripts/ci/drive_state_sync.py push
 
       - name: Upload run output as artifact (debugging)
