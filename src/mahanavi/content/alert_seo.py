@@ -75,11 +75,12 @@ _ENGLISH_WEEKDAYS: dict[int, str] = {
     4: "Friday", 5: "Saturday", 6: "Sunday",
 }
 
-# Each title pool has 18 real variations, rotated deterministically by
+# Each title pool has 35 real variations, rotated deterministically by
 # date -- avoids literally identical text every day while keeping every
 # variant on-brand and equally accurate. Kept to the researched 30-40
-# char Shorts sweet spot (module docstring) -- a few run a touch longer
-# for the bilingual ones, matching the original 6's own range.
+# char Shorts sweet spot (module docstring), and every single title
+# mixes actual Telugu script with English (not just a bilingual pair of
+# otherwise-monolingual entries) -- per explicit requirement.
 _RAHU_KALAM_TITLES = [
     "ఈరోజు రాహు కాలం - Rahu Kalam Today",
     "రాహు కాలం Timing - ఈరోజు జాగ్రత్త!",
@@ -87,18 +88,35 @@ _RAHU_KALAM_TITLES = [
     "Today's Rahu Kalam - ఈరోజు సమయం",
     "రాహు కాలం Alert - నేటి సమయం",
     "Avoid This Time - ఈరోజు రాహు కాలం",
-    "ఈరోజు రాహు కాలం సమయం చూడండి",
-    "Rahu Kalam Alert - Today's Timing",
-    "జాగ్రత్త! ఈరోజు రాహు కాలం సమయం",
+    "ఈరోజు రాహు కాలం Time చూడండి",
+    "Rahu Kalam Alert - ఈరోజు Timing",
+    "జాగ్రత్త! Rahu Kalam ఈరోజు సమయం",
     "Rahu Kalam Today - ఈరోజు వేళ ఇదే",
     "నేటి రాహు కాలం - Don't Miss This",
     "Rahu Kalam Warning - ఈరోజు టైమింగ్",
-    "ఈరోజు రాహు కాలం ఎప్పటి వరకు?",
-    "Know Today's Rahu Kalam Time",
-    "రాహు కాలం - ఈ సమయం గుర్తుంచుకోండి",
+    "ఈరోజు రాహు కాలం Ends ఎప్పుడు?",
+    "Know Today's రాహు కాలం Time",
+    "రాహు కాలం Alert - ఈ సమయం గుర్తుంచుకోండి",
     "Today's Inauspicious Time - రాహు కాలం",
     "రాహు కాలం Update - ఈరోజు సమయం ఇదే",
-    "Check Rahu Kalam Before You Start",
+    "Check రాహు కాలం Before You Start",
+    "రాహు కాలం ఈరోజు - Full Details",
+    "Today's Rahu Kalam Time - ఈరోజు తేదీ",
+    "రాహు కాలం Start ఎప్పుడు? ఈరోజు",
+    "Rahu Kalam Ends At - ఈరోజు సమయం",
+    "ఈరోజు రాహు కాలం - Plan Your Day",
+    "Rahu Kalam Live Update - ఈరోజు",
+    "రాహు కాలం Timing Miss అవ్వకండి",
+    "Today's Rahu Kalam Duration - ఈరోజు వ్యవధి",
+    "రాహు కాలం - Important పని వాయిదా వేయండి",
+    "Rahu Kalam Schedule - ఈరోజు",
+    "ఈరోజు Rahu Kalam ఎప్పుడు మొదలు?",
+    "Rahu Kalam Precaution Time - ఈరోజు",
+    "రాహు కాలం Timing తెలుసుకోండి",
+    "Daily Rahu Kalam - ఈరోజు వివరాలు",
+    "Rahu Kalam Countdown - ఈరోజు",
+    "రాహు కాలం Warning - ఈరోజు సమయం",
+    "Rahu Kalam Timing Alert - ఈరోజు",
 ]
 
 _SHUBHA_GHADIYALU_TITLES = [
@@ -108,18 +126,96 @@ _SHUBHA_GHADIYALU_TITLES = [
     "Auspicious Time - శుభకార్యాలకు ఇదే సమయం",
     "అభిజిత్/అమృత కాలం - Abhijit/Amrit Kaal - ఈరోజు టైమింగ్స్",
     "Pooja Time Today - ఈరోజు పూజకు మంచి సమయం",
-    "ఈరోజు శుభ సమయాలు చూడండి",
-    "Shubha Ghadiyalu Alert - Today's Timing",
-    "నేటి శుభ ముహూర్తాలు ఇవే",
+    "ఈరోజు శుభ ఘడియలు Time చూడండి",
+    "Shubha Ghadiyalu Alert - నేటి Timing",
+    "నేటి Shubha ముహూర్తాలు ఇవే",
     "Best Time Today - ఈరోజు శుభ ఘడియలు",
-    "శుభకార్యాలకు నేటి మంచి సమయం",
+    "శుభకార్యాలకు Today మంచి సమయం",
     "Auspicious Timings - ఈరోజు కోసం",
-    "ఈరోజు పూజలకు, శుభకార్యాలకు మంచి సమయం",
+    "ఈరోజు Pooja, శుభకార్యాలకు మంచి సమయం",
     "Today's Good Muhurtam - శుభ సమయం",
     "శుభ ఘడియలు Update - ఈరోజు సమయం ఇదే",
     "Perfect Time Today - శుభ ముహూర్తం",
-    "ఈరోజు అభిజిత్ ముహూర్తం సమయం",
-    "Know Today's Auspicious Timings",
+    "ఈరోజు Abhijit ముహూర్తం సమయం",
+    "Know Today's శుభ ఘడియలు Timings",
+    "శుభ ఘడియలు ఈరోజు - Full Details",
+    "Today's Auspicious Timings - ఈరోజు తేదీ",
+    "శుభ సమయం Start ఎప్పుడు? ఈరోజు",
+    "Shubha Time Ends At - ఈరోజు",
+    "ఈరోజు శుభ ఘడియలు - Plan Your Day",
+    "Muhurtam Live Update - ఈరోజు",
+    "శుభ సమయం Miss అవ్వకండి",
+    "Today's Shubha Muhurtam Duration - ఈరోజు",
+    "శుభ ఘడియలు - Important పని ఇప్పుడే మొదలుపెట్టండి",
+    "Shubha Ghadiyalu Schedule - ఈరోజు",
+    "ఈరోజు Shubha సమయం ఎప్పుడు మొదలు?",
+    "Auspicious Time Reminder - ఈరోజు",
+    "శుభ ఘడియల Details తెలుసుకోండి",
+    "Daily Shubha Muhurtam - ఈరోజు వివరాలు",
+    "Muhurtam Countdown - ఈరోజు",
+    "శుభ సమయం Alert - ఈరోజు",
+    "Shubha Timing Alert - ఈరోజు",
+]
+
+# Opening hook line, prepended to each description -- this is the part
+# that shows in the high-visibility snippet before YouTube's "...more"
+# cutoff on mobile, so it earns a real hook rather than starting cold
+# on the raw time data. Rotates independently of the title/CTA pools;
+# paired Telugu/English by index (see module docstring's pairing note).
+_RAHU_KALAM_HOOKS_TE = [
+    "ఈరోజు ఈ సమయంలో కొత్త పని మొదలుపెట్టకండి — Rahu Kalam Alert",
+    "Rahu Kalam Alert: ఈరోజు ఈ సమయం జాగ్రత్తగా గమనించండి",
+    "ముఖ్యమైన పనులు మొదలుపెట్టేముందు ఈ సమయం చూడండి",
+    "Save This Time: ఈరోజు రాహు కాలం వివరాలు ఇక్కడ",
+    "ప్రతిరోజు రాహు కాలం తెలుసుకోవడం ఎందుకు ముఖ్యమో మీకు తెలుసా?",
+    "Rahu Kalam Reminder: ఈరోజు ఈ సమయం పాటించండి",
+    "ఈరోజు శుభ కార్యాలు మొదలుపెట్టే ముందు ఇది చదవండి",
+    "Quick Alert: ఈరోజు రాహు కాలం సమయం ఇదే",
+]
+_RAHU_KALAM_HOOKS_EN = [
+    "Don't start anything new during this time today — Rahu Kalam Alert",
+    "Rahu Kalam Alert: Please note this time carefully today",
+    "Check this time before starting anything important",
+    "Save This Time: Today's Rahu Kalam details here",
+    "Do you know why checking Rahu Kalam every day matters?",
+    "Rahu Kalam Reminder: Follow this time today",
+    "Read this before starting any auspicious task today",
+    "Quick Alert: Here's today's Rahu Kalam time",
+]
+
+_SHUBHA_GHADIYALU_HOOKS_TE = [
+    "ఈరోజు ఈ సమయంలో శుభకార్యాలు మొదలుపెట్టండి — Shubha Muhurtam",
+    "Good News: ఈరోజు ఈ సమయాలు అన్నీ శుభప్రదం",
+    "కొత్త పని మొదలుపెట్టాలా? ఈ శుభ సమయం చూడండి",
+    "Save This Time: ఈరోజు శుభ ఘడియల వివరాలు ఇక్కడ",
+    "ప్రతిరోజు శుభ ముహూర్తం తెలుసుకోవడం ఎందుకు ముఖ్యమో మీకు తెలుసా?",
+    "Shubha Muhurtam Reminder: ఈరోజు ఈ సమయాలు పాటించండి",
+    "ఏదైనా మంచి పని మొదలుపెట్టేముందు ఇది చదవండి",
+    "Quick Update: ఈరోజు శుభ ఘడియలు ఇవే",
+]
+_SHUBHA_GHADIYALU_HOOKS_EN = [
+    "Start your auspicious tasks during this time today — Shubha Muhurtam",
+    "Good News: All these timings today are auspicious",
+    "Planning to start something new? Check this auspicious time",
+    "Save This Time: Today's Shubha Ghadiyalu details here",
+    "Do you know why checking Shubha Muhurtam every day matters?",
+    "Shubha Muhurtam Reminder: Follow these timings today",
+    "Read this before starting any good work today",
+    "Quick Update: Here are today's Shubha Ghadiyalu timings",
+]
+
+# English half of the comment-engagement line appended to every
+# description, right after the CTA -- echoes the same on-screen
+# comment prompt (passed in by the caller as `comment_prompt_te`,
+# same rotation as the AlertCard render) rather than a third, separate
+# ask, so viewers who don't watch to the end still see the request.
+_COMMENT_ENGAGEMENT_EN = [
+    "Share your thoughts in the comments below! 🙏",
+    "Let us know in the comments! 🙏",
+    "Drop a comment and share your thoughts! 🙏",
+    "We'd love to hear from you in the comments! 🙏",
+    "Comment below and join the conversation! 🙏",
+    "Tell us in the comments below! 🙏",
 ]
 
 # Closing CTA sentence in the description also rotates. English pools
@@ -210,14 +306,24 @@ def _pick_rotating_pair(pool_te: list[str], pool_en: list[str], for_date_ordinal
     return pool_te[index], pool_en[index]
 
 
-def build_rahu_kalam_seo(rahu_kalam_range: str, for_date_ordinal: int, festival: str | None = None) -> ShortSeoContent:
+def build_rahu_kalam_seo(
+    rahu_kalam_range: str, for_date_ordinal: int, comment_prompt_te: str, festival: str | None = None,
+) -> ShortSeoContent:
     title = _pick_rotating(_RAHU_KALAM_TITLES, for_date_ordinal)
     d = date.fromordinal(for_date_ordinal)
     weekday_te, weekday_en = _TELUGU_WEEKDAYS[d.weekday()], _ENGLISH_WEEKDAYS[d.weekday()]
     cta_te, cta_en = _pick_rotating_pair(_RAHU_KALAM_CTAS, _RAHU_KALAM_CTAS_EN, for_date_ordinal, offset=1)
+    hook_te, hook_en = _pick_rotating_pair(_RAHU_KALAM_HOOKS_TE, _RAHU_KALAM_HOOKS_EN, for_date_ordinal, offset=2)
+    comment_en = _pick_rotating(_COMMENT_ENGAGEMENT_EN, for_date_ordinal, offset=3)
 
-    description_te = f"ఈరోజు {weekday_te} రాహు కాలం: {rahu_kalam_range} — {cta_te}"
-    description_en = f"Today's ({weekday_en}) Rahu Kalam: {rahu_kalam_range} — {cta_en}"
+    # comment_prompt_te is the SAME text/rotation already shown on-screen
+    # (caller passes the exact string it built the AlertCard with) --
+    # the description echoes it rather than posing a second, different
+    # ask, so viewers who don't watch to the end still see the request.
+    description_te = (
+        f"{hook_te}\n\nఈరోజు {weekday_te} రాహు కాలం: {rahu_kalam_range} — {cta_te}\n\n{comment_prompt_te}"
+    )
+    description_en = f"{hook_en}\n\nToday's ({weekday_en}) Rahu Kalam: {rahu_kalam_range} — {cta_en}\n\n{comment_en}"
     description = f"{description_te}\n\n{_CHANNEL_FOOTER_TE}\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
 
     hashtags = ["#Shorts", *_RAHU_KALAM_HASHTAGS]
@@ -229,16 +335,27 @@ def build_rahu_kalam_seo(rahu_kalam_range: str, for_date_ordinal: int, festival:
 
 
 def build_shubha_ghadiyalu_seo(
-    good_muhurtams: list[tuple[str, str]], for_date_ordinal: int, festival: str | None = None,
+    good_muhurtams: list[tuple[str, str]],
+    for_date_ordinal: int,
+    comment_prompt_te: str,
+    festival: str | None = None,
 ) -> ShortSeoContent:
     title = _pick_rotating(_SHUBHA_GHADIYALU_TITLES, for_date_ordinal)
     d = date.fromordinal(for_date_ordinal)
     weekday_te, weekday_en = _TELUGU_WEEKDAYS[d.weekday()], _ENGLISH_WEEKDAYS[d.weekday()]
     lines = ", ".join(f"{label} {value}" for label, value in good_muhurtams)
     cta_te, cta_en = _pick_rotating_pair(_SHUBHA_GHADIYALU_CTAS, _SHUBHA_GHADIYALU_CTAS_EN, for_date_ordinal, offset=1)
+    hook_te, hook_en = _pick_rotating_pair(
+        _SHUBHA_GHADIYALU_HOOKS_TE, _SHUBHA_GHADIYALU_HOOKS_EN, for_date_ordinal, offset=2,
+    )
+    comment_en = _pick_rotating(_COMMENT_ENGAGEMENT_EN, for_date_ordinal, offset=3)
 
-    description_te = f"ఈరోజు {weekday_te} శుభ ఘడియలు: {lines} — {cta_te}"
-    description_en = f"Today's ({weekday_en}) auspicious timings: {lines} — {cta_en}"
+    description_te = (
+        f"{hook_te}\n\nఈరోజు {weekday_te} శుభ ఘడియలు: {lines} — {cta_te}\n\n{comment_prompt_te}"
+    )
+    description_en = (
+        f"{hook_en}\n\nToday's ({weekday_en}) auspicious timings: {lines} — {cta_en}\n\n{comment_en}"
+    )
     description = f"{description_te}\n\n{_CHANNEL_FOOTER_TE}\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
 
     hashtags = ["#Shorts", *_SHUBHA_GHADIYALU_HASHTAGS]

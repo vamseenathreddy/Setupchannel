@@ -343,6 +343,7 @@ def main() -> int:
     mantra_lines = _mantra_lines(for_date)
     date_text = format_telugu_date(for_date)
 
+    rahu_comment_prompt = _pick_comment_prompt(_COMMENT_PROMPT_LINES, for_date, offset=0)
     rahu_card = AlertCard(
         title="ఈరోజు రాహు కాలం",
         lines=[("సమయం", panchang.rahu_kalam), *mantra_lines],
@@ -350,15 +351,23 @@ def main() -> int:
         filename_suffix="rahu_kalam", icon_paths=icon_paths,
         date_text=date_text, secondary_info=_other_inauspicious_periods(panchang),
         subscribe_text=_pick_subscribe_text(_RAHU_KALAM_SUBSCRIBE_LINES, for_date),
-        comment_prompt_text=_pick_comment_prompt(_COMMENT_PROMPT_LINES, for_date, offset=0),
+        comment_prompt_text=rahu_comment_prompt,
     )
-    rahu_seo = build_rahu_kalam_seo(panchang.rahu_kalam, for_date_ordinal=for_date.toordinal())
+    # Same comment_prompt text/rotation as the on-screen card above --
+    # the description echoes it instead of posing a second, different
+    # ask (see alert_seo.build_rahu_kalam_seo's docstring note).
+    rahu_seo = build_rahu_kalam_seo(
+        panchang.rahu_kalam, for_date_ordinal=for_date.toordinal(), comment_prompt_te=rahu_comment_prompt,
+    )
     rahu_ok = _process_one("Rahu Kalam", rahu_card, rahu_seo, renderer, settings, for_date, uploader, privacy_status)
 
     if not args.no_delay:
         _wait_until_wall_clock_slot(tz, dt_time(0, 30), dt_time(1, 0), "the second Short (12:30-1:00 AM slot)")
 
     shubha_lines = _shubha_lines(panchang)
+    shubha_comment_prompt = _pick_comment_prompt(
+        _COMMENT_PROMPT_LINES, for_date, offset=len(_COMMENT_PROMPT_LINES) // 2,
+    )
     shubha_card = AlertCard(
         title="ఈరోజు శుభ ఘడియలు",
         lines=[*shubha_lines, *mantra_lines],
@@ -366,11 +375,11 @@ def main() -> int:
         filename_suffix="shubha_ghadiyalu", icon_paths=icon_paths,
         date_text=date_text,
         subscribe_text=_pick_subscribe_text(_SHUBHA_GHADIYALU_SUBSCRIBE_LINES, for_date),
-        comment_prompt_text=_pick_comment_prompt(
-            _COMMENT_PROMPT_LINES, for_date, offset=len(_COMMENT_PROMPT_LINES) // 2,
-        ),
+        comment_prompt_text=shubha_comment_prompt,
     )
-    shubha_seo = build_shubha_ghadiyalu_seo(shubha_lines, for_date_ordinal=for_date.toordinal())
+    shubha_seo = build_shubha_ghadiyalu_seo(
+        shubha_lines, for_date_ordinal=for_date.toordinal(), comment_prompt_te=shubha_comment_prompt,
+    )
     shubha_ok = _process_one(
         "Shubha Ghadiyalu", shubha_card, shubha_seo, renderer, settings, for_date, uploader, privacy_status,
     )
