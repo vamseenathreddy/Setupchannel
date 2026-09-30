@@ -8,7 +8,29 @@ on:
     # An odd minute like :37 avoids that queue. The 12:00-1:00 AM IST posting window logic in
     # post_alert_shorts.py is wall-clock based regardless of when this actually fires, so a
     # few minutes' offset here changes nothing about when the Shorts themselves get posted.
+    #
+    # BACKUP RUN, 15 min later (targets 00:22 IST): GitHub's own docs state
+    # schedule: is best-effort and a run can simply not fire at all during
+    # high platform load -- confirmed here across multiple real nights
+    # where the 00:07 trigger silently never fired, needing a manual
+    # workflow_dispatch to post that night's Shorts. Safe against a
+    # double-post because of the `concurrency` block below: if the first
+    # schedule DID fire and is still mid-run (it takes up to ~1h, since
+    # "mark done" only happens at the very end), GitHub queues this
+    # second run rather than starting it in parallel. It only actually
+    # starts once the first run has fully finished and pushed state, at
+    # which point the "Skip if already posted today (IST)" gate correctly
+    # sees today as done and exits without posting again.
+    - cron: '52 18 * * *'   # targets 00:22 IST daily (18:52 UTC previous day)
   workflow_dispatch: {}
+
+# Serializes runs of this workflow (scheduled backup, manual dispatch, or
+# both landing close together) so a second run can never execute the
+# pipeline in parallel with one still in progress -- it waits until the
+# first finishes, then sees the Drive state that first run just pushed.
+concurrency:
+  group: daily-shorts-post
+  cancel-in-progress: false
 
 permissions:
   contents: read
