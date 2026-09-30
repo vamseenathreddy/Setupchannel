@@ -15,14 +15,13 @@ GitHub Actions workflow — nothing needs a laptop or server running 24/7.
 
 ### Alert Shorts — Rahu Kalam / Shubha Ghadiyalu (`daily-shorts.yml`)
 
-Two YouTube Shorts every night, targeting the real **12:00–1:00 AM IST**
-window:
+Two YouTube Shorts every night, posted somewhere inside the real
+**12:00–2:00 AM IST** window:
 
 - **Rahu Kalam** (red card) — today's inauspicious period to avoid
-  starting anything important, posted in a random slot within
-  12:00–12:30 AM IST.
-- **Shubha Ghadiyalu** (green card) — today's auspicious moments,
-  posted in a random slot within 12:30–1:00 AM IST.
+  starting anything important. Attempted first, at the 12:00 AM tick.
+- **Shubha Ghadiyalu** (green card) — today's auspicious moments.
+  Attempted once Rahu Kalam is already posted, at the 1:00 AM tick.
 
 Both are 10-second vertical Shorts: a rendered alert card
 (`images/alert_card_renderer.py`) turned into an `.mp4`
@@ -32,22 +31,42 @@ API v3 (`publishers/youtube_shorts_uploader.py`).
 
 Entry point: `src/mahanavi/scripts/post_alert_shorts.py`.
 
-**Timing design, deliberately wall-clock based, not elapsed-time-based:**
-the pipeline targets real IST clock times for each of the two posting
-windows. If the GitHub Actions cron itself fires late (a known,
-documented GitHub limitation — scheduled workflows queue up most at
-round times of the hour) or the workflow is triggered manually well
-outside the window, it posts immediately with no further wait instead
-of compounding the delay or waiting for a slot that's already gone.
+**Timing design — hourly ticks + a gate, not a single precise-time cron:**
+GitHub's `schedule:` event is best-effort and, confirmed across several
+real nights, can simply not fire at all — not just late, but never.
+Rather than depend on one cron fire succeeding, the workflow ticks
+**every hour, all day** (`cron: '0 * * * *'`), and a cheap first step
+(`scripts/ci/scheduler_gate.py`) decides on each tick whether to do
+anything:
+
+- **Never fires before 12:00 AM IST** — firing early would fetch and
+  post *today's* Panchang under what's meant to be the next day's
+  Short, i.e. show yesterday's timings.
+- **Only fires inside 12:00 AM – 2:00 AM IST.** If both Shorts are
+  still unposted when that window closes, that day's remaining
+  Short(s) are skipped rather than posted late in the day — a very
+  late post reads worse than a missed one for time-sensitive content.
+- Because a dropped tick just means the *next* tick tries again (each
+  Short has its own "posted today" marker), one missed schedule event
+  no longer loses the whole night the way it used to with a single
+  once-a-night cron.
+- `workflow_dispatch` can pass `force_target` (`rahu_kalam` /
+  `shubha_ghadiyalu` / `both`) to post immediately regardless of the
+  window or today's marker — for manual testing or a deliberate re-post.
+
+A `concurrency` group (`daily-shorts-post`) ensures two ticks can never
+run the pipeline in parallel — a later tick queues behind one already
+in progress and only starts once it's finished and pushed state.
 
 **State persistence across runs** (GitHub Actions runners are ephemeral,
 so nothing survives between runs on the runner itself): a Google Drive
-folder holds `mahanavi.db`, `youtube_token.json`, and
-`last_run_date.txt`, pulled at the start of each run and pushed back at
-the end (`scripts/ci/drive_state_sync.py`), authenticated via a Google
-service account. The "skip if already posted today" gate reads
-`last_run_date.txt` so a late-firing scheduled run never double-posts
-after a manual trigger already covered the day.
+folder holds `mahanavi.db`, `youtube_token.json`,
+`last_run_date_rahu_kalam.txt`, and `last_run_date_shubha_ghadiyalu.txt`
+— pulled at the start of each run and pushed back after a successful
+post (`scripts/ci/drive_state_sync.py`), authenticated via a Google
+service account. The two Shorts get separate marker files (not one
+combined date) specifically so a delay on one never blocks or skips
+the other.
 
 ### Purana video scripts (not yet automated)
 
@@ -112,11 +131,12 @@ src/mahanavi/
     └── check_festival_today.py                             # Ad-hoc festival lookup helper
 
 .github/workflows/
-├── daily-shorts.yml    # Runs Alert Shorts nightly, targeting 12:00-1:00 AM IST
+├── daily-shorts.yml    # Ticks hourly all day; posts Alert Shorts within 12:00-2:00 AM IST
 └── ci.yml               # Tests + mypy on every push/PR
 
 scripts/ci/
-└── drive_state_sync.py  # Pull/check-date/mark-done/push against the Google Drive state folder
+├── drive_state_sync.py  # pull/mark-done <which>/push against the Google Drive state folder
+└── scheduler_gate.py     # Decides per-tick whether/which Short to post (see README above)
 ```
 
 ## Setup
@@ -244,9 +264,11 @@ CI (`.github/workflows/ci.yml`) runs both automatically on every push/PR.
 - **Prokerala's free tier has a daily quota** — the fallback second
   account buys headroom, but both can still be exhausted on a heavy day.
 - **GitHub Actions scheduled triggers are best-effort** — GitHub's own
-  docs note delays are more likely at round times of the hour; the
-  workflow's cron is deliberately set to an odd minute to reduce this,
-  and the pipeline's wall-clock timing logic means a late fire never
-  compounds into an even later post.
+  docs say a `schedule:` event can simply not fire at all under load,
+  confirmed on several real nights with the old once-a-night cron. The
+  hourly-tick + gate design (see above) tolerates a dropped tick, but
+  if the whole 12:00-2:00 AM IST window passes with no tick landing at
+  all (not just one), that night's Short(s) are skipped, not posted
+  late — use `workflow_dispatch` with `force_target` to post manually.
 - **Purana video scripts have no scheduled trigger** — they're
   functional code, not yet wired into an automated daily run.

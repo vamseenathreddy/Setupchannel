@@ -19,6 +19,22 @@ Usage:
     python -m mahanavi.scripts.post_alert_shorts
     python -m mahanavi.scripts.post_alert_shorts --date 2026-09-16
     python -m mahanavi.scripts.post_alert_shorts --public   # only once you're ready
+    python -m mahanavi.scripts.post_alert_shorts --only rahu_kalam   # just one Short
+
+TIMING: the production workflow (.github/workflows/daily-shorts.yml) now
+ticks hourly, all day, and a separate cheap gate step (scripts/ci/
+scheduler_gate.py) decides -- based on the current IST time and each
+Short's own "already posted today" marker -- whether THIS tick should
+post Rahu Kalam, Shubha Ghadiyalu, or nothing. It only ever invokes
+this script with --only when it decides to fire, so by the time this
+script runs it trusts that the timing is already correct and does NOT
+re-check or wait -- it posts the one requested Short immediately. This
+replaced an earlier design where a single once-a-night cron fired and
+this script itself slept until the right wall-clock moment; that design
+silently lost the whole night whenever GitHub's schedule event failed
+to fire even once (confirmed happening for real on several nights).
+Running with no --only (the default) still does both Shorts back to
+back with the old natural-timing wait, for local/manual testing only.
 """
 
 from __future__ import annotations
@@ -306,8 +322,14 @@ def main() -> int:
     parser.add_argument(
         "--no-delay", action="store_true",
         help="Skip the natural-timing delays that normally spread the two Shorts across the "
-             "12:00-12:30 / 12:30-1:00 AM halves of the posting window. Use this for local/manual "
-             "testing -- the scheduled GitHub Actions workflow never passes it.",
+             "12:00-12:30 / 12:30-1:00 AM halves of the posting window. Only meaningful when "
+             "--only is NOT given (legacy both-in-one-run mode) -- used for local/manual testing.",
+    )
+    parser.add_argument(
+        "--only", choices=["rahu_kalam", "shubha_ghadiyalu"], default=None,
+        help="Post just this one Short and exit -- no wait, posts immediately. This is what the "
+             "production hourly-tick workflow always passes (see module docstring); omit it for "
+             "the legacy both-Shorts-with-natural-timing-wait local/manual mode.",
     )
     args = parser.parse_args()
 
@@ -329,7 +351,14 @@ def main() -> int:
     renderer = AlertCardRenderer(settings)
     uploader = YouTubeShortsUploader(settings)
 
-    if not args.no_delay:
+    want_rahu = args.only in (None, "rahu_kalam")
+    want_shubha = args.only in (None, "shubha_ghadiyalu")
+    # --only always fires immediately (the outer hourly-tick gate already
+    # confirmed the timing); the wait is only for the legacy no-args
+    # "post both Shorts back to back" local/manual mode.
+    should_wait = args.only is None and not args.no_delay
+
+    if want_rahu and should_wait:
         _wait_until_wall_clock_slot(tz, dt_time(0, 0), dt_time(0, 30), "the first Short (12:00-12:30 AM slot)")
 
     print(f"Fetching Panchang for {for_date.isoformat()}...")
@@ -343,49 +372,56 @@ def main() -> int:
     mantra_lines = _mantra_lines(for_date)
     date_text = format_telugu_date(for_date)
 
-    rahu_comment_prompt = _pick_comment_prompt(_COMMENT_PROMPT_LINES, for_date, offset=0)
-    rahu_card = AlertCard(
-        title="ఈరోజు రాహు కాలం",
-        lines=[("సమయం", panchang.rahu_kalam), *mantra_lines],
-        top_color=COLOR_RAHU_TOP, bottom_color=COLOR_RAHU_BOTTOM,
-        filename_suffix="rahu_kalam", icon_paths=icon_paths,
-        date_text=date_text, secondary_info=_other_inauspicious_periods(panchang),
-        subscribe_text=_pick_subscribe_text(_RAHU_KALAM_SUBSCRIBE_LINES, for_date),
-        comment_prompt_text=rahu_comment_prompt,
-    )
-    # Same comment_prompt text/rotation as the on-screen card above --
-    # the description echoes it instead of posing a second, different
-    # ask (see alert_seo.build_rahu_kalam_seo's docstring note).
-    rahu_seo = build_rahu_kalam_seo(
-        panchang.rahu_kalam, for_date_ordinal=for_date.toordinal(), comment_prompt_te=rahu_comment_prompt,
-    )
-    rahu_ok = _process_one("Rahu Kalam", rahu_card, rahu_seo, renderer, settings, for_date, uploader, privacy_status)
+    rahu_ok = True
+    if want_rahu:
+        rahu_comment_prompt = _pick_comment_prompt(_COMMENT_PROMPT_LINES, for_date, offset=0)
+        rahu_card = AlertCard(
+            title="ఈరోజు రాహు కాలం",
+            lines=[("సమయం", panchang.rahu_kalam), *mantra_lines],
+            top_color=COLOR_RAHU_TOP, bottom_color=COLOR_RAHU_BOTTOM,
+            filename_suffix="rahu_kalam", icon_paths=icon_paths,
+            date_text=date_text, secondary_info=_other_inauspicious_periods(panchang),
+            subscribe_text=_pick_subscribe_text(_RAHU_KALAM_SUBSCRIBE_LINES, for_date),
+            comment_prompt_text=rahu_comment_prompt,
+        )
+        # Same comment_prompt text/rotation as the on-screen card above --
+        # the description echoes it instead of posing a second, different
+        # ask (see alert_seo.build_rahu_kalam_seo's docstring note).
+        rahu_seo = build_rahu_kalam_seo(
+            panchang.rahu_kalam, for_date_ordinal=for_date.toordinal(), comment_prompt_te=rahu_comment_prompt,
+        )
+        rahu_ok = _process_one(
+            "Rahu Kalam", rahu_card, rahu_seo, renderer, settings, for_date, uploader, privacy_status,
+        )
 
-    if not args.no_delay:
+    if want_shubha and should_wait:
         _wait_until_wall_clock_slot(tz, dt_time(0, 30), dt_time(1, 0), "the second Short (12:30-1:00 AM slot)")
 
-    shubha_lines = _shubha_lines(panchang)
-    shubha_comment_prompt = _pick_comment_prompt(
-        _COMMENT_PROMPT_LINES, for_date, offset=len(_COMMENT_PROMPT_LINES) // 2,
-    )
-    shubha_card = AlertCard(
-        title="ఈరోజు శుభ ఘడియలు",
-        lines=[*shubha_lines, *mantra_lines],
-        top_color=COLOR_SHUBHA_TOP, bottom_color=COLOR_SHUBHA_BOTTOM,
-        filename_suffix="shubha_ghadiyalu", icon_paths=icon_paths,
-        date_text=date_text,
-        subscribe_text=_pick_subscribe_text(_SHUBHA_GHADIYALU_SUBSCRIBE_LINES, for_date),
-        comment_prompt_text=shubha_comment_prompt,
-    )
-    shubha_seo = build_shubha_ghadiyalu_seo(
-        shubha_lines, for_date_ordinal=for_date.toordinal(), comment_prompt_te=shubha_comment_prompt,
-    )
-    shubha_ok = _process_one(
-        "Shubha Ghadiyalu", shubha_card, shubha_seo, renderer, settings, for_date, uploader, privacy_status,
-    )
+    shubha_ok = True
+    if want_shubha:
+        shubha_lines = _shubha_lines(panchang)
+        shubha_comment_prompt = _pick_comment_prompt(
+            _COMMENT_PROMPT_LINES, for_date, offset=len(_COMMENT_PROMPT_LINES) // 2,
+        )
+        shubha_card = AlertCard(
+            title="ఈరోజు శుభ ఘడియలు",
+            lines=[*shubha_lines, *mantra_lines],
+            top_color=COLOR_SHUBHA_TOP, bottom_color=COLOR_SHUBHA_BOTTOM,
+            filename_suffix="shubha_ghadiyalu", icon_paths=icon_paths,
+            date_text=date_text,
+            subscribe_text=_pick_subscribe_text(_SHUBHA_GHADIYALU_SUBSCRIBE_LINES, for_date),
+            comment_prompt_text=shubha_comment_prompt,
+        )
+        shubha_seo = build_shubha_ghadiyalu_seo(
+            shubha_lines, for_date_ordinal=for_date.toordinal(), comment_prompt_te=shubha_comment_prompt,
+        )
+        shubha_ok = _process_one(
+            "Shubha Ghadiyalu", shubha_card, shubha_seo, renderer, settings, for_date, uploader, privacy_status,
+        )
 
-    print(f"\n=== Done. Rahu Kalam: {'OK' if rahu_ok else 'FAILED'}, "
-          f"Shubha Ghadiyalu: {'OK' if shubha_ok else 'FAILED'} ===")
+    rahu_status = "skipped (not requested)" if not want_rahu else ("OK" if rahu_ok else "FAILED")
+    shubha_status = "skipped (not requested)" if not want_shubha else ("OK" if shubha_ok else "FAILED")
+    print(f"\n=== Done. Rahu Kalam: {rahu_status}, Shubha Ghadiyalu: {shubha_status} ===")
     return 0 if (rahu_ok and shubha_ok) else 1
 
 

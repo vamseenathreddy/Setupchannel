@@ -6,10 +6,16 @@ GitHub Actions runners are stateless -- every run starts from a clean
 checkout. This script uses one Drive folder as the durable store for the
 files that must survive between runs:
 
-  - data/mahanavi.db          (purana / image usage history)
-  - data/youtube_token.json   (OAuth refresh token)
-  - data/last_run_date.txt    (IST date of the last successful post --
-                                used as a same-day double-post guard)
+  - data/mahanavi.db                          (purana / image usage history)
+  - data/youtube_token.json                   (OAuth refresh token)
+  - data/last_run_date_rahu_kalam.txt         (IST date Rahu Kalam last posted)
+  - data/last_run_date_shubha_ghadiyalu.txt   (IST date Shubha Ghadiyalu last posted)
+
+The two Shorts got separate marker files (replacing one combined
+last_run_date.txt) when the workflow moved to hourly ticks with an
+independent gate per Short (scripts/ci/scheduler_gate.py) -- Rahu Kalam
+and Shubha Ghadiyalu can now post on different ticks, so a delay on one
+must never block or skip the other.
 
 Auth: a Google Cloud SERVICE ACCOUNT (not the interactive OAuth app used
 for the actual YouTube upload). Its JSON key is stored as the
@@ -18,10 +24,10 @@ as-is) and written to a temp file at the start of each run. The target Drive fol
 with the service account's email as Editor, or nothing below will find it.
 
 Usage:
-    python scripts/ci/drive_state_sync.py pull          # Drive -> ./data
-    python scripts/ci/drive_state_sync.py push           # ./data -> Drive
-    python scripts/ci/drive_state_sync.py check-date      # sets $GITHUB_OUTPUT run=true/false
-    python scripts/ci/drive_state_sync.py mark-done        # writes today's IST date locally
+    python scripts/ci/drive_state_sync.py pull                    # Drive -> ./data
+    python scripts/ci/drive_state_sync.py push                     # ./data -> Drive
+    python scripts/ci/drive_state_sync.py mark-done rahu_kalam       # writes today's IST date locally
+    python scripts/ci/drive_state_sync.py mark-done shubha_ghadiyalu
 """
 
 from __future__ import annotations
@@ -39,7 +45,12 @@ from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 DATA_DIR = Path("data")
-STATE_FILES = ["mahanavi.db", "youtube_token.json", "last_run_date.txt"]
+STATE_FILES = [
+    "mahanavi.db",
+    "youtube_token.json",
+    "last_run_date_rahu_kalam.txt",
+    "last_run_date_shubha_ghadiyalu.txt",
+]
 
 
 def _drive_client():
@@ -102,31 +113,24 @@ def _today_ist() -> str:
     return datetime.now(ZoneInfo("Asia/Kolkata")).date().isoformat()
 
 
-def check_date() -> None:
-    marker = DATA_DIR / "last_run_date.txt"
-    last = marker.read_text().strip() if marker.exists() else ""
-    today = _today_ist()
-    should_run = last != today
-    print(f"[drive-sync] last posted: {last or '(never)'} | today: {today} | run: {should_run}")
-    gh_out = os.environ.get("GITHUB_OUTPUT")
-    if gh_out:
-        with open(gh_out, "a") as fh:
-            fh.write(f"run={'true' if should_run else 'false'}\n")
-
-
-def mark_done() -> None:
+def mark_done(which: str) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    (DATA_DIR / "last_run_date.txt").write_text(_today_ist())
-    print(f"[drive-sync] marked {_today_ist()} as done")
+    (DATA_DIR / f"last_run_date_{which}.txt").write_text(_today_ist())
+    print(f"[drive-sync] marked {which} as done for {_today_ist()}")
 
 
 def main() -> int:
-    valid = {"pull": pull, "push": push, "check-date": check_date, "mark-done": mark_done}
-    if len(sys.argv) != 2 or sys.argv[1] not in valid:
-        print(__doc__)
-        return 1
-    valid[sys.argv[1]]()
-    return 0
+    if len(sys.argv) == 2 and sys.argv[1] == "pull":
+        pull()
+        return 0
+    if len(sys.argv) == 2 and sys.argv[1] == "push":
+        push()
+        return 0
+    if len(sys.argv) == 3 and sys.argv[1] == "mark-done":
+        mark_done(sys.argv[2])
+        return 0
+    print(__doc__)
+    return 1
 
 
 if __name__ == "__main__":

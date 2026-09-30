@@ -2,32 +2,31 @@ name: Daily Shorts Post
 
 on:
   schedule:
-    - cron: '37 18 * * *'   # targets 00:07 IST daily (18:37 UTC previous day) -- GitHub's own docs
-    # note scheduled workflows queue up most at round times (top/half of the hour); 18:30 was
-    # exactly one of those congested slots and a real cause of the multi-hour delays we saw.
-    # An odd minute like :37 avoids that queue. The 12:00-1:00 AM IST posting window logic in
-    # post_alert_shorts.py is wall-clock based regardless of when this actually fires, so a
-    # few minutes' offset here changes nothing about when the Shorts themselves get posted.
-    #
-    # BACKUP RUN, 15 min later (targets 00:22 IST): GitHub's own docs state
-    # schedule: is best-effort and a run can simply not fire at all during
-    # high platform load -- confirmed here across multiple real nights
-    # where the 00:07 trigger silently never fired, needing a manual
-    # workflow_dispatch to post that night's Shorts. Safe against a
-    # double-post because of the `concurrency` block below: if the first
-    # schedule DID fire and is still mid-run (it takes up to ~1h, since
-    # "mark done" only happens at the very end), GitHub queues this
-    # second run rather than starting it in parallel. It only actually
-    # starts once the first run has fully finished and pushed state, at
-    # which point the "Skip if already posted today (IST)" gate correctly
-    # sees today as done and exits without posting again.
-    - cron: '52 18 * * *'   # targets 00:22 IST daily (18:52 UTC previous day)
-  workflow_dispatch: {}
+    # Ticks EVERY HOUR, all day. A cheap gate step (scripts/ci/
+    # scheduler_gate.py) decides on each tick whether to actually do
+    # anything -- see that script's docstring for the full reasoning.
+    # In short: GitHub's schedule: event is best-effort and has
+    # confirmedly failed to fire at all on several real nights when
+    # this was a single once-a-night cron. Hourly ticks give many
+    # independent chances, and each Short's own "posted today" marker
+    # (synced from Drive) means a dropped tick just gets retried on
+    # the next one instead of silently losing the whole night.
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      force_target:
+        description: >-
+          Force-post ignoring the time-of-day window and today's
+          marker: rahu_kalam, shubha_ghadiyalu, or both. Leave blank
+          for normal tick behavior (only posts if it's 12:00-2:00 AM
+          IST and today's post is still missing).
+        required: false
+        default: ''
 
-# Serializes runs of this workflow (scheduled backup, manual dispatch, or
-# both landing close together) so a second run can never execute the
-# pipeline in parallel with one still in progress -- it waits until the
-# first finishes, then sees the Drive state that first run just pushed.
+# Serializes runs so an hourly tick can never execute the pipeline in
+# parallel with one still in progress (a run can take a while) -- it
+# waits until the one in front of it finishes and has pushed state,
+# then sees that state before deciding what to do.
 concurrency:
   group: daily-shorts-post
   cancel-in-progress: false
@@ -47,15 +46,12 @@ jobs:
           python-version: "3.13"
           cache: "pip"
 
-      - name: Install ffmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install google-auth google-api-python-client
-          pip install -e .
+      # Just enough to pull state from Drive and run the gate -- kept
+      # separate from the full requirements.txt install below so the
+      # ~22/24 hourly ticks that don't need to do anything stay fast
+      # and cheap.
+      - name: Install minimal deps for state sync + gate
+        run: pip install google-auth google-api-python-client
 
       - name: Restore persistent state from Google Drive
         env:
@@ -63,18 +59,25 @@ jobs:
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
         run: python scripts/ci/drive_state_sync.py pull
 
-      - name: Skip if already posted today (IST)
+      - name: Decide whether this tick should post, and which Short
         id: gate
-        run: python scripts/ci/drive_state_sync.py check-date
+        env:
+          FORCE_TARGET: ${{ github.event_name == 'workflow_dispatch' && inputs.force_target || '' }}
+        run: python scripts/ci/scheduler_gate.py
+
+      - name: Install ffmpeg
+        if: steps.gate.outputs.target != 'none'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install full Python dependencies
+        if: steps.gate.outputs.target != 'none'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
 
       - name: Run Shorts pipeline
-        # Natural-timing note: the script itself now posts the first
-        # Short at a random point in the first half of this hour
-        # (12:00-12:30 AM IST) and the second at a random point in the
-        # second half (12:30-1:00 AM IST) -- see post_alert_shorts.py's
-        # --no-delay flag / _wait_for_natural_slot(). No separate
-        # sleep step needed here anymore.
-        if: steps.gate.outputs.run == 'true'
+        if: steps.gate.outputs.target == 'rahu_kalam' || steps.gate.outputs.target == 'both'
         env:
           MAHANAVI_IMAGES_ROOT: ./Images
           MAHANAVI_ASSETS_DIR: ./assets
@@ -88,19 +91,45 @@ jobs:
           MAHANAVI_PROKERALA_CLIENT_ID_2: ${{ secrets.MAHANAVI_PROKERALA_CLIENT_ID_2 }}
           MAHANAVI_PROKERALA_CLIENT_SECRET_2: ${{ secrets.MAHANAVI_PROKERALA_CLIENT_SECRET_2 }}
           MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
-        run: python3 -m mahanavi.scripts.post_alert_shorts --public
+        run: python3 -m mahanavi.scripts.post_alert_shorts --public --only rahu_kalam
 
-      - name: Mark today done and push state back to Drive
-        if: steps.gate.outputs.run == 'true'
+      - name: Mark Rahu Kalam done and push state to Drive
+        if: steps.gate.outputs.target == 'rahu_kalam' || steps.gate.outputs.target == 'both'
         env:
           GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
         run: |
-          python scripts/ci/drive_state_sync.py mark-done
+          python scripts/ci/drive_state_sync.py mark-done rahu_kalam
+          python scripts/ci/drive_state_sync.py push
+
+      - name: Run Shorts pipeline (Shubha Ghadiyalu)
+        if: steps.gate.outputs.target == 'shubha_ghadiyalu' || steps.gate.outputs.target == 'both'
+        env:
+          MAHANAVI_IMAGES_ROOT: ./Images
+          MAHANAVI_ASSETS_DIR: ./assets
+          MAHANAVI_OUTPUT_DIR: ./data/generated
+          MAHANAVI_DATABASE_PATH: ./data/mahanavi.db
+          MAHANAVI_LOG_DIR: ./data/logs
+          MAHANAVI_TIMEZONE: Asia/Kolkata
+          MAHANAVI_PANCHANG_PROVIDER: prokerala
+          MAHANAVI_PROKERALA_CLIENT_ID: ${{ secrets.MAHANAVI_PROKERALA_CLIENT_ID }}
+          MAHANAVI_PROKERALA_CLIENT_SECRET: ${{ secrets.MAHANAVI_PROKERALA_CLIENT_SECRET }}
+          MAHANAVI_PROKERALA_CLIENT_ID_2: ${{ secrets.MAHANAVI_PROKERALA_CLIENT_ID_2 }}
+          MAHANAVI_PROKERALA_CLIENT_SECRET_2: ${{ secrets.MAHANAVI_PROKERALA_CLIENT_SECRET_2 }}
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+        run: python3 -m mahanavi.scripts.post_alert_shorts --public --only shubha_ghadiyalu
+
+      - name: Mark Shubha Ghadiyalu done and push state to Drive
+        if: steps.gate.outputs.target == 'shubha_ghadiyalu' || steps.gate.outputs.target == 'both'
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: |
+          python scripts/ci/drive_state_sync.py mark-done shubha_ghadiyalu
           python scripts/ci/drive_state_sync.py push
 
       - name: Upload run output as artifact (debugging)
-        if: always()
+        if: steps.gate.outputs.target != 'none'
         uses: actions/upload-artifact@v4
         with:
           name: run-log-${{ github.run_id }}
