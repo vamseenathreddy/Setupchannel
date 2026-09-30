@@ -74,12 +74,22 @@ class PuranaTextRenderer:
         self._settings = settings
         self._fonts = font_manager or FontManager(settings.telugu_font_path)
 
-    def render(self, paragraphs: list[ParagraphInput], output_path: Path) -> tuple[Path, int]:
+    def render(
+        self,
+        paragraphs: list[ParagraphInput],
+        output_path: Path,
+        text_column_width: int = TEXT_COLUMN_WIDTH,
+    ) -> tuple[Path, int]:
         """Renders `paragraphs` (each a block of Telugu text, plain str or
         TextSegment) as one tall transparent PNG, word-wrapped to
-        TEXT_COLUMN_WIDTH. Returns the output path and the image's total
+        text_column_width. Returns the output path and the image's total
         height in pixels (the caller needs this to compute the scroll
-        animation's duration/speed)."""
+        animation's duration/speed).
+
+        text_column_width defaults to TEXT_COLUMN_WIDTH (the landscape
+        long-form canvas's column) -- callers targeting a narrower canvas
+        (e.g. a vertical Shorts scroll video) pass a smaller value so the
+        text doesn't overflow the frame width."""
         segments = [p if isinstance(p, TextSegment) else TextSegment(text=p) for p in paragraphs]
 
         regular_font = self._fonts.get_font(size=FONT_SIZE, weight="Regular")
@@ -95,7 +105,7 @@ class PuranaTextRenderer:
 
         wrapped_paragraphs = [
             (
-                self._wrap_text(probe_draw, seg.text, bold_font if seg.emphasized else regular_font, TEXT_COLUMN_WIDTH),
+                self._wrap_text(probe_draw, seg.text, bold_font if seg.emphasized else regular_font, text_column_width),
                 seg.emphasized,
             )
             for seg in segments
@@ -109,7 +119,7 @@ class PuranaTextRenderer:
         )
 
         try:
-            canvas = Image.new("RGBA", (TEXT_COLUMN_WIDTH, total_height), (0, 0, 0, 0))
+            canvas = Image.new("RGBA", (text_column_width, total_height), (0, 0, 0, 0))
             draw = ImageDraw.Draw(canvas)
 
             y = line_height * 2  # top padding
@@ -120,7 +130,7 @@ class PuranaTextRenderer:
                     bbox = draw.textbbox((0, 0), line, font=font)
                     line_w = bbox[2] - bbox[0]
                     draw.text(
-                        ((TEXT_COLUMN_WIDTH - line_w) // 2, y - bbox[1]),
+                        ((text_column_width - line_w) // 2, y - bbox[1]),
                         line, font=font, fill=color,
                     )
                     y += line_height + line_gap
@@ -128,7 +138,7 @@ class PuranaTextRenderer:
 
             output_path.parent.mkdir(parents=True, exist_ok=True)
             canvas.save(output_path)
-            logger.info("Rendered Puranam text image: %s (%dx%d)", output_path, TEXT_COLUMN_WIDTH, total_height)
+            logger.info("Rendered Puranam text image: %s (%dx%d)", output_path, text_column_width, total_height)
             return output_path, total_height
 
         except OSError as exc:

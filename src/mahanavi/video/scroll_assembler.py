@@ -43,6 +43,8 @@ def assemble_scroll_video(
     duration_seconds: float,
     audio_path: Path | None = None,
     audio_volume: float = 0.5,
+    video_width: int = VIDEO_WIDTH,
+    video_height: int = VIDEO_HEIGHT,
 ) -> Path:
     """Assemble the scrolling Puranam video.
 
@@ -50,6 +52,12 @@ def assemble_scroll_video(
     (returned by PuranaTextRenderer.render) -- needed to compute how
     far the overlay must travel so the text fully enters and exits the
     frame, not just an assumed/guessed distance.
+
+    video_width/video_height default to the landscape long-form canvas
+    (VIDEO_WIDTH/VIDEO_HEIGHT, 1920x1080) -- pass 1080x1920 (matching
+    alert_card_renderer.py's ALERT_CARD_WIDTH/HEIGHT, the channel's
+    existing Shorts canvas) for a vertical Shorts-format scroll video
+    instead, e.g. for the Kamakhya Devi short.
     """
     if shutil.which("ffmpeg") is None:
         raise VideoAssemblyError(
@@ -71,12 +79,12 @@ def assemble_scroll_video(
     # travel got stretched across the same slow, deliberate pace as the
     # rest of the scroll. Starting already on-screen removes that dead
     # time entirely.
-    scroll_distance = (VIDEO_HEIGHT / 2) + text_image_height
-    y_expr = f"({VIDEO_HEIGHT}/2)-(t/{duration_seconds})*{scroll_distance}"
+    scroll_distance = (video_height / 2) + text_image_height
+    y_expr = f"({video_height}/2)-(t/{duration_seconds})*{scroll_distance}"
 
     filter_complex = (
-        f"[0:v]scale={VIDEO_WIDTH}:{VIDEO_HEIGHT}:force_original_aspect_ratio=increase,"
-        f"crop={VIDEO_WIDTH}:{VIDEO_HEIGHT},eq=brightness={BACKGROUND_BRIGHTNESS}[bg];"
+        f"[0:v]scale={video_width}:{video_height}:force_original_aspect_ratio=increase,"
+        f"crop={video_width}:{video_height},eq=brightness={BACKGROUND_BRIGHTNESS}[bg];"
         f"[1:v]format=rgba[txt];"
         f"[bg][txt]overlay=x=(W-w)/2:y='{y_expr}':shortest=1[v]"
     )
