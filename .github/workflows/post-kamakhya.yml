@@ -1,0 +1,88 @@
+name: Post Kamakhya Short (Manual)
+
+# Manual-only -- no schedule: trigger. This is an evergreen Shakti Peetha
+# story, not a date-specific Panchang alert, so unlike daily-shorts.yml
+# there is no daily "already posted" marker and no time-of-day window --
+# it runs once, whenever you dispatch it, and does not repeat itself
+# automatically.
+on:
+  workflow_dispatch:
+    inputs:
+      public:
+        description: >-
+          Upload as public. Leave unchecked to upload unlisted first and
+          review the result in YouTube Studio before making it public.
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  post-kamakhya:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install full Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Run Kamakhya Short pipeline
+        env:
+          MAHANAVI_IMAGES_ROOT: ./Images
+          MAHANAVI_ASSETS_DIR: ./assets
+          MAHANAVI_OUTPUT_DIR: ./data/generated
+          MAHANAVI_DATABASE_PATH: ./data/mahanavi.db
+          MAHANAVI_LOG_DIR: ./data/logs
+          MAHANAVI_TIMEZONE: Asia/Kolkata
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+        run: |
+          if [ "${{ inputs.public }}" = "true" ]; then
+            python3 -m mahanavi.scripts.post_kamakhya_short --public
+          else
+            python3 -m mahanavi.scripts.post_kamakhya_short
+          fi
+
+      # Runs even if the upload step failed, so a refreshed YouTube OAuth
+      # token (written locally by the uploader on expiry -- see
+      # youtube_shorts_uploader.py's _build_service) is never lost even
+      # on a failed run.
+      - name: Push refreshed state to Drive
+        if: always()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py push
+
+      - name: Upload run output as artifact (debugging)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kamakhya-run-${{ github.run_id }}
+          path: |
+            data/logs/
+            data/generated/
+          if-no-files-found: ignore
+          retention-days: 14
