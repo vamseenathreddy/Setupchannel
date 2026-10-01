@@ -101,10 +101,12 @@ class Settings(BaseSettings):
     # Deliberately shorter than a comfortable full read of a Rashi Mantra
     # card (5-6 text blocks, ~10-14s to read once) -- short enough that
     # most viewers loop 2-3x to finish reading, which YouTube Shorts
-    # counts as fresh views and reads as a retention signal. Paired with
-    # video.assembler.LOOP_FRIENDLY_FADE_IN_SECONDS so the fade-in doesn't
-    # visibly flash on every loop. See video/assembler.py module docstring
-    # (explicit request, 2026-10-01) for the full reasoning.
+    # counts as fresh views and reads as a retention signal. Use this
+    # together with video.assembler.LOOP_FRIENDLY_FADE_IN_SECONDS /
+    # LOOP_FRIENDLY_FADE_OUT_SECONDS (both 0.0) so the loop has no
+    # visible/audible seam -- it should read as one stable, continuous
+    # view, not a video restarting. See video/assembler.py module
+    # docstring (explicit request, 2026-10-01) for the full reasoning.
     rashi_mantra_short_duration_seconds: float = Field(default=8.0, gt=0)
 
     # fal.ai (AI-generated Purana scene visuals: FLUX.1 [dev] stills +
