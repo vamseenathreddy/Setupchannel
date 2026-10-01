@@ -35,6 +35,32 @@ GDRIVE_SA_KEY_JSON GitHub secret (the raw JSON key file content, pasted
 as-is) and written to a temp file at the start of each run. The target Drive folder must be shared
 with the service account's email as Editor, or nothing below will find it.
 
+*** CONFIRMED VIA A REAL FAILURE (2026-10-01) *** Google Drive service
+accounts have ZERO storage quota of their own. update() on a file that
+already exists works fine (its quota is charged to whoever actually
+owns the file -- a real human Google account, here
+vamseenathreddy@gmail.com), but create() for a brand-new file fails
+outright with HttpError 403 "Service Accounts do not have storage
+quota... storageQuotaExceeded". This is NOT fixable by adjusting code
+here -- Shared Drives (which pool quota from the organization) require
+Google Workspace, not a personal Gmail account, and OAuth domain-wide
+delegation has the same requirement.
+
+PRACTICAL CONSEQUENCE: every path in STATE_FILES must already exist as
+a real file in the target Drive folder, created once by the human
+account that owns it (not by this script), before this script can ever
+successfully push() it. This bit us for real when the hourly-tick
+redesign introduced per-Short marker files
+(last_run_date_rahu_kalam.txt etc.) to replace the old combined
+last_run_date.txt -- nobody pre-created the new marker files in Drive,
+so the very first post under the new scheme failed at push(), which
+(being a single straight-through script with no per-file error
+handling) aborted before pushing any of the remaining STATE_FILES too,
+silently skipping whatever Shorts were still queued behind it that
+tick. Whenever a new entry is added to STATE_FILES, it must be created
+once by hand (or via an authenticated human session, e.g. a connected
+Drive account) in the target folder first.
+
 Usage:
     python scripts/ci/drive_state_sync.py pull                    # Drive -> ./data
     python scripts/ci/drive_state_sync.py push                     # ./data -> Drive
