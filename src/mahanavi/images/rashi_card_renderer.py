@@ -34,12 +34,13 @@ footer boundary.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 
 from mahanavi.config import Settings
+from mahanavi.content.rashi_current_transits import AFFECTED_RASHIS, SHANI_REMEDY_CHANT_COUNT_TE, SHANI_REMEDY_MANTRA_TE
 from mahanavi.content.rashi_mantra_content import RashiMantraContent
 from mahanavi.exceptions import ImageRenderError
 from mahanavi.images.fonts import FontManager
@@ -56,17 +57,27 @@ COLOR_TEXT_LIGHT = (255, 250, 240)
 COLOR_GOLD = (230, 190, 90)
 
 # Fixed, generous sizes (fraction of width) -- same "wrap, don't shrink
-# the whole card" philosophy as alert_card_renderer.py.
-SERIES_LABEL_FONT_FRAC = 0.040
-RASHI_NAME_FONT_FRAC = 0.115
-PLANET_FONT_FRAC = 0.048
-MANTRA_FONT_FRAC = 0.072
-CHANT_COUNT_FONT_FRAC = 0.040
-BENEFIT_FONT_FRAC = 0.044
-SUBSCRIBE_FONT_FRAC = 0.040
-COMMENT_FONT_FRAC = 0.040
+# the whole card" philosophy as alert_card_renderer.py. Trimmed from an
+# earlier pass (name 0.115->0.090, mantra 0.072->0.065) to make room for
+# the deity icon row added below the mantra per explicit request -- the
+# card was already near its vertical budget before that addition.
+SERIES_LABEL_FONT_FRAC = 0.038
+RASHI_NAME_FONT_FRAC = 0.078
+PLANET_FONT_FRAC = 0.044
+MANTRA_FONT_FRAC = 0.056
+CHANT_COUNT_FONT_FRAC = 0.036
+STATUS_FONT_FRAC = 0.033  # Shani transit status label, shown only for affected rashis
+SUBSCRIBE_FONT_FRAC = 0.038
+COMMENT_FONT_FRAC = 0.038
 
-DEFAULT_SUBSCRIBE_TEXT = "మీ రాశి మంత్రం కోసం సబ్‌స్క్రైబ్ చేయండి"  # "Subscribe for your rashi's mantra"
+# "ప్రతి నెల మీ రాశి మంత్రం కోసం సబ్‌స్క్రైబ్ చేయండి" -- exact phrasing
+# requested ("prathi nela me raasi mantram kosam subscribe cheyyandi"),
+# i.e. "Every month, subscribe for your rashi's mantra" -- names this as
+# a recurring monthly series rather than a one-off post.
+DEFAULT_SUBSCRIBE_TEXT = "ప్రతి నెల మీ రాశి మంత్రం కోసం సబ్‌స్క్రైబ్ చేయండి"
+
+ICON_FRAC = 0.078  # deity icon size, fraction of width
+ICON_GAP_FRAC = 0.045
 
 # Reference strings used to pick ONE shared font size across all 12
 # cards (see the comment at mantra_font/name_font below for why
@@ -74,7 +85,10 @@ DEFAULT_SUBSCRIBE_TEXT = "మీ రాశి మంత్రం కోసం �
 # RASHI_MANTRAS as of 2026-10 -- Karkataka/Vrishchika tie for name,
 # Mesha/Vrishchika/Dhanussu/Meena tie for mantra.
 LONGEST_RASHI_NAME_TE = "కర్కాటకం"
-LONGEST_MANTRA_TE = "ఓం బృహస్పతయే నమః"
+# Now the longer of the two mantra pools this card can show: a
+# ruling-planet mantra, or (for a Shani-affected rashi) the Shani remedy
+# mantra from rashi_current_transits.py, which is the longest of all.
+LONGEST_MANTRA_TE = "ఓం ప్రాం ప్రీం ప్రౌం సః శనయే నమః"
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,6 +98,7 @@ class RashiCard:
     date_text: str = ""  # e.g. "అక్టోబర్ 2026 మాసం" (this month)
     subscribe_text: str = DEFAULT_SUBSCRIBE_TEXT
     comment_prompt_text: str = ""
+    icon_paths: list[Path] = field(default_factory=list)  # e.g. [Lakshmi, Ganesha, Kubera], left-to-right
 
 
 class RashiCardRenderer:
@@ -102,13 +117,31 @@ class RashiCardRenderer:
             canvas = self._load_background(card.rashi_index).convert("RGBA")
             draw = ImageDraw.Draw(canvas)
 
-            # Content starts below the muggu roundel (drawn by the
-            # background generator up to roughly height*0.26) and must
-            # finish, including the subscribe/comment footer, at or
-            # above height*0.68 -- same validated boundary as the alert
-            # cards, which share this channel's Shorts UI overlay.
-            content_top = int(height * 0.27)
+            # Content starts just below the muggu roundel (drawn by the
+            # background generator up to roughly height*0.244) and must
+            # finish, including the icon row and the subscribe/comment
+            # footer, at or above height*0.68 -- same validated boundary
+            # as the alert cards, which share this channel's Shorts UI
+            # overlay.
+            content_top = int(height * 0.25)
             footer_bottom = int(height * 0.68)
+
+            # Transit-aware mantra selection ("this mantra should change
+            # for them according [to] sani and other situation" --
+            # explicit request): a rashi currently under Sade Sati,
+            # Ashtama Shani, or Kantaka Shani (see
+            # rashi_current_transits.py) gets the classic Shani remedy
+            # mantra instead of its usual ruling-planet one, with a short
+            # status line explaining why. Unaffected rashis are unchanged.
+            transit = AFFECTED_RASHIS.get(card.content.name_en)
+            if transit is not None:
+                mantra_text = SHANI_REMEDY_MANTRA_TE
+                chant_count_text = SHANI_REMEDY_CHANT_COUNT_TE
+                status_line = transit.status_label_te
+            else:
+                mantra_text = card.content.mantra_te
+                chant_count_text = card.content.chant_count_te
+                status_line = ""
 
             series_font = self._fonts.get_font(size=int(width * SERIES_LABEL_FONT_FRAC), weight="SemiBold")
             # Same shared-size reasoning as mantra_font below: fit to the
@@ -134,7 +167,7 @@ class RashiCardRenderer:
                 start_size=int(width * MANTRA_FONT_FRAC), weight="Bold", min_size=36,
             )
             chant_font = self._fonts.get_font(size=int(width * CHANT_COUNT_FONT_FRAC), weight="Regular")
-            benefit_font = self._fonts.get_font(size=int(width * BENEFIT_FONT_FRAC), weight="Regular")
+            status_font = self._fonts.get_font(size=int(width * STATUS_FONT_FRAC), weight="SemiBold")
             subscribe_font = self._fit_font_to_width(
                 draw, card.subscribe_text, max_width=content_width,
                 start_size=int(width * SUBSCRIBE_FONT_FRAC), weight="Bold",
@@ -155,30 +188,34 @@ class RashiCardRenderer:
                     start_size=int(width * COMMENT_FONT_FRAC), weight="Bold",
                 )
 
-            # Footer block (comment prompt + subscribe) is anchored to the
-            # fixed, validated footer_bottom boundary -- it never moves
-            # regardless of how tall the content above is.
-            # Same font-size-based line height as _draw_centered_line, for
-            # the same reason -- consistent regardless of which glyphs a
-            # given subscribe/comment string happens to contain.
+            # Font-size-based line height, same reasoning as
+            # _draw_centered_line -- consistent regardless of which
+            # glyphs a given string happens to contain.
             subscribe_h = int(subscribe_font.size * 1.15)
             footer_line_gap = int(height * 0.015)
+            comment_h = int(comment_font.size * 1.15) if (card.comment_prompt_text and comment_font is not None) else 0
+            icon_size = int(width * ICON_FRAC)
 
-            comment_h = 0
-            if card.comment_prompt_text and comment_font is not None:
-                comment_h = int(comment_font.size * 1.15)
+            gap = int(height * 0.017)
+            mantra_block_gap = int(height * 0.025)
 
-            # Measured against the real numbers that caused the overlap
-            # bug above (content reached y=1238 while the footer's
-            # comment line started at y=1179 -- a 59px collision, true
-            # for every rashi since these sizes/gaps don't vary by card):
-            # content_top moved up (0.30 -> 0.27, roundel still clears
-            # with margin) and these two gaps tightened, together freeing
-            # ~115px -- confirmed by rendering the three cards that
-            # previously overlapped most (longest name, longest and
-            # shortest mantra) after this change.
-            gap = int(height * 0.022)
-            mantra_block_gap = int(height * 0.035)
+            # EVERYTHING below content_top is now anchored bottom-up from
+            # the fixed, validated footer_bottom boundary -- subscribe,
+            # then comment (if any), then the icon row (if any) above
+            # that. This replaced an earlier version where the icon row
+            # was drawn wherever the content above happened to end,
+            # independent of the footer's own fixed position -- a real
+            # render showed the icon row landing on top of both the
+            # comment line above it and the subscribe line below it,
+            # because nothing reserved it a slot. Computing the whole
+            # footer stack first, then handing the content above
+            # whatever vertical space is LEFT, is the same fix already
+            # applied once to the comment/subscribe pair -- just
+            # extended to cover the icon row too.
+            subscribe_top = footer_bottom - subscribe_h
+            comment_top = subscribe_top - footer_line_gap - comment_h if card.comment_prompt_text else subscribe_top
+            icon_row_top = comment_top - mantra_block_gap - icon_size if card.icon_paths else comment_top
+            content_bottom_limit = icon_row_top
 
             # Deliberately NOT showing the benefit line on the card itself
             # -- an earlier version with 6 stacked text blocks plus a
@@ -186,29 +223,39 @@ class RashiCardRenderer:
             # footer_top that it became barely legible and still nearly
             # touched the footer (confirmed via a real render). The benefit
             # text is still used in the Short's description/SEO instead --
-            # see rashi_mantra_seo.py. Card content is now just: series
-            # label, rashi name, ruling planet, mantra, chant count --
-            # fits comfortably with room to spare, matching how the
-            # competitor cards researched for this series stay punchy.
+            # see rashi_mantra_seo.py. Card content is now: series label,
+            # rashi name, ruling planet, mantra (ruling-planet or, for a
+            # Shani-affected rashi, the remedy mantra), chant count, and
+            # an optional Shani status line -- all finishing at or above
+            # content_bottom_limit, with the icon row and footer below it.
             cursor_y = content_top
             for text, font, color in lines:
                 cursor_y = self._draw_centered_line(draw, text, font, width, cursor_y, color)
                 cursor_y += gap
 
             cursor_y += mantra_block_gap
-            cursor_y = self._draw_centered_line(draw, card.content.mantra_te, mantra_font, width, cursor_y, COLOR_GOLD)
+            cursor_y = self._draw_centered_line(draw, mantra_text, mantra_font, width, cursor_y, COLOR_GOLD)
             cursor_y += int(gap * 0.6)
             cursor_y = self._draw_centered_line(
-                draw, f"({card.content.chant_count_te})", chant_font, width, cursor_y, COLOR_TEXT_LIGHT,
+                draw, f"({chant_count_text})", chant_font, width, cursor_y, COLOR_TEXT_LIGHT,
             )
 
-            # Footer: comment prompt (optional) then subscribe, drawn at
-            # the fixed boundary.
-            subscribe_top = footer_bottom - subscribe_h
-            self._draw_centered_line(draw, card.subscribe_text, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT)
+            if status_line:
+                cursor_y += int(gap * 0.5)
+                cursor_y = self._draw_centered_line(draw, status_line, status_font, width, cursor_y, COLOR_GOLD)
 
+            if cursor_y > content_bottom_limit:
+                logger.warning(
+                    "Rashi card content for %s ran %dpx past its budget (cursor_y=%d, limit=%d) -- "
+                    "may visually crowd the icon row/footer. Check gaps/font fractions if this recurs.",
+                    card.content.name_en, cursor_y - content_bottom_limit, cursor_y, content_bottom_limit,
+                )
+
+            if card.icon_paths:
+                self._draw_icon_row(canvas, card.icon_paths, width, icon_row_top)
+
+            self._draw_centered_line(draw, card.subscribe_text, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT)
             if card.comment_prompt_text and comment_font is not None:
-                comment_top = subscribe_top - footer_line_gap - comment_h
                 self._draw_centered_line(draw, card.comment_prompt_text, comment_font, width, comment_top, COLOR_TEXT_LIGHT)
 
             output_path = self._build_output_path(card)
@@ -224,6 +271,36 @@ class RashiCardRenderer:
 
         except OSError as exc:
             raise ImageRenderError(f"Rashi card rendering/save failed: {exc}") from exc
+
+    def _draw_icon_row(self, canvas: Image.Image, icon_paths: list[Path], width: int, top: int) -> None:
+        """Paste up to 3 deity icons (e.g. Lakshmi, Ganesha, Kubera) in a
+        centered horizontal row at `top` -- same icon-row technique as
+        alert_card_renderer.py's _draw_icon_row, reused here per explicit
+        request to add them to this card too."""
+        icon_size = int(width * ICON_FRAC)
+        icon_gap = int(width * ICON_GAP_FRAC)
+
+        icons: list[Image.Image] = []
+        for path in icon_paths:
+            try:
+                with Image.open(path) as raw:
+                    icon = raw.convert("RGBA")
+                    icon.thumbnail((icon_size, icon_size))
+                    icons.append(icon)
+            except (OSError, UnidentifiedImageError) as exc:
+                logger.warning("Could not load rashi card icon at %s (%s) -- skipping it.", path, exc)
+
+        if not icons:
+            return
+
+        total_w = sum(icon.width for icon in icons) + icon_gap * (len(icons) - 1)
+        x = (width - total_w) // 2
+        max_h = max(icon.height for icon in icons)
+
+        for icon in icons:
+            y = top + (max_h - icon.height) // 2
+            canvas.alpha_composite(icon, (x, y))
+            x += icon.width + icon_gap
 
     def _load_background(self, rashi_index: int) -> Image.Image:
         filename = BACKGROUND_FILENAMES[rashi_index % len(BACKGROUND_FILENAMES)]
