@@ -10,12 +10,24 @@ files that must survive between runs:
   - data/youtube_token.json                   (OAuth refresh token)
   - data/last_run_date_rahu_kalam.txt         (IST date Rahu Kalam last posted)
   - data/last_run_date_shubha_ghadiyalu.txt   (IST date Shubha Ghadiyalu last posted)
+  - data/last_run_date_durmuhurtham.txt       (IST date Durmuhurtham last posted)
 
-The two Shorts got separate marker files (replacing one combined
+The Shorts got separate marker files (replacing one combined
 last_run_date.txt) when the workflow moved to hourly ticks with an
-independent gate per Short (scripts/ci/scheduler_gate.py) -- Rahu Kalam
-and Shubha Ghadiyalu can now post on different ticks, so a delay on one
-must never block or skip the other.
+independent gate per Short (scripts/ci/scheduler_gate.py) -- each Short
+can now post on a different tick, so a delay on one must never block or
+skip the others.
+
+BUG FIX (2026-10-01): last_run_date_durmuhurtham.txt was missing from
+STATE_FILES entirely when Durmuhurtham was added as a third alert Short
+-- mark-done durmuhurtham would write the marker locally, but push()
+would never upload it (it only iterates STATE_FILES), so the marker
+never survived to the next run. Confirmed via a real failed run
+(2026-10-01, run 36773455308): the push step failed for an unrelated
+reason, which happened to hide this bug before it could bite -- it
+would otherwise have caused Durmuhurtham to repost on every tick in the
+window, every single night, since pull() would never find a prior
+marker on Drive to restore.
 
 Auth: a Google Cloud SERVICE ACCOUNT (not the interactive OAuth app used
 for the actual YouTube upload). Its JSON key is stored as the
@@ -50,6 +62,7 @@ STATE_FILES = [
     "youtube_token.json",
     "last_run_date_rahu_kalam.txt",
     "last_run_date_shubha_ghadiyalu.txt",
+    "last_run_date_durmuhurtham.txt",
 ]
 
 
