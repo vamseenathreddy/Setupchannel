@@ -11,6 +11,7 @@ files that must survive between runs:
   - data/last_run_date_rahu_kalam.txt         (IST date Rahu Kalam last posted)
   - data/last_run_date_shubha_ghadiyalu.txt   (IST date Shubha Ghadiyalu last posted)
   - data/last_run_date_durmuhurtham.txt       (IST date Durmuhurtham last posted)
+  - data/last_rashi_index.txt                 (0-11, which rashi the Rashi Mantra series posts next)
 
 The Shorts got separate marker files (replacing one combined
 last_run_date.txt) when the workflow moved to hourly ticks with an
@@ -59,7 +60,17 @@ handling) aborted before pushing any of the remaining STATE_FILES too,
 silently skipping whatever Shorts were still queued behind it that
 tick. Whenever a new entry is added to STATE_FILES, it must be created
 once by hand (or via an authenticated human session, e.g. a connected
-Drive account) in the target folder first.
+Drive account) in the target folder first. *** THIS APPLIES TO
+last_rashi_index.txt, ADDED 2026-10-01 *** -- before the Rashi Mantra
+series' first real run, create an empty (or containing just "0") text
+file named exactly "last_rashi_index.txt" in the same Drive folder as
+the other marker files, the same way the earlier Durmuhurtham bug had
+to be fixed. Skipping this will NOT crash the run (pull() just won't
+find it and the posting script defaults to index 0/Mesha locally), but
+push() will then hit the exact same storageQuotaExceeded failure
+documented above, and the rotation will silently reset to Mesha every
+single run instead of advancing -- it just won't be obvious until
+several runs in a row all post the same rashi.
 
 Usage:
     python scripts/ci/drive_state_sync.py pull                    # Drive -> ./data
@@ -89,6 +100,7 @@ STATE_FILES = [
     "last_run_date_rahu_kalam.txt",
     "last_run_date_shubha_ghadiyalu.txt",
     "last_run_date_durmuhurtham.txt",
+    "last_rashi_index.txt",
 ]
 
 
