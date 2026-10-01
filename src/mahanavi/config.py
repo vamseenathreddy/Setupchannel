@@ -98,6 +98,14 @@ class Settings(BaseSettings):
     sarvam_temperature: float = Field(default=0.75, ge=0.01, le=2.0)
     sarvam_speech_sample_rate: int = Field(default=24000)
     alert_short_duration_seconds: float = Field(default=10.0, gt=0)
+    # Deliberately shorter than a comfortable full read of a Rashi Mantra
+    # card (5-6 text blocks, ~10-14s to read once) -- short enough that
+    # most viewers loop 2-3x to finish reading, which YouTube Shorts
+    # counts as fresh views and reads as a retention signal. Paired with
+    # video.assembler.LOOP_FRIENDLY_FADE_IN_SECONDS so the fade-in doesn't
+    # visibly flash on every loop. See video/assembler.py module docstring
+    # (explicit request, 2026-10-01) for the full reasoning.
+    rashi_mantra_short_duration_seconds: float = Field(default=8.0, gt=0)
 
     # fal.ai (AI-generated Purana scene visuals: FLUX.1 [dev] stills +
     # Kling 2.5 Turbo Pro image-to-video animation) -- get a key at

@@ -12,6 +12,22 @@ pipeline (render -> assemble -> upload) actually works end to end,
 THEN add a zoom effect as a refinement once the baseline is proven, not
 before.
 
+LOOP-FRIENDLY SHORTS (added per explicit request, 2026-10-01): a static
+text card that takes longer to read than the video is long will make
+YouTube Shorts auto-loop it -- each completed loop counts as a fresh
+view, and rewatches are a real retention/satisfaction signal to the
+recommendation system, so shortening a text-heavy card deliberately
+(so a viewer naturally loops 2-3x to finish reading) is a legitimate
+growth tactic, not a gimmick. BUT the default VIDEO_FADE_IN_SECONDS
+fade-in is invisible at 10s and becomes a visible flash/reset on EVERY
+loop at shorter durations -- that reads as broken, not smooth. So
+`fade_in_seconds` is now a parameter: pass a near-zero value (e.g. 0.15)
+for any Short you intend people to loop, and leave the default (0.6)
+alone for one-shot longer Shorts where a loop isn't the point. There is
+no single "right" duration for every card -- it should be a bit SHORTER
+than a comfortable first full read, not an arbitrary small number, so
+callers pass their own value rather than relying on a shared default.
+
 Requires ffmpeg on PATH -- this module shells out to the real `ffmpeg`
 binary via subprocess rather than a Python video library, since ffmpeg
 is the actual, battle-tested tool for this and Python wrappers around it
@@ -33,6 +49,11 @@ DEFAULT_DURATION_SECONDS = 10.0
 DEFAULT_FPS = 30
 AUDIO_FADE_OUT_SECONDS = 1.0
 VIDEO_FADE_IN_SECONDS = 0.6
+# Near-instant fade for loop-style Shorts -- fully removing the fade (0.0)
+# can leave a single hard-cut frame visible at the very first play, so a
+# tiny fade is kept rather than none, but it's short enough to be
+# imperceptible as a "flash" on every subsequent loop.
+LOOP_FRIENDLY_FADE_IN_SECONDS = 0.15
 
 
 def assemble_short(
@@ -41,12 +62,19 @@ def assemble_short(
     duration_seconds: float = DEFAULT_DURATION_SECONDS,
     audio_path: Path | None = None,
     fps: int = DEFAULT_FPS,
+    fade_in_seconds: float = VIDEO_FADE_IN_SECONDS,
 ) -> Path:
     """Assemble a static image (+ optional looped audio) into a .mp4.
 
     If audio_path is None, the output has a silent audio track (still a
     valid, playable video -- some platforms expect SOME audio stream
     even if silent, rather than none at all).
+
+    `fade_in_seconds`: use LOOP_FRIENDLY_FADE_IN_SECONDS (or another small
+    value) for a Short whose duration is intentionally shorter than its
+    reading time, so the fade doesn't visibly flash on every loop. Keep
+    the default for a longer, one-shot Short where looping isn't the
+    design (see module docstring).
     """
     if shutil.which("ffmpeg") is None:
         raise VideoAssemblyError(
@@ -74,7 +102,7 @@ def assemble_short(
     fade_start = max(duration_seconds - AUDIO_FADE_OUT_SECONDS, 0)
     cmd += [
         "-t", str(duration_seconds),
-        "-vf", f"fps={fps},format=yuv420p,fade=t=in:st=0:d={VIDEO_FADE_IN_SECONDS}",
+        "-vf", f"fps={fps},format=yuv420p,fade=t=in:st=0:d={fade_in_seconds}",
         "-af", f"afade=t=out:st={fade_start}:d={AUDIO_FADE_OUT_SECONDS}",
         "-c:v", "libx264",
         "-pix_fmt", "yuv420p",
