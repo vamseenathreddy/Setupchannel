@@ -125,6 +125,15 @@ class Settings(BaseSettings):
     # on this channel.
     purana_concept_short_duration_seconds: float = Field(default=5.0, gt=0)
 
+    # Bhagavad Gita Sloka Shorts (post_gita_sloka_short.py) -- the
+    # seventh series, 3-4 PM IST window, one verse + Telugu meaning per
+    # day (2026-10-02: "from bhagavadgeetha get daily one sloka and
+    # meening shorts card at 3 to 4 pm daily"). Same loop-friendly,
+    # no-fade, short-duration design as every other Short on this
+    # channel -- slightly longer than the Purana cards since a Sanskrit
+    # verse plus its meaning is a bit more to read.
+    gita_sloka_short_duration_seconds: float = Field(default=6.0, gt=0)
+
     # fal.ai (AI-generated Purana scene visuals: FLUX.1 [dev] stills +
     # Kling 2.5 Turbo Pro image-to-video animation) -- get a key at
     # fal.ai/dashboard/keys. Pay-as-you-go, no plan to pick; add a

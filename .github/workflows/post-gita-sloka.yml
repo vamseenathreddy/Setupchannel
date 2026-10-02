@@ -1,0 +1,118 @@
+name: Post Bhagavad Gita Sloka Short
+
+# Manual-trigger-only (same reasoning as the other dispatch-driven
+# Shorts) -- driven externally by a cron-job.org watchdog calling this
+# workflow's workflow_dispatch endpoint repeatedly through the 3-4 PM
+# IST window. scripts/ci/gita_sloka_gate.py decides on each call
+# whether THIS is the day's randomly-chosen post time.
+on:
+  workflow_dispatch:
+    inputs:
+      public:
+        description: "Upload as public. Uncheck for an unlisted test/review run."
+        required: false
+        type: boolean
+        default: true
+      bypass_gate:
+        description: >-
+          Post immediately, ignoring the 3-4 PM time window and today's
+          already-posted marker. For manual testing/review runs only --
+          never set this on the recurring cron-job.org calls.
+        required: false
+        type: boolean
+        default: false
+      force_sloka:
+        description: >-
+          Force a specific verse instead of the next one in rotation --
+          an index, or "chapter.verse" like "2.47". Leave blank for
+          normal rotation behavior. A forced run does NOT advance the
+          stored rotation state.
+        required: false
+        default: ''
+
+concurrency:
+  group: post-gita-sloka
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  post-gita-sloka:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync + gate
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Decide whether this call should post today
+        id: gate
+        env:
+          BYPASS_GATE: ${{ inputs.bypass_gate && 'true' || 'false' }}
+        run: python scripts/ci/gita_sloka_gate.py
+
+      - name: Install ffmpeg
+        if: steps.gate.outputs.target == 'post'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install full Python dependencies
+        if: steps.gate.outputs.target == 'post'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Run Gita Sloka Short pipeline
+        if: steps.gate.outputs.target == 'post'
+        env:
+          MAHANAVI_IMAGES_ROOT: ./Images
+          MAHANAVI_ASSETS_DIR: ./assets
+          MAHANAVI_OUTPUT_DIR: ./data/generated
+          MAHANAVI_DATABASE_PATH: ./data/mahanavi.db
+          MAHANAVI_LOG_DIR: ./data/logs
+          MAHANAVI_TIMEZONE: Asia/Kolkata
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+        run: |
+          ARGS=""
+          if [ "${{ inputs.public }}" = "true" ]; then
+            ARGS="$ARGS --public"
+          fi
+          if [ -n "${{ inputs.force_sloka }}" ]; then
+            ARGS="$ARGS --sloka ${{ inputs.force_sloka }}"
+          fi
+          python3 -m mahanavi.scripts.post_gita_sloka_short $ARGS
+
+      - name: Mark today done
+        if: steps.gate.outputs.target == 'post'
+        run: python scripts/ci/drive_state_sync.py mark-done gita_sloka
+
+      - name: Push state to Drive
+        if: always() && steps.gate.outputs.target == 'post'
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py push
+
+      - name: Upload run output as artifact (debugging)
+        if: steps.gate.outputs.target == 'post'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gita-sloka-run-${{ github.run_id }}
+          path: |
+            data/logs/
+            data/generated/
+          if-no-files-found: ignore
+          retention-days: 14
