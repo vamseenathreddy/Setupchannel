@@ -51,6 +51,13 @@ from mahanavi.video.assembler import (
 
 STATE_FILE = Path("data") / "last_purana_short_index.txt"
 
+# Ever-incrementing posting count shown on the card ("పురాణ కథ - N"),
+# tracked separately from STATE_FILE's bounded 0-9 content rotation --
+# see PuranaShortCard.episode_number's docstring for why. Never reset,
+# never wraps, so a forced/test run still advances it (unlike the
+# content rotation, which a forced run deliberately leaves alone).
+EPISODE_COUNT_FILE = Path("data") / "purana_short_episode_count.txt"
+
 
 def _icon_paths(settings: Settings) -> list[Path]:
     """Same three deity icons already used on the alert and rashi cards,
@@ -82,6 +89,21 @@ def _read_rotation_index() -> int:
 def _write_rotation_index(next_index: int) -> None:
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
     STATE_FILE.write_text(str(next_index % len(PURANA_SHORT_STORIES)))
+
+
+def _read_episode_count() -> int:
+    if not EPISODE_COUNT_FILE.exists():
+        return 0
+    try:
+        return int(EPISODE_COUNT_FILE.read_text().strip())
+    except ValueError:
+        print(f"Note: {EPISODE_COUNT_FILE} had unreadable content, starting episode count at 0.")
+        return 0
+
+
+def _write_episode_count(count: int) -> None:
+    EPISODE_COUNT_FILE.parent.mkdir(parents=True, exist_ok=True)
+    EPISODE_COUNT_FILE.write_text(str(count))
 
 
 def _resolve_forced_story(spec: str) -> int:
@@ -136,8 +158,11 @@ def main() -> int:
     tz = ZoneInfo(settings.timezone)
     today = datetime.now(tz).date()
 
+    episode_count = _read_episode_count()
+    episode_number = episode_count + 1
+
     try:
-        card = PuranaShortCard(story=story, icon_paths=_icon_paths(settings))
+        card = PuranaShortCard(story=story, episode_number=episode_number, icon_paths=_icon_paths(settings))
         renderer = PuranaShortCardRenderer(settings)
         image_path = renderer.render(card)
         print(f"Rendered: {image_path}")
@@ -162,6 +187,9 @@ def main() -> int:
             return 1
 
         print(f"Uploaded ({privacy_status}): {result.post_url}")
+
+        _write_episode_count(episode_number)
+        print(f"Episode count advanced: next run will show 'పురాణ కథ - {episode_number + 1}'")
 
         if not forced:
             next_index = (story_index + 1) % len(PURANA_SHORT_STORIES)

@@ -13,6 +13,7 @@ files that must survive between runs:
   - data/last_run_date_durmuhurtham.txt       (IST date Durmuhurtham last posted)
   - data/last_rashi_index.txt                 (0-11, which rashi the Rashi Mantra series posts next)
   - data/last_purana_short_index.txt          (0-9, which story the Purana Story series posts next)
+  - data/purana_short_episode_count.txt       (ever-incrementing "పురాణ కథ - N" display count, never wraps)
 
 The Shorts got separate marker files (replacing one combined
 last_run_date.txt) when the workflow moved to hourly ticks with an
@@ -89,6 +90,17 @@ same Drive folder before relying on the daily gate -- otherwise every
 gate-passing call on a given day would see "not posted today" and the
 series could post more than once in the same 5-6 PM window.
 
+*** AND TO purana_short_episode_count.txt, ADDED 2026-10-02 *** -- same
+fix again: this is the ever-incrementing "పురాణ కథ - N" display counter
+(distinct from last_purana_short_index.txt's bounded 0-9 content
+rotation -- see PuranaShortCard.episode_number's docstring). Create an
+empty (or containing just "0") text file named exactly
+"purana_short_episode_count.txt" in the same Drive folder before the
+first real run -- otherwise push() will hit the same storageQuotaExceeded
+failure documented above, and every run will silently restart the
+displayed count at "1" instead of advancing, even though the content
+rotation itself keeps advancing correctly.
+
 Usage:
     python scripts/ci/drive_state_sync.py pull                    # Drive -> ./data
     python scripts/ci/drive_state_sync.py push                     # ./data -> Drive
@@ -120,6 +132,7 @@ STATE_FILES = [
     "last_rashi_index.txt",
     "last_purana_short_index.txt",
     "last_run_date_purana_short.txt",
+    "purana_short_episode_count.txt",
 ]
 
 

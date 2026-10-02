@@ -39,6 +39,18 @@ channel -- content centered in an 84%-width column (8% margin each
 side), finishing at or above height*0.68 (YouTube's own Shorts UI
 chrome -- channel handle, caption, visibility badge -- occupies roughly
 the bottom 25% of a real posted Short, confirmed via screenshot).
+
+EPISODE NUMBER (per explicit request, 2026-10-02: "i want story number
+count beside purana katha - 1, 2, 3 etc... this should be endless
+story posting shorts"): PuranaShortCard.episode_number is an
+EVER-INCREMENTING count of posts made, tracked separately from the
+0-9 content-rotation index in content/purana_short_stories.py. The
+content pool will eventually repeat (10 stories, reused in rotation),
+but the episode number never resets and never wraps -- so the series
+reads as an endless, ongoing count ("పురాణ కథ - 47") even on a day it
+happens to repost a story the audience already saw. Persisted by
+scripts/post_purana_short.py as data/purana_short_episode_count.txt,
+synced via Drive like every other piece of this channel's state.
 """
 
 from __future__ import annotations
@@ -54,6 +66,7 @@ from mahanavi.content.purana_short_stories import PuranaShortStory
 from mahanavi.exceptions import ImageRenderError
 from mahanavi.images.fonts import FontManager
 from mahanavi.images.layout import vertical_gradient
+from mahanavi.images.muggu import draw_muggu_roundel
 
 logger = logging.getLogger(__name__)
 
@@ -84,10 +97,27 @@ DEFAULT_SUBSCRIBE_TEXT = "ప్రతిరోజు పురాణ కథల 
 ICON_FRAC = 0.078
 ICON_GAP_FRAC = 0.045
 
+# Border + muggu watermark (per explicit request, 2026-10-02: "muggu
+# like design... at border or in middle... to bring live feel instead
+# of static"). Same programmatic, copyright-free technique as the Rashi
+# Mantra backgrounds (images/muggu.py), applied here as: a thin double-
+# line gold border inset from the card edge, and one large, LOW-ALPHA
+# muggu roundel centered in the content column, behind all text --
+# a watermark, not a competing foreground element, so it adds visual
+# richness without hurting legibility. This is the DEFAULT look (no
+# animation) -- see video/assembler.py's assemble_purana_short_with_rotating_muggu
+# for the optional animated variant the request also asked about.
+BORDER_OUTER_MARGIN_FRAC = 0.035
+BORDER_ACCENT = (230, 190, 90)
+MUGGU_WATERMARK_ALPHA = 40  # faint -- a watermark behind text, not competing with it
+MUGGU_RADIUS_FRAC = 0.30
+MUGGU_PETALS = 10
+
 
 @dataclass(frozen=True, slots=True)
 class PuranaShortCard:
     story: PuranaShortStory
+    episode_number: int = 1  # ever-incrementing posting count, NOT the 0-9 content rotation index -- see module docstring
     subscribe_text: str = DEFAULT_SUBSCRIBE_TEXT
     icon_paths: list[Path] = field(default_factory=list)
 
@@ -106,6 +136,8 @@ class PuranaShortCardRenderer:
 
         try:
             canvas = vertical_gradient(width, height, COLOR_PURANA_TOP, COLOR_PURANA_BOTTOM).convert("RGBA")
+            self._draw_border(canvas)
+            self._draw_muggu_watermark(canvas, width, height)
             draw = ImageDraw.Draw(canvas)
 
             content_top = int(height * 0.08)
@@ -130,7 +162,7 @@ class PuranaShortCardRenderer:
                 start_size=int(width * SUBSCRIBE_FONT_FRAC), weight="Bold",
             )
 
-            series_label = "పురాణ కథ"
+            series_label = f"పురాణ కథ - {card.episode_number}"
             source_line = f"— {card.story.purana_name_te}"
 
             # Fixed-height elements (everything except the story body)
@@ -206,6 +238,41 @@ class PuranaShortCardRenderer:
 
         except OSError as exc:
             raise ImageRenderError(f"Purana short card rendering/save failed: {exc}") from exc
+
+    def _draw_border(self, canvas: Image.Image) -> None:
+        """Thin double-line gold border inset from the card edge -- same
+        generic, copyright-free "traditional border" technique already
+        used for the Rashi Mantra backgrounds, reused here per the
+        explicit request to highlight the card's border."""
+        width, height = canvas.size
+        draw = ImageDraw.Draw(canvas)
+        outer_margin = int(width * BORDER_OUTER_MARGIN_FRAC)
+        inner_margin = outer_margin + 10
+        draw.rectangle(
+            [outer_margin, outer_margin, width - outer_margin, height - outer_margin],
+            outline=BORDER_ACCENT, width=4,
+        )
+        draw.rectangle(
+            [inner_margin, inner_margin, width - inner_margin, height - inner_margin],
+            outline=BORDER_ACCENT, width=2,
+        )
+
+    def _draw_muggu_watermark(self, canvas: Image.Image, width: int, height: int) -> None:
+        """A large, faint (low-alpha) muggu roundel centered in the
+        content column, composited BEHIND all text -- a watermark for
+        visual richness ("bring live feel instead of static"), not a
+        competing foreground element. This is the static default; the
+        optional rotating variant (video/assembler.py) uses this exact
+        same motif as a separate animated layer instead of baking it in
+        here."""
+        overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        overlay_draw = ImageDraw.Draw(overlay)
+        draw_muggu_roundel(
+            overlay_draw, center=(width // 2, int(height * 0.42)),
+            radius=int(width * MUGGU_RADIUS_FRAC), petals=MUGGU_PETALS,
+            accent=(*BORDER_ACCENT, MUGGU_WATERMARK_ALPHA),
+        )
+        canvas.alpha_composite(overlay)
 
     def _fit_paragraph_to_box(
         self, draw: ImageDraw.ImageDraw, text: str, max_width: int, max_height: int,
