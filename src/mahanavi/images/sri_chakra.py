@@ -1,16 +1,28 @@
 """
-Shared Sri Chakra (Sri Yantra) drawing helpers -- a programmatic,
-copyright-free rendering of the classic interlocking-triangle yantra
-(four upward "Shiva" triangles + five downward "Shakti" triangles around
-a central bindu, ringed by a lotus-petal border), replacing the earlier
-generic muggu/kolam roundel as the Purana Story cards' background motif
-per explicit request (2026-10-02: "i want slowly rotating sri chakram in
-background"). Pulled into its own module, same pattern as images/muggu.py
-(which is left in place -- still used by the Rashi Mantra backgrounds),
-so this motif can be drawn directly onto a canvas OR rendered as a
-standalone transparent PNG for the rotating-overlay video pipeline (see
-render_sri_chakra_png below, consumed by video/assembler.py's
-assemble_purana_short_with_rotating_chakra).
+Shared Sri Chakra (Sri Yantra-inspired) drawing helpers -- a
+programmatic, copyright-free mandala motif (an outer circle, a ring of
+lotus petals, two interlocking rings of radiating star-points, and a
+central bindu), replacing the earlier generic muggu/kolam roundel as the
+Purana Story cards' background motif per explicit request (2026-10-02:
+"i want slowly rotating sri chakram in background"). Pulled into its own
+module, same pattern as images/muggu.py (which is left in place -- still
+used by the Rashi Mantra backgrounds), so this motif can be drawn
+directly onto a canvas OR rendered as a standalone transparent PNG for
+the rotating-overlay video pipeline (see render_sri_chakra_png below,
+consumed by video/assembler.py's assemble_purana_short_with_rotating_chakra).
+
+ROTATIONAL SYMMETRY, BY DESIGN: every part of this motif (the petal
+ring, both star-point rings) is built from CHAKRA_POINTS evenly-spaced
+copies around the same center, at the same CHAKRA_POINTS-fold angular
+period -- so the whole motif is exactly symmetric under a rotation of
+360/CHAKRA_POINTS degrees (and any whole multiple of it). This was a
+deliberate redesign (an earlier version used two unevenly-sized
+triangle sets, which only had 60-degree symmetry) so that
+video/assembler.py's rotating-chakra assembly can slow its spin down to
+any fraction of a revolution that's a multiple of 1/CHAKRA_POINTS and
+still land on a pixel-identical frame at the loop point -- see that
+module's CHAKRA_REVOLUTIONS_PER_LOOP comment for why this matters (the
+loop must stay invisible, "user should not feel" the Short restarting).
 """
 
 from __future__ import annotations
@@ -22,32 +34,29 @@ from PIL import Image, ImageDraw
 
 RGBA = tuple[int, int, int, int]
 
-# How many upward ("Shiva") vs downward ("Shakti") triangles to draw, and
-# the radius each is inscribed in (as a fraction of the overall motif
-# radius) -- loosely mirrors the real Sri Yantra's interlocking triangles
-# without attempting exact traditional proportions, which isn't needed
-# for a background watermark motif. Upward and downward sets share the
-# SAME radii (unlike the real Sri Yantra's uneven 4-vs-5 count) so the
-# whole motif has exact 180-degree rotational symmetry -- needed so the
-# rotating-chakra video (video/assembler.py) can slow the spin down to
-# half a revolution per loop and still land on a pixel-identical frame
-# at the loop point (half a turn now looks exactly like a full turn).
-_UPWARD_RADIUS_FRACS = (1.0, 0.80, 0.60, 0.40)
-_DOWNWARD_RADIUS_FRACS = (1.0, 0.80, 0.60, 0.40)
+# Number of points in the radiating star motif, and the petal count in
+# the ring around it -- kept EQUAL and SHARED by every symmetric element
+# below specifically so the whole motif's rotational symmetry period is
+# a single clean value (360 / CHAKRA_POINTS degrees). Picked as a highly
+# divisible number (12) so a wide range of slowdown fractions --
+# 1/2, 1/3, 1/4, 1/6, 1/12 of a revolution -- all stay loop-seamless.
+CHAKRA_POINTS = 12
 
 
-def _triangle_points(
-    center: tuple[float, float], radius: float, point_up: bool,
+def _spike_triangle(
+    center: tuple[float, float], angle_deg: float, inner_r: float, outer_r: float, half_width_deg: float,
 ) -> list[tuple[float, float]]:
-    """Equilateral triangle inscribed in a circle of the given radius,
-    pointing up (apex at top) or down (apex at bottom)."""
+    """A single radial "spike" -- a narrow triangle with its tip at
+    `outer_r` and its base straddling `angle_deg` at `inner_r` -- the
+    building block for the star-point rings below."""
     cx, cy = center
-    base_angle = -90.0 if point_up else 90.0
-    points = []
-    for i in range(3):
-        angle = math.radians(base_angle + i * 120.0)
-        points.append((cx + radius * math.cos(angle), cy + radius * math.sin(angle)))
-    return points
+    tip_angle = math.radians(angle_deg)
+    tip = (cx + outer_r * math.cos(tip_angle), cy + outer_r * math.sin(tip_angle))
+    a1 = math.radians(angle_deg - half_width_deg)
+    a2 = math.radians(angle_deg + half_width_deg)
+    base1 = (cx + inner_r * math.cos(a1), cy + inner_r * math.sin(a1))
+    base2 = (cx + inner_r * math.cos(a2), cy + inner_r * math.sin(a2))
+    return [tip, base1, base2]
 
 
 def draw_sri_chakra_roundel(
@@ -56,13 +65,19 @@ def draw_sri_chakra_roundel(
     radius: int,
     accent: RGBA,
     line_width: int = 3,
+    points: int = CHAKRA_POINTS,
 ) -> None:
-    """Draws the interlocking-triangle yantra + lotus-petal ring + bindu,
-    all as outline strokes in `accent` (pass an RGBA tuple -- this is
-    almost always used as a watermark at a non-opaque alpha)."""
+    """Draws the mandala/yantra motif -- outer circle, lotus-petal ring,
+    two interlocking star-point rings, and a central bindu -- all as
+    outline strokes in `accent` (pass an RGBA tuple -- this is almost
+    always used as a watermark at a non-opaque alpha). `points` controls
+    both ring's point count AND the motif's rotational symmetry period
+    (360/points degrees) -- keep it at the default unless you also
+    update the caller's rotation-speed fractions to match."""
     cx, cy = center
+    step = 360.0 / points
 
-    # Outer boundary circle.
+    # Outer boundary circle -- perfectly rotation-symmetric on its own.
     draw.ellipse(
         [cx - radius, cy - radius, cx + radius, cy + radius],
         outline=accent, width=line_width,
@@ -70,12 +85,13 @@ def draw_sri_chakra_roundel(
 
     # Lotus-petal ring just inside the boundary circle: a ring of small
     # overlapping circles, the same "petal" construction used by the
-    # muggu roundel, reused here to frame the triangles.
-    petal_count = 16
+    # muggu roundel, reused here to frame the star. Uses the SAME point
+    # count as the star rings below so the whole motif shares one
+    # rotational symmetry period.
     petal_ring_radius = radius * 0.92
     petal_r = radius * 0.11
-    for i in range(petal_count):
-        angle = 2 * math.pi * i / petal_count
+    for i in range(points):
+        angle = math.radians(step * i)
         px = cx + petal_ring_radius * math.cos(angle)
         py = cy + petal_ring_radius * math.sin(angle)
         draw.ellipse(
@@ -83,16 +99,26 @@ def draw_sri_chakra_roundel(
             outline=accent, width=max(line_width - 1, 1),
         )
 
-    # Nine interlocking triangles -- the Sri Yantra's defining feature.
-    inner_radius = radius * 0.72
-    for frac in _UPWARD_RADIUS_FRACS:
-        pts = _triangle_points(center, inner_radius * frac, point_up=True)
-        draw.polygon(pts, outline=accent, width=line_width)
-    for frac in _DOWNWARD_RADIUS_FRACS:
-        pts = _triangle_points(center, inner_radius * frac, point_up=False)
-        draw.polygon(pts, outline=accent, width=line_width)
+    # Two interlocking rings of radiating spikes -- the Sri Yantra-
+    # inspired "star" at the motif's heart. The inner ring is offset by
+    # half a step so the two rings interlock visually, but each ring is
+    # independently `points`-periodic, so the combined figure is too.
+    half_width = step * 0.32
+    for i in range(points):
+        angle = step * i
+        draw.polygon(
+            _spike_triangle(center, angle, radius * 0.55, radius * 0.95, half_width),
+            outline=accent, width=line_width,
+        )
+    for i in range(points):
+        angle = step * i + step / 2
+        draw.polygon(
+            _spike_triangle(center, angle, radius * 0.22, radius * 0.58, half_width),
+            outline=accent, width=line_width,
+        )
 
-    # Central bindu (the yantra's focal point) + a small ring around it.
+    # Central bindu (the yantra's focal point) + a small ring around it
+    # -- a point and a circle, both rotation-symmetric at any angle.
     bindu_r = max(radius // 22, 4)
     draw.ellipse([cx - bindu_r, cy - bindu_r, cx + bindu_r, cy + bindu_r], fill=accent)
     ring_r = bindu_r * 2.4

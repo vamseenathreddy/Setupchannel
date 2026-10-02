@@ -142,16 +142,18 @@ def assemble_short(
 
 
 # How many turns the Sri Chakra makes across one loop of the Short.
-# Halved per explicit request (2026-10-02: "slow this rotation 50%
-# thats it") from an original full turn (1.0) down to half a turn (0.5)
-# per loop -- i.e. half the angular speed. 0.5 only stays seamless
-# because images/sri_chakra.py's motif was made 180-degree rotationally
-# symmetric specifically so a half-turn looks identical to a full turn
-# at the loop point -- see assemble_purana_short_with_rotating_chakra's
-# docstring and that module's comment. Any further slowdown would need
-# a finer rotational symmetry in the motif (or accept a visible loop
-# seam), not just a smaller number here.
-CHAKRA_REVOLUTIONS_PER_LOOP = 0.5
+# Halved AGAIN per explicit request (2026-10-02: "i suggest decrease
+# speed to 50% from current", following up on "user should not feel"
+# the Short end/loop) -- from 1.0 (first version) to 0.5 (first
+# slowdown) to 0.25 (this one) of a full turn per loop. Any of these
+# values stays seamless ONLY because images/sri_chakra.py's motif
+# (CHAKRA_POINTS=12 points, 30-degree rotational symmetry period) was
+# specifically built so every multiple of 1/12 of a revolution lands on
+# a pixel-identical frame at the loop point -- 0.25 = 3/12, still a
+# clean multiple. Slowing further is still possible down to 1/12
+# (~0.083) without a redesign; going below that, or to a value that
+# isn't a multiple of 1/12, would put a visible jump at the loop point.
+CHAKRA_REVOLUTIONS_PER_LOOP = 0.25
 
 
 def assemble_purana_short_with_rotating_chakra(
@@ -198,16 +200,17 @@ def assemble_purana_short_with_rotating_chakra(
     `2*pi*revolutions_per_loop*t/duration`, so the angle swept over one
     loop is `revolutions_per_loop` full turns. That only lands back on a
     visually identical frame at t=duration if revolutions_per_loop is a
-    multiple of the motif's own rotational symmetry -- a whole number
-    (1.0, 2.0, ...) always works for any shape, since a full 360-degree
-    turn returns ANY image to its starting orientation; a half turn
-    (0.5, used here per "slow this rotation 50%") only works because
-    images/sri_chakra.py's motif was deliberately built with exact
-    180-degree rotational symmetry (matching up/down triangle radii,
-    an even-count petal ring), so half a turn looks identical to a full
-    one. Changing revolutions_per_loop to anything else the motif isn't
-    symmetric under (e.g. 0.25) would put a visible jump at the loop
-    point. Verified here by comparing extracted frames: the chakra spins
+    multiple of the motif's own rotational symmetry period. A whole
+    number (1.0, 2.0, ...) always works for any shape, since a full
+    360-degree turn returns ANY image to its starting orientation; a
+    fractional value (0.5, 0.25, ... used here per the "slow this
+    rotation" / "decrease speed to 50% from current" requests) only
+    works because images/sri_chakra.py's motif was deliberately built
+    with CHAKRA_POINTS-fold (12-fold, 30-degree) rotational symmetry --
+    every multiple of 1/12 of a revolution lands back on an identical
+    frame. Changing revolutions_per_loop to a value that ISN'T a
+    multiple of 1/12 would put a visible jump at the loop point.
+    Verified here by comparing extracted frames: the chakra spins
     continuously in place, always around the same fixed center, and the
     frame at t=duration is pixel-identical to t=0 -- and because the
     motion is periodic with period=duration, consecutive loops flow as
