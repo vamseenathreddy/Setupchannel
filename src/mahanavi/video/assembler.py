@@ -141,10 +141,10 @@ def assemble_short(
     return output_path
 
 
-# Default sway amplitude for the rotating Sri Chakra background (degrees).
-# See assemble_purana_short_with_rotating_chakra's docstring for why this
-# is a back-and-forth SWAY rather than a continuous one-direction spin.
-CHAKRA_SWAY_DEGREES = 14.0
+# How many full 360-degree turns the Sri Chakra makes across one loop of
+# the Short. Kept at a whole number so the loop stays seamless -- see
+# assemble_purana_short_with_rotating_chakra's docstring.
+CHAKRA_REVOLUTIONS_PER_LOOP = 1.0
 
 
 def assemble_purana_short_with_rotating_chakra(
@@ -155,33 +155,34 @@ def assemble_purana_short_with_rotating_chakra(
     duration_seconds: float,
     audio_path: Path | None = None,
     fps: int = DEFAULT_FPS,
-    sway_degrees: float = CHAKRA_SWAY_DEGREES,
+    revolutions_per_loop: float = CHAKRA_REVOLUTIONS_PER_LOOP,
 ) -> Path:
     """Assembles the Purana Story Short's three separate layers
     (PuranaShortCardRenderer.render_layers()) into one .mp4 with the Sri
-    Chakra background motif slowly rotating, instead of a single flat
-    still image -- per explicit request (2026-10-02: "i want slowly
-    rotating sri chakram in background... to bring live feel instead of
-    static").
+    Chakra background motif continuously rotating IN PLACE (same center,
+    turning like a wheel), instead of a single flat still image -- per
+    explicit request (2026-10-02: "i want slowly rotating sri chakram in
+    background... to bring live feel instead of static", then
+    2026-10-02: "its rotating front back but it should rotate at
+    samplace circle" -- an earlier version used a back-and-forth sway
+    instead of a continuous spin, which read as swinging rather than
+    rotating; replaced with a real continuous rotation per this
+    correction).
 
-    WHY A SWAY, NOT A CONTINUOUS SPIN: this Short is intentionally short
+    WHY A WHOLE NUMBER OF REVOLUTIONS: this Short is intentionally short
     (duration_seconds, loop-friendly, no fade -- see module docstring)
     and relies on YouTube auto-looping it seamlessly so repeated loops
     read as one continuous, stable view rather than a video restarting.
-    A continuous one-direction rotation would leave the chakra at a
-    DIFFERENT angle at the end of the clip than at the start, so every
-    loop would show a visible jump back to the starting angle -- exactly
-    the seam the loop-friendly design has avoided everywhere else in
-    this channel. Instead, the chakra's rotation angle follows
-    `sway_degrees * sin(2*pi*t/duration)` -- it swings slowly from
-    center to +sway_degrees, back through center to -sway_degrees, and
-    back to center exactly at t=duration, which is mathematically
-    identical to its angle at t=0. That makes the loop point perfectly
-    seamless (frame at t=duration == frame at t=0) while still reading
-    as a slow, continuous, "alive" rotating motion to a viewer who isn't
-    frame-counting -- and because the motion itself is periodic with
-    period=duration, consecutive loops flow as one unbroken sway rather
-    than restarting, same as the Short overall.
+    The chakra's rotation angle follows
+    `2*pi*revolutions_per_loop*t/duration` -- with revolutions_per_loop
+    a whole number, the angle at t=duration is an exact multiple of
+    360 degrees, which is visually identical to the angle at t=0 (same
+    center, same orientation). That makes the loop point perfectly
+    seamless (frame at t=duration == frame at t=0, verified by comparing
+    extracted frames) while the chakra spins continuously in place,
+    always around the same fixed center, for the whole clip -- and
+    because the motion is periodic with period=duration, consecutive
+    loops flow as one unbroken spin rather than restarting.
 
     The three layers are composited in this order (back to front):
     background (opaque) -> chakra (rotating, transparent) -> text
@@ -216,7 +217,7 @@ def assemble_purana_short_with_rotating_chakra(
         cmd += ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100"]
         audio_map = ["-map", "3:a"]
 
-    angle_expr = f"({sway_degrees}*PI/180)*sin(2*PI*t/{duration_seconds})"
+    angle_expr = f"2*PI*{revolutions_per_loop}*t/{duration_seconds}"
     filter_complex = (
         f"[1:v]format=rgba,rotate=a='{angle_expr}':c=none:ow=iw:oh=ih[chakra_rot];"
         f"[0:v][chakra_rot]overlay=0:0:format=auto[bg_chakra];"
