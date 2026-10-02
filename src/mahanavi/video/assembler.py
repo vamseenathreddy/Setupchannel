@@ -153,6 +153,8 @@ def assemble_purana_short_with_rotating_chakra(
     text_path: Path,
     output_path: Path,
     duration_seconds: float,
+    chakra_x: int,
+    chakra_y: int,
     audio_path: Path | None = None,
     fps: int = DEFAULT_FPS,
     revolutions_per_loop: float = CHAKRA_REVOLUTIONS_PER_LOOP,
@@ -167,7 +169,19 @@ def assemble_purana_short_with_rotating_chakra(
     samplace circle" -- an earlier version used a back-and-forth sway
     instead of a continuous spin, which read as swinging rather than
     rotating; replaced with a real continuous rotation per this
-    correction).
+    correction, then 2026-10-02 again: "it looks funny. center dot is
+    center point to rotate" -- that earlier version also rotated the
+    chakra_path image as-is, which was full-card-sized with the motif
+    drawn off-center within it, so ffmpeg's rotate filter (which always
+    spins an image around ITS OWN center) was actually spinning the
+    whole card-sized canvas around the CARD's center, not around the
+    chakra's own bindu -- the motif visibly orbited instead of spinning
+    in place. Fixed by having PuranaShortCardRenderer build chakra_path
+    as its own small, tightly-sized image centered on its bindu
+    (_build_chakra_layer), so rotating that image IS rotating around the
+    bindu; `chakra_x`/`chakra_y` is where that (fixed-size) rotated image
+    gets overlaid on the background so its center lands in the right
+    spot on the full card).
 
     WHY A WHOLE NUMBER OF REVOLUTIONS: this Short is intentionally short
     (duration_seconds, loop-friendly, no fade -- see module docstring)
@@ -185,10 +199,10 @@ def assemble_purana_short_with_rotating_chakra(
     loops flow as one unbroken spin rather than restarting.
 
     The three layers are composited in this order (back to front):
-    background (opaque) -> chakra (rotating, transparent) -> text
-    (fixed, transparent) -- so the chakra always sits behind the text,
-    visible only through the gaps between letters/lines, exactly like
-    the static watermark design it replaces.
+    background (opaque) -> chakra (rotating, transparent, overlaid at
+    chakra_x/chakra_y) -> text (fixed, transparent) -- so the chakra
+    always sits behind the text, visible only through the gaps between
+    letters/lines, exactly like the static watermark design it replaces.
     """
     if shutil.which("ffmpeg") is None:
         raise VideoAssemblyError(
@@ -220,7 +234,7 @@ def assemble_purana_short_with_rotating_chakra(
     angle_expr = f"2*PI*{revolutions_per_loop}*t/{duration_seconds}"
     filter_complex = (
         f"[1:v]format=rgba,rotate=a='{angle_expr}':c=none:ow=iw:oh=ih[chakra_rot];"
-        f"[0:v][chakra_rot]overlay=0:0:format=auto[bg_chakra];"
+        f"[0:v][chakra_rot]overlay={chakra_x}:{chakra_y}:format=auto[bg_chakra];"
         f"[bg_chakra][2:v]overlay=0:0:format=auto,fps={fps},format=yuv420p[vout]"
     )
 

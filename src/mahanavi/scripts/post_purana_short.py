@@ -167,12 +167,20 @@ def main() -> int:
 
         slug = story.title_en.split(" ")[0].lower()
         video_path = settings.output_dir / f"{today.isoformat()}_purana_{slug}_short.mp4"
+        # chakra_x/y: top-left placement for the (fixed-size, rotating)
+        # chakra image so its own center -- its bindu, where ffmpeg's
+        # rotate filter actually pivots -- lands at the intended spot on
+        # the full card. See PuranaShortCardLayers' docstring.
+        chakra_x = layers.chakra_center_x - layers.chakra_width // 2
+        chakra_y = layers.chakra_center_y - layers.chakra_height // 2
         assemble_purana_short_with_rotating_chakra(
             background_path=layers.background_path,
             chakra_path=layers.chakra_path,
             text_path=layers.text_path,
             output_path=video_path,
             duration_seconds=settings.purana_short_duration_seconds,
+            chakra_x=chakra_x,
+            chakra_y=chakra_y,
             audio_path=settings.alert_short_music_path,
         )
         print(f"Assembled (rotating Sri Chakra, loop-friendly, {settings.purana_short_duration_seconds}s, no fades): {video_path}")

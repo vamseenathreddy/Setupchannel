@@ -120,6 +120,7 @@ BORDER_ACCENT = (230, 190, 90)
 CHAKRA_WATERMARK_ALPHA = 110  # raised from 40 -- "not visible currently, increase brightness"
 CHAKRA_ACCENT_RGB = (235, 200, 110)  # slightly lighter/warmer gold, reads better at this alpha
 CHAKRA_RADIUS_FRAC = 0.30
+CHAKRA_CENTER_Y_FRAC = 0.42  # where the chakra's own center (its bindu) sits on the full card
 
 
 @dataclass(frozen=True, slots=True)
@@ -146,6 +147,19 @@ class PuranaShortCardLayers:
     background_path: Path
     chakra_path: Path
     text_path: Path
+    # Where chakra_path's own center (its bindu -- see
+    # PuranaShortCardRenderer._build_chakra_layer) should land once
+    # placed on the full card canvas -- NOT (0, 0). The rotating
+    # assembly needs this because ffmpeg's rotate filter always spins
+    # an image around ITS OWN center: chakra_path is sized tightly
+    # around the motif precisely so that center IS the bindu, and the
+    # caller positions the (same-size, rotated) image so that center
+    # lands here, rather than overlaying it flush with the top-left
+    # corner of the full canvas.
+    chakra_width: int
+    chakra_height: int
+    chakra_center_x: int
+    chakra_center_y: int
 
 
 class PuranaShortCardRenderer:
@@ -162,9 +176,11 @@ class PuranaShortCardRenderer:
         """Flattens background + chakra watermark + text into one static
         .mp4-ready still image -- a plain fallback for callers that don't
         need the rotating variant (e.g. a quick preview or test)."""
-        background, chakra_layer, text_layer = self._compose(card)
+        background, chakra_img, chakra_cx, chakra_cy, text_layer = self._compose(card)
         canvas = background.copy()
-        canvas.alpha_composite(chakra_layer)
+        paste_x = chakra_cx - chakra_img.width // 2
+        paste_y = chakra_cy - chakra_img.height // 2
+        canvas.paste(chakra_img, (paste_x, paste_y), chakra_img)
         canvas.alpha_composite(text_layer)
 
         output_path = self._build_output_path(card)
@@ -182,7 +198,7 @@ class PuranaShortCardRenderer:
         """Saves background/chakra/text as three separate files for
         video/assembler.py's rotating-chakra assembly -- the production
         path per the "slowly rotating sri chakram" request."""
-        background, chakra_layer, text_layer = self._compose(card)
+        background, chakra_img, chakra_cx, chakra_cy, text_layer = self._compose(card)
 
         self._settings.output_dir.mkdir(parents=True, exist_ok=True)
         slug = card.story.title_en.split(" ")[0].lower()
@@ -193,16 +209,27 @@ class PuranaShortCardRenderer:
         background.convert("RGB").save(
             background_path, format="JPEG", quality=self._settings.image_output_quality, optimize=True,
         )
-        chakra_layer.save(chakra_path, format="PNG")
+        chakra_img.save(chakra_path, format="PNG")
         text_layer.save(text_path, format="PNG")
 
         logger.info("Rendered purana short card layers for %s to %s", card.story.title_en, self._settings.output_dir)
-        return PuranaShortCardLayers(background_path, chakra_path, text_path)
+        return PuranaShortCardLayers(
+            background_path, chakra_path, text_path,
+            chakra_width=chakra_img.width, chakra_height=chakra_img.height,
+            chakra_center_x=chakra_cx, chakra_center_y=chakra_cy,
+        )
 
-    def _compose(self, card: PuranaShortCard) -> tuple[Image.Image, Image.Image, Image.Image]:
-        """Does all the layout/fit work once, drawing onto three separate
-        RGBA canvases (background, chakra, text) so callers can either
-        flatten them (render()) or keep them apart (render_layers())."""
+    def _compose(
+        self, card: PuranaShortCard,
+    ) -> tuple[Image.Image, Image.Image, int, int, Image.Image]:
+        """Does all the layout/fit work once, drawing onto separate RGBA
+        images (background, chakra, text) so callers can either flatten
+        them (render()) or keep them apart (render_layers()). Returns
+        (background, chakra_img, chakra_center_x, chakra_center_y,
+        text_layer) -- chakra_img is its own small, tightly-sized image
+        (see _build_chakra_layer), not full-canvas-sized like the other
+        two, and chakra_center_x/y is where its center should land on
+        the full canvas."""
         width, height = CARD_WIDTH, CARD_HEIGHT
         margin_x = int(width * 0.08)
         content_width = width - 2 * margin_x
@@ -211,8 +238,7 @@ class PuranaShortCardRenderer:
             background = vertical_gradient(width, height, COLOR_PURANA_TOP, COLOR_PURANA_BOTTOM).convert("RGBA")
             self._draw_border(background)
 
-            chakra_layer = Image.new("RGBA", (width, height), (0, 0, 0, 0))
-            self._draw_chakra_watermark(chakra_layer, width, height)
+            chakra_img, chakra_cx, chakra_cy = self._build_chakra_layer(width, height)
 
             text_layer = Image.new("RGBA", (width, height), (0, 0, 0, 0))
             draw = ImageDraw.Draw(text_layer)
@@ -302,7 +328,7 @@ class PuranaShortCardRenderer:
 
             self._draw_centered_line(draw, card.subscribe_text, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT)
 
-            return background, chakra_layer, text_layer
+            return background, chakra_img, chakra_cx, chakra_cy, text_layer
 
         except OSError as exc:
             raise ImageRenderError(f"Purana short card rendering/save failed: {exc}") from exc
@@ -325,20 +351,33 @@ class PuranaShortCardRenderer:
             outline=BORDER_ACCENT, width=2,
         )
 
-    def _draw_chakra_watermark(self, chakra_layer: Image.Image, width: int, height: int) -> None:
-        """Draws the Sri Chakra motif directly onto its own transparent
-        layer, centered in the content column -- a clearly-visible (but
-        still background, not foreground) watermark per the explicit
-        "not visible currently, increase brightness" request. Kept on its
-        own layer (rather than composited onto a shared canvas) so
-        video/assembler.py's assemble_purana_short_with_rotating_chakra
-        can rotate this exact image independently of the backdrop/text."""
-        draw = ImageDraw.Draw(chakra_layer)
+    def _build_chakra_layer(self, width: int, height: int) -> tuple[Image.Image, int, int]:
+        """Builds the Sri Chakra motif as its OWN small, tightly-sized
+        square image -- centered on its own bindu -- rather than drawn
+        onto a full-card-sized transparent layer. This matters
+        specifically for the rotating variant: ffmpeg's `rotate` filter
+        always spins an image around ITS OWN center, so if the motif
+        were off-center within a larger canvas (as it was before this
+        fix), the whole canvas -- motif included -- would visibly orbit
+        around the CANVAS's center instead of the motif spinning in
+        place around its own bindu (reported as "it looks funny...
+        center dot is center point to rotate"). Returns (chakra_img,
+        target_center_x, target_center_y): target_center_* is where this
+        image's center should land once placed on the full card canvas
+        (see render()'s paste / render_layers()'s stored
+        chakra_center_x/y, consumed by
+        video/assembler.py's assemble_purana_short_with_rotating_chakra)."""
+        radius = int(width * CHAKRA_RADIUS_FRAC)
+        size = int(radius * 2.2)  # a little padding beyond the outer circle/petals
+        chakra_img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(chakra_img)
         draw_sri_chakra_roundel(
-            draw, center=(width // 2, int(height * 0.42)),
-            radius=int(width * CHAKRA_RADIUS_FRAC),
+            draw, center=(size // 2, size // 2), radius=radius,
             accent=(*CHAKRA_ACCENT_RGB, CHAKRA_WATERMARK_ALPHA),
         )
+        target_cx = width // 2
+        target_cy = int(height * CHAKRA_CENTER_Y_FRAC)
+        return chakra_img, target_cx, target_cy
 
     def _fit_paragraph_to_box(
         self, draw: ImageDraw.ImageDraw, text: str, max_width: int, max_height: int,
