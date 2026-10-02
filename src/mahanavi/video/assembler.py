@@ -141,10 +141,17 @@ def assemble_short(
     return output_path
 
 
-# How many full 360-degree turns the Sri Chakra makes across one loop of
-# the Short. Kept at a whole number so the loop stays seamless -- see
-# assemble_purana_short_with_rotating_chakra's docstring.
-CHAKRA_REVOLUTIONS_PER_LOOP = 1.0
+# How many turns the Sri Chakra makes across one loop of the Short.
+# Halved per explicit request (2026-10-02: "slow this rotation 50%
+# thats it") from an original full turn (1.0) down to half a turn (0.5)
+# per loop -- i.e. half the angular speed. 0.5 only stays seamless
+# because images/sri_chakra.py's motif was made 180-degree rotationally
+# symmetric specifically so a half-turn looks identical to a full turn
+# at the loop point -- see assemble_purana_short_with_rotating_chakra's
+# docstring and that module's comment. Any further slowdown would need
+# a finer rotational symmetry in the motif (or accept a visible loop
+# seam), not just a smaller number here.
+CHAKRA_REVOLUTIONS_PER_LOOP = 0.5
 
 
 def assemble_purana_short_with_rotating_chakra(
@@ -183,20 +190,28 @@ def assemble_purana_short_with_rotating_chakra(
     gets overlaid on the background so its center lands in the right
     spot on the full card).
 
-    WHY A WHOLE NUMBER OF REVOLUTIONS: this Short is intentionally short
-    (duration_seconds, loop-friendly, no fade -- see module docstring)
-    and relies on YouTube auto-looping it seamlessly so repeated loops
-    read as one continuous, stable view rather than a video restarting.
-    The chakra's rotation angle follows
-    `2*pi*revolutions_per_loop*t/duration` -- with revolutions_per_loop
-    a whole number, the angle at t=duration is an exact multiple of
-    360 degrees, which is visually identical to the angle at t=0 (same
-    center, same orientation). That makes the loop point perfectly
-    seamless (frame at t=duration == frame at t=0, verified by comparing
-    extracted frames) while the chakra spins continuously in place,
-    always around the same fixed center, for the whole clip -- and
-    because the motion is periodic with period=duration, consecutive
-    loops flow as one unbroken spin rather than restarting.
+    WHY revolutions_per_loop MUST MATCH THE MOTIF'S OWN SYMMETRY: this
+    Short is intentionally short (duration_seconds, loop-friendly, no
+    fade -- see module docstring) and relies on YouTube auto-looping it
+    seamlessly so repeated loops read as one continuous, stable view
+    rather than a video restarting. The chakra's rotation angle follows
+    `2*pi*revolutions_per_loop*t/duration`, so the angle swept over one
+    loop is `revolutions_per_loop` full turns. That only lands back on a
+    visually identical frame at t=duration if revolutions_per_loop is a
+    multiple of the motif's own rotational symmetry -- a whole number
+    (1.0, 2.0, ...) always works for any shape, since a full 360-degree
+    turn returns ANY image to its starting orientation; a half turn
+    (0.5, used here per "slow this rotation 50%") only works because
+    images/sri_chakra.py's motif was deliberately built with exact
+    180-degree rotational symmetry (matching up/down triangle radii,
+    an even-count petal ring), so half a turn looks identical to a full
+    one. Changing revolutions_per_loop to anything else the motif isn't
+    symmetric under (e.g. 0.25) would put a visible jump at the loop
+    point. Verified here by comparing extracted frames: the chakra spins
+    continuously in place, always around the same fixed center, and the
+    frame at t=duration is pixel-identical to t=0 -- and because the
+    motion is periodic with period=duration, consecutive loops flow as
+    one unbroken spin rather than restarting.
 
     The three layers are composited in this order (back to front):
     background (opaque) -> chakra (rotating, transparent, overlaid at

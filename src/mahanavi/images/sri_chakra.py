@@ -24,11 +24,16 @@ RGBA = tuple[int, int, int, int]
 
 # How many upward ("Shiva") vs downward ("Shakti") triangles to draw, and
 # the radius each is inscribed in (as a fraction of the overall motif
-# radius) -- loosely mirrors the real Sri Yantra's nine interlocking
-# triangles without attempting exact traditional proportions, which isn't
-# needed for a background watermark motif.
+# radius) -- loosely mirrors the real Sri Yantra's interlocking triangles
+# without attempting exact traditional proportions, which isn't needed
+# for a background watermark motif. Upward and downward sets share the
+# SAME radii (unlike the real Sri Yantra's uneven 4-vs-5 count) so the
+# whole motif has exact 180-degree rotational symmetry -- needed so the
+# rotating-chakra video (video/assembler.py) can slow the spin down to
+# half a revolution per loop and still land on a pixel-identical frame
+# at the loop point (half a turn now looks exactly like a full turn).
 _UPWARD_RADIUS_FRACS = (1.0, 0.80, 0.60, 0.40)
-_DOWNWARD_RADIUS_FRACS = (0.92, 0.74, 0.56, 0.38, 0.20)
+_DOWNWARD_RADIUS_FRACS = (1.0, 0.80, 0.60, 0.40)
 
 
 def _triangle_points(
