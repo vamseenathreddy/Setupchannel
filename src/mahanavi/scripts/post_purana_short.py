@@ -7,17 +7,19 @@ subscribers' feeds and dilute each video's individual loop/replay
 performance).
 
 Flow: read the rotation state (data/last_purana_short_index.txt,
-default 0 if missing/first run) -> pick that story -> render its static
-card (PuranaShortCardRenderer -- a held STILL frame with auto-fit text,
-never scrolling, never narrated, per explicit requirement) -> assemble
-into a .mp4 with NO fade-in/fade-out (LOOP_FRIENDLY_FADE_*_SECONDS, both
-0.0) at a duration shorter than a comfortable full read (settings.
-purana_short_duration_seconds, 12s default) so viewers loop 2-3x to
-finish reading -> build SEO (purana_short_seo.py) -> upload -> advance
-the rotation index (wraps back to 0 after the last story), UNLESS
---story was used to force a specific one (a forced run is a deliberate
-one-off re-post/test, so it does NOT disturb where the natural rotation
-is).
+default 0 if missing/first run) -> pick that story -> render it as three
+layers (PuranaShortCardRenderer.render_layers() -- background, a Sri
+Chakra motif, and the text, auto-fit per story, never scrolling, never
+narrated, per explicit requirement) -> assemble into a .mp4 with the Sri
+Chakra slowly swaying/rotating behind the fixed text
+(assemble_purana_short_with_rotating_chakra -- see that function's
+docstring for why a sway instead of a continuous spin) and NO fade-in/
+fade-out at a duration shorter than a comfortable full read (settings.
+purana_short_duration_seconds, 5s) so viewers loop 2-3x to finish
+reading -> build SEO (purana_short_seo.py) -> upload -> advance the
+rotation index (wraps back to 0 after the last story), UNLESS --story
+was used to force a specific one (a forced run is a deliberate one-off
+re-post/test, so it does NOT disturb where the natural rotation is).
 
 SAFETY: uploads as "unlisted" by default, same as every other posting
 script in this repo -- pass --public once you've reviewed it.
@@ -43,11 +45,7 @@ from mahanavi.content.purana_short_stories import PURANA_SHORT_STORIES, PuranaSh
 from mahanavi.exceptions import MahanaviError
 from mahanavi.images.purana_short_card_renderer import PuranaShortCard, PuranaShortCardRenderer
 from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
-from mahanavi.video.assembler import (
-    LOOP_FRIENDLY_FADE_IN_SECONDS,
-    LOOP_FRIENDLY_FADE_OUT_SECONDS,
-    assemble_short,
-)
+from mahanavi.video.assembler import assemble_purana_short_with_rotating_chakra
 
 STATE_FILE = Path("data") / "last_purana_short_index.txt"
 
@@ -164,19 +162,20 @@ def main() -> int:
     try:
         card = PuranaShortCard(story=story, episode_number=episode_number, icon_paths=_icon_paths(settings))
         renderer = PuranaShortCardRenderer(settings)
-        image_path = renderer.render(card)
-        print(f"Rendered: {image_path}")
+        layers = renderer.render_layers(card)
+        print(f"Rendered layers: {layers.background_path}, {layers.chakra_path}, {layers.text_path}")
 
         slug = story.title_en.split(" ")[0].lower()
         video_path = settings.output_dir / f"{today.isoformat()}_purana_{slug}_short.mp4"
-        assemble_short(
-            image_path, video_path,
+        assemble_purana_short_with_rotating_chakra(
+            background_path=layers.background_path,
+            chakra_path=layers.chakra_path,
+            text_path=layers.text_path,
+            output_path=video_path,
             duration_seconds=settings.purana_short_duration_seconds,
             audio_path=settings.alert_short_music_path,
-            fade_in_seconds=LOOP_FRIENDLY_FADE_IN_SECONDS,
-            fade_out_seconds=LOOP_FRIENDLY_FADE_OUT_SECONDS,
         )
-        print(f"Assembled (loop-friendly, {settings.purana_short_duration_seconds}s, no fades): {video_path}")
+        print(f"Assembled (rotating Sri Chakra, loop-friendly, {settings.purana_short_duration_seconds}s, no fades): {video_path}")
 
         seo = build_purana_short_seo(story, story_index, today.toordinal())
         uploader = YouTubeShortsUploader(settings)

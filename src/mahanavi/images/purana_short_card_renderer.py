@@ -66,7 +66,7 @@ from mahanavi.content.purana_short_stories import PuranaShortStory
 from mahanavi.exceptions import ImageRenderError
 from mahanavi.images.fonts import FontManager
 from mahanavi.images.layout import vertical_gradient
-from mahanavi.images.muggu import draw_muggu_roundel
+from mahanavi.images.sri_chakra import draw_sri_chakra_roundel
 
 logger = logging.getLogger(__name__)
 
@@ -97,21 +97,29 @@ DEFAULT_SUBSCRIBE_TEXT = "ప్రతిరోజు పురాణ కథల 
 ICON_FRAC = 0.078
 ICON_GAP_FRAC = 0.045
 
-# Border + muggu watermark (per explicit request, 2026-10-02: "muggu
+# Border + Sri Chakra watermark (per explicit request, 2026-10-02: "muggu
 # like design... at border or in middle... to bring live feel instead
-# of static"). Same programmatic, copyright-free technique as the Rashi
-# Mantra backgrounds (images/muggu.py), applied here as: a thin double-
-# line gold border inset from the card edge, and one large, LOW-ALPHA
-# muggu roundel centered in the content column, behind all text --
-# a watermark, not a competing foreground element, so it adds visual
-# richness without hurting legibility. This is the DEFAULT look (no
-# animation) -- see video/assembler.py's assemble_purana_short_with_rotating_muggu
-# for the optional animated variant the request also asked about.
+# of static", then again 2026-10-02: "i want slowly rotating sri chakram
+# in background its not visible currently, can increase brightness a
+# little more" -- swapped the generic muggu motif for an actual Sri
+# Chakra/Sri Yantra (images/sri_chakra.py) and raised the watermark alpha
+# from an earlier, too-faint 40 up to 110, confirmed visually legible
+# against the card's dark background without competing with the text).
+# A thin double-line gold border is inset from the card edge, and the
+# Sri Chakra is centered in the content column, behind all text -- a
+# watermark, not a competing foreground element. render() below bakes
+# this in as a STATIC image (used as a plain fallback / for tests);
+# the production pipeline uses render_layers() instead, which keeps the
+# Sri Chakra on its own transparent layer so
+# video/assembler.py's assemble_purana_short_with_rotating_chakra can
+# animate it (a slow back-and-forth sway, see that function's docstring
+# for why a sway rather than a continuous spin) while the backdrop and
+# text stay perfectly still.
 BORDER_OUTER_MARGIN_FRAC = 0.035
 BORDER_ACCENT = (230, 190, 90)
-MUGGU_WATERMARK_ALPHA = 40  # faint -- a watermark behind text, not competing with it
-MUGGU_RADIUS_FRAC = 0.30
-MUGGU_PETALS = 10
+CHAKRA_WATERMARK_ALPHA = 110  # raised from 40 -- "not visible currently, increase brightness"
+CHAKRA_ACCENT_RGB = (235, 200, 110)  # slightly lighter/warmer gold, reads better at this alpha
+CHAKRA_RADIUS_FRAC = 0.30
 
 
 @dataclass(frozen=True, slots=True)
@@ -122,23 +130,92 @@ class PuranaShortCard:
     icon_paths: list[Path] = field(default_factory=list)
 
 
+@dataclass(frozen=True, slots=True)
+class PuranaShortCardLayers:
+    """Three separate images consumed by the rotating-chakra video
+    pipeline (video/assembler.py's assemble_purana_short_with_rotating_chakra)
+    instead of one flattened frame, so the Sri Chakra motif can be
+    animated on its own layer while the backdrop and text stay fixed.
+
+    background_path: opaque gradient + border. No motif, no text.
+    chakra_path: transparent PNG, Sri Chakra motif only, full canvas size,
+        sits BEHIND the text layer once composited.
+    text_path: transparent PNG, every text element + the icon row, full
+        canvas size, sits on TOP of the (rotating) chakra layer.
+    """
+    background_path: Path
+    chakra_path: Path
+    text_path: Path
+
+
 class PuranaShortCardRenderer:
-    """Renders a single PuranaShortCard to a static 9:16 image file."""
+    """Renders a PuranaShortCard either as one flattened static image
+    (render()) or as three separate layers for the rotating-chakra video
+    pipeline (render_layers()) -- both share the same layout/fit logic
+    via _compose()."""
 
     def __init__(self, settings: Settings, font_manager: FontManager | None = None) -> None:
         self._settings = settings
         self._fonts = font_manager or FontManager(settings.telugu_font_path)
 
     def render(self, card: PuranaShortCard) -> Path:
+        """Flattens background + chakra watermark + text into one static
+        .mp4-ready still image -- a plain fallback for callers that don't
+        need the rotating variant (e.g. a quick preview or test)."""
+        background, chakra_layer, text_layer = self._compose(card)
+        canvas = background.copy()
+        canvas.alpha_composite(chakra_layer)
+        canvas.alpha_composite(text_layer)
+
+        output_path = self._build_output_path(card)
+        final = canvas.convert("RGB")
+        final.save(
+            output_path,
+            format=self._settings.image_output_format,
+            quality=self._settings.image_output_quality,
+            optimize=True,
+        )
+        logger.info("Rendered purana short card (static) for %s to %s", card.story.title_en, output_path)
+        return output_path
+
+    def render_layers(self, card: PuranaShortCard) -> PuranaShortCardLayers:
+        """Saves background/chakra/text as three separate files for
+        video/assembler.py's rotating-chakra assembly -- the production
+        path per the "slowly rotating sri chakram" request."""
+        background, chakra_layer, text_layer = self._compose(card)
+
+        self._settings.output_dir.mkdir(parents=True, exist_ok=True)
+        slug = card.story.title_en.split(" ")[0].lower()
+        background_path = self._settings.output_dir / f"purana_short_{slug}_bg.jpg"
+        chakra_path = self._settings.output_dir / f"purana_short_{slug}_chakra.png"
+        text_path = self._settings.output_dir / f"purana_short_{slug}_text.png"
+
+        background.convert("RGB").save(
+            background_path, format="JPEG", quality=self._settings.image_output_quality, optimize=True,
+        )
+        chakra_layer.save(chakra_path, format="PNG")
+        text_layer.save(text_path, format="PNG")
+
+        logger.info("Rendered purana short card layers for %s to %s", card.story.title_en, self._settings.output_dir)
+        return PuranaShortCardLayers(background_path, chakra_path, text_path)
+
+    def _compose(self, card: PuranaShortCard) -> tuple[Image.Image, Image.Image, Image.Image]:
+        """Does all the layout/fit work once, drawing onto three separate
+        RGBA canvases (background, chakra, text) so callers can either
+        flatten them (render()) or keep them apart (render_layers())."""
         width, height = CARD_WIDTH, CARD_HEIGHT
         margin_x = int(width * 0.08)
         content_width = width - 2 * margin_x
 
         try:
-            canvas = vertical_gradient(width, height, COLOR_PURANA_TOP, COLOR_PURANA_BOTTOM).convert("RGBA")
-            self._draw_border(canvas)
-            self._draw_muggu_watermark(canvas, width, height)
-            draw = ImageDraw.Draw(canvas)
+            background = vertical_gradient(width, height, COLOR_PURANA_TOP, COLOR_PURANA_BOTTOM).convert("RGBA")
+            self._draw_border(background)
+
+            chakra_layer = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+            self._draw_chakra_watermark(chakra_layer, width, height)
+
+            text_layer = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(text_layer)
 
             content_top = int(height * 0.08)
             footer_bottom = int(height * 0.68)
@@ -221,20 +298,11 @@ class PuranaShortCardRenderer:
             self._draw_centered_line(draw, source_line, source_font, width, source_top, COLOR_TEXT_LIGHT)
 
             if card.icon_paths:
-                self._draw_icon_row(canvas, card.icon_paths, width, icon_row_top)
+                self._draw_icon_row(text_layer, card.icon_paths, width, icon_row_top)
 
             self._draw_centered_line(draw, card.subscribe_text, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT)
 
-            output_path = self._build_output_path(card)
-            final = canvas.convert("RGB")
-            final.save(
-                output_path,
-                format=self._settings.image_output_format,
-                quality=self._settings.image_output_quality,
-                optimize=True,
-            )
-            logger.info("Rendered purana short card for %s to %s", card.story.title_en, output_path)
-            return output_path
+            return background, chakra_layer, text_layer
 
         except OSError as exc:
             raise ImageRenderError(f"Purana short card rendering/save failed: {exc}") from exc
@@ -257,22 +325,20 @@ class PuranaShortCardRenderer:
             outline=BORDER_ACCENT, width=2,
         )
 
-    def _draw_muggu_watermark(self, canvas: Image.Image, width: int, height: int) -> None:
-        """A large, faint (low-alpha) muggu roundel centered in the
-        content column, composited BEHIND all text -- a watermark for
-        visual richness ("bring live feel instead of static"), not a
-        competing foreground element. This is the static default; the
-        optional rotating variant (video/assembler.py) uses this exact
-        same motif as a separate animated layer instead of baking it in
-        here."""
-        overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
-        overlay_draw = ImageDraw.Draw(overlay)
-        draw_muggu_roundel(
-            overlay_draw, center=(width // 2, int(height * 0.42)),
-            radius=int(width * MUGGU_RADIUS_FRAC), petals=MUGGU_PETALS,
-            accent=(*BORDER_ACCENT, MUGGU_WATERMARK_ALPHA),
+    def _draw_chakra_watermark(self, chakra_layer: Image.Image, width: int, height: int) -> None:
+        """Draws the Sri Chakra motif directly onto its own transparent
+        layer, centered in the content column -- a clearly-visible (but
+        still background, not foreground) watermark per the explicit
+        "not visible currently, increase brightness" request. Kept on its
+        own layer (rather than composited onto a shared canvas) so
+        video/assembler.py's assemble_purana_short_with_rotating_chakra
+        can rotate this exact image independently of the backdrop/text."""
+        draw = ImageDraw.Draw(chakra_layer)
+        draw_sri_chakra_roundel(
+            draw, center=(width // 2, int(height * 0.42)),
+            radius=int(width * CHAKRA_RADIUS_FRAC),
+            accent=(*CHAKRA_ACCENT_RGB, CHAKRA_WATERMARK_ALPHA),
         )
-        canvas.alpha_composite(overlay)
 
     def _fit_paragraph_to_box(
         self, draw: ImageDraw.ImageDraw, text: str, max_width: int, max_height: int,
@@ -310,7 +376,7 @@ class PuranaShortCardRenderer:
         for line in lines:
             bbox = draw.textbbox((0, 0), line, font=font)
             line_w = bbox[2] - bbox[0]
-            draw.text(((width - line_w) // 2, y - bbox[1]), line, font=font, fill=color)
+            draw.text(((width - line_w) // 2, y - bbox[1]), line, font=font, fill=(*color, 255))
             y += line_height
 
     def _draw_icon_row(self, canvas: Image.Image, icon_paths: list[Path], width: int, top: int) -> None:
@@ -363,7 +429,7 @@ class PuranaShortCardRenderer:
     ) -> int:
         bbox = draw.textbbox((0, 0), text, font=font)
         line_w = bbox[2] - bbox[0]
-        draw.text(((width - line_w) // 2, top - bbox[1]), text, font=font, fill=color)
+        draw.text(((width - line_w) // 2, top - bbox[1]), text, font=font, fill=(*color, 255))
         return top + int(font.size * 1.15)
 
     def _fit_font_to_width(

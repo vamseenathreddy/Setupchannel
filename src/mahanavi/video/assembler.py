@@ -139,3 +139,110 @@ def assemble_short(
 
     logger.info("Assembled video: %s", output_path)
     return output_path
+
+
+# Default sway amplitude for the rotating Sri Chakra background (degrees).
+# See assemble_purana_short_with_rotating_chakra's docstring for why this
+# is a back-and-forth SWAY rather than a continuous one-direction spin.
+CHAKRA_SWAY_DEGREES = 14.0
+
+
+def assemble_purana_short_with_rotating_chakra(
+    background_path: Path,
+    chakra_path: Path,
+    text_path: Path,
+    output_path: Path,
+    duration_seconds: float,
+    audio_path: Path | None = None,
+    fps: int = DEFAULT_FPS,
+    sway_degrees: float = CHAKRA_SWAY_DEGREES,
+) -> Path:
+    """Assembles the Purana Story Short's three separate layers
+    (PuranaShortCardRenderer.render_layers()) into one .mp4 with the Sri
+    Chakra background motif slowly rotating, instead of a single flat
+    still image -- per explicit request (2026-10-02: "i want slowly
+    rotating sri chakram in background... to bring live feel instead of
+    static").
+
+    WHY A SWAY, NOT A CONTINUOUS SPIN: this Short is intentionally short
+    (duration_seconds, loop-friendly, no fade -- see module docstring)
+    and relies on YouTube auto-looping it seamlessly so repeated loops
+    read as one continuous, stable view rather than a video restarting.
+    A continuous one-direction rotation would leave the chakra at a
+    DIFFERENT angle at the end of the clip than at the start, so every
+    loop would show a visible jump back to the starting angle -- exactly
+    the seam the loop-friendly design has avoided everywhere else in
+    this channel. Instead, the chakra's rotation angle follows
+    `sway_degrees * sin(2*pi*t/duration)` -- it swings slowly from
+    center to +sway_degrees, back through center to -sway_degrees, and
+    back to center exactly at t=duration, which is mathematically
+    identical to its angle at t=0. That makes the loop point perfectly
+    seamless (frame at t=duration == frame at t=0) while still reading
+    as a slow, continuous, "alive" rotating motion to a viewer who isn't
+    frame-counting -- and because the motion itself is periodic with
+    period=duration, consecutive loops flow as one unbroken sway rather
+    than restarting, same as the Short overall.
+
+    The three layers are composited in this order (back to front):
+    background (opaque) -> chakra (rotating, transparent) -> text
+    (fixed, transparent) -- so the chakra always sits behind the text,
+    visible only through the gaps between letters/lines, exactly like
+    the static watermark design it replaces.
+    """
+    if shutil.which("ffmpeg") is None:
+        raise VideoAssemblyError(
+            "ffmpeg was not found on PATH. Install it (e.g. `winget install Gyan.FFmpeg` "
+            "on Windows) and restart your terminal so PATH picks it up."
+        )
+    for label, path in (("background", background_path), ("chakra", chakra_path), ("text", text_path)):
+        if not path.exists():
+            raise VideoAssemblyError(f"Purana short {label} layer does not exist: {path}")
+    if audio_path is not None and not audio_path.exists():
+        raise VideoAssemblyError(f"Audio file does not exist: {audio_path}")
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    cmd: list[str] = [
+        "ffmpeg", "-y",
+        "-framerate", str(fps), "-loop", "1", "-i", str(background_path),
+        "-framerate", str(fps), "-loop", "1", "-i", str(chakra_path),
+        "-framerate", str(fps), "-loop", "1", "-i", str(text_path),
+    ]
+
+    if audio_path is not None:
+        cmd += ["-stream_loop", "-1", "-i", str(audio_path)]
+        audio_map = ["-map", "3:a"]
+    else:
+        cmd += ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100"]
+        audio_map = ["-map", "3:a"]
+
+    angle_expr = f"({sway_degrees}*PI/180)*sin(2*PI*t/{duration_seconds})"
+    filter_complex = (
+        f"[1:v]format=rgba,rotate=a='{angle_expr}':c=none:ow=iw:oh=ih[chakra_rot];"
+        f"[0:v][chakra_rot]overlay=0:0:format=auto[bg_chakra];"
+        f"[bg_chakra][2:v]overlay=0:0:format=auto,fps={fps},format=yuv420p[vout]"
+    )
+
+    cmd += [
+        "-filter_complex", filter_complex,
+        "-map", "[vout]",
+        *audio_map,
+        "-t", str(duration_seconds),
+        "-c:v", "libx264",
+        "-pix_fmt", "yuv420p",
+        "-c:a", "aac",
+        "-shortest",
+        str(output_path),
+    ]
+
+    logger.info("Assembling rotating-chakra video: %s", " ".join(cmd))
+    result = subprocess.run(cmd, capture_output=True, text=True)
+
+    if result.returncode != 0:
+        raise VideoAssemblyError(
+            f"ffmpeg failed (exit code {result.returncode}) assembling {output_path}. "
+            f"stderr:\n{result.stderr[-2000:]}"
+        )
+
+    logger.info("Assembled rotating-chakra video: %s", output_path)
+    return output_path
