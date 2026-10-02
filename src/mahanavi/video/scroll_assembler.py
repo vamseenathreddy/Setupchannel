@@ -57,7 +57,7 @@ def assemble_scroll_video(
     (VIDEO_WIDTH/VIDEO_HEIGHT, 1920x1080) -- pass 1080x1920 (matching
     alert_card_renderer.py's ALERT_CARD_WIDTH/HEIGHT, the channel's
     existing Shorts canvas) for a vertical Shorts-format scroll video
-    instead, e.g. for the Kamakhya Devi short.
+    instead.
     """
     if shutil.which("ffmpeg") is None:
         raise VideoAssemblyError(

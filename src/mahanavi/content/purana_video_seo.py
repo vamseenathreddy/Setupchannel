@@ -257,38 +257,6 @@ def build_manasadevi_video_seo() -> PuranaVideoSeoContent:
     )
 
 
-def build_kamakhya_video_seo() -> PuranaVideoSeoContent:
-    """SEO content for the Kamakhya Devi short. Deliberately NOT built via
-    build_purana_video_seo() -- that helper hardcodes an "one of the 18
-    Puranas" claim into the description, which would be factually wrong
-    here. Kamakhya's primary source is the Kalika Purana, an Upapurana
-    (minor Purana), not one of the 18 Mahapuranas this channel's PDF
-    source (Astadasa_Puranalu.pdf) covers -- confirmed via Wikipedia's
-    Kalika Purana and Kamakhya Temple articles during research for this
-    episode. Devi Bhagavata mentions her only in a supplementary list of
-    108 Sati sites, not as a primary source either. Kept factually
-    precise rather than folded into the Ashtadasa Purana rotation."""
-    title = "కామాఖ్య దేవి ఆవిర్భావం - Kamakhya Devi Origin | Shakti Peetha"
-
-    description_te = (
-        "సతీదేవి శరీరభాగాలు పడిన యాభైఒక్క శక్తి పీఠాలలో అత్యంత ప్రాచీనమైనది కామాఖ్యా పీఠం. ఈ గాథ "
-        "కాళికా పురాణం నుండి తీసుకోబడింది -- ఇది అష్టాదశ మహాపురాణాలలో ఒకటి కాదు, ప్రత్యేకమైన శక్తి "
-        "ఉపపురాణం."
-    )
-    description_en = (
-        "Kamakhya Peetha, in Assam, is among the four oldest of the 51 Shakti Peethas where Sati "
-        "Devi's body fell. This story is from the Kalika Purana, a Shakta Upapurana (not one of the "
-        "18 Mahapuranas)."
-    )
-    description = f"{description_te}\n\n{_CHANNEL_FOOTER_TE}\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
-
-    return PuranaVideoSeoContent(
-        title=title,
-        description=description,
-        hashtags=["#KamakhyaDevi", "#కామాఖ్యదేవి", "#ShaktiPeetha", "#శక్తిపీఠం", "#TeluguDevotional"],
-    )
-
-
 def build_samudrika_shastra_video_seo() -> PuranaVideoSeoContent:
     """SEO content for the Samudrika Shastra (physiognomy) episode.
 

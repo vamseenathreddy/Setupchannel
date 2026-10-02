@@ -9,8 +9,7 @@ design (2026-10-01).
 Flow: read the rotation state (data/last_rashi_index.txt, default 0 if
 missing/first run) -> pick that rashi from RASHI_MANTRAS -> render its
 static card (RashiCardRenderer -- a held STILL frame, never scrolling
-text, per explicit requirement distinguishing this series from
-post_kamakhya_short.py's animated scroll) -> assemble into a .mp4 with
+text, per explicit requirement) -> assemble into a .mp4 with
 NO fade-in/fade-out (LOOP_FRIENDLY_FADE_*_SECONDS, both 0.0) at a
 duration shorter than a comfortable full read (settings.
 rashi_mantra_short_duration_seconds, 8s default) so viewers loop 2-3x to
