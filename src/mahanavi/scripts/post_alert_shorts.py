@@ -71,7 +71,7 @@ from mahanavi.images.alert_card_renderer import (
 from mahanavi.images.telugu_text import PANCHANG_LABELS, format_telugu_date
 from mahanavi.panchang.factory import get_panchang_provider
 from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
-from mahanavi.video.assembler import assemble_short
+from mahanavi.video.assembler import LOOP_FRIENDLY_FADE_IN_SECONDS, LOOP_FRIENDLY_FADE_OUT_SECONDS, assemble_short
 
 
 def _icon_paths(settings: Settings) -> list[Path]:
@@ -315,10 +315,22 @@ def _process_one(
         print(f"Rendered: {image_path}")
 
         video_path = settings.output_dir / f"{for_date.isoformat()}_{card.filename_suffix}_short.mp4"
+        # Loop-friendly, no fade (per explicit request, 2026-10-02: "it's
+        # fading out after ending short it should not happen user should
+        # not find our short ended"). These are the channel's OLDEST
+        # Shorts (Rahu Kalam / Shubha Ghadiyalu / Durmuhurtham), built
+        # before LOOP_FRIENDLY_FADE_*_SECONDS existed for the later
+        # Rashi Mantra / Purana series -- they were still using
+        # assemble_short()'s plain defaults (0.6s video fade-in, 1.0s
+        # audio fade-out), which is exactly the visible/audible "ending"
+        # seam a looping Short must not have. Explicitly loop-friendly
+        # now, matching every other series on the channel.
         assemble_short(
             image_path, video_path,
             duration_seconds=settings.alert_short_duration_seconds,
             audio_path=settings.alert_short_music_path,
+            fade_in_seconds=LOOP_FRIENDLY_FADE_IN_SECONDS,
+            fade_out_seconds=LOOP_FRIENDLY_FADE_OUT_SECONDS,
         )
         print(f"Assembled: {video_path}")
 
