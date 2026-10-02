@@ -357,8 +357,11 @@ class AlertCardRenderer:
             start_size=int(width * DATE_BADGE_FONT_FRAC), weight="Bold",
         )
         bbox = draw.textbbox((0, 0), date_text, font=font)
-        text_w = bbox[2] - bbox[0]
-        text_h = bbox[3] - bbox[1]
+        # PIL's textbbox is typed as returning floats -- cast to int here
+        # so badge_w/badge_h (and this function's `-> int` return) stay
+        # consistent; pixel coordinates don't need sub-pixel precision.
+        text_w = int(bbox[2] - bbox[0])
+        text_h = int(bbox[3] - bbox[1])
 
         badge_w = text_w + 2 * pad_x
         badge_h = text_h + 2 * pad_y
