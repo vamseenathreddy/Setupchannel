@@ -200,7 +200,25 @@ class YouTubeShortsUploader:
                 "Run `python -m mahanavi.scripts.youtube_shorts_auth_setup` once first."
             )
 
-        credentials = Credentials.from_authorized_user_file(str(token_file), SCOPES)
+        # Deliberately NOT passing SCOPES here (confirmed via a real
+        # production failure, 2026-10-02, run 37006560955): google-auth's
+        # Credentials.from_authorized_user_file(path, scopes) treats an
+        # EXPLICIT scopes argument as an override, not a fallback --
+        # passing SCOPES (now youtube.force-ssl) made it try to refresh
+        # using a scope the already-saved token was never granted,
+        # which Google's token endpoint rejects outright with
+        # `google.auth.exceptions.RefreshError: invalid_scope: Bad
+        # Request` -- crashing the ENTIRE upload, not just comment
+        # posting. Omitting the argument makes it fall back to
+        # info.get("scopes"), i.e. whatever scope the token file itself
+        # actually carries -- the old youtube.upload-only token keeps
+        # working exactly as before, and a token refreshed after
+        # re-running youtube_shorts_auth_setup.py will carry
+        # youtube.force-ssl automatically, with no code change needed
+        # here. post_comment() below still correctly fails gracefully
+        # (logs a warning, returns False) if the loaded token's scope
+        # doesn't cover commentThreads.insert.
+        credentials = Credentials.from_authorized_user_file(str(token_file))
         if credentials.expired and credentials.refresh_token:
             credentials.refresh(Request())
             token_file.write_text(credentials.to_json(), encoding="utf-8")
