@@ -80,6 +80,15 @@ exactly "last_purana_short_index.txt" in the same Drive folder. Skipping
 it means every run silently reposts story 0 (Gajendra Moksham) instead
 of advancing through the rotation.
 
+*** AND TO last_run_date_purana_short.txt, ALSO ADDED 2026-10-02 *** --
+same fix again: this is the "already posted today" marker
+scripts/ci/purana_short_gate.py checks (same role as
+last_run_date_rahu_kalam.txt etc. for the alert Shorts). Create an
+empty text file named exactly "last_run_date_purana_short.txt" in the
+same Drive folder before relying on the daily gate -- otherwise every
+gate-passing call on a given day would see "not posted today" and the
+series could post more than once in the same 5-6 PM window.
+
 Usage:
     python scripts/ci/drive_state_sync.py pull                    # Drive -> ./data
     python scripts/ci/drive_state_sync.py push                     # ./data -> Drive
@@ -109,6 +118,8 @@ STATE_FILES = [
     "last_run_date_shubha_ghadiyalu.txt",
     "last_run_date_durmuhurtham.txt",
     "last_rashi_index.txt",
+    "last_purana_short_index.txt",
+    "last_run_date_purana_short.txt",
 ]
 
 

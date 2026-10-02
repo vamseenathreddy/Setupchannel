@@ -68,6 +68,7 @@ COLOR_PURANA_BOTTOM = (90, 20, 45)
 COLOR_TEXT_LIGHT = (255, 250, 240)
 COLOR_GOLD = (230, 190, 90)
 
+INVOCATION_FONT_FRAC = 0.046
 SERIES_LABEL_FONT_FRAC = 0.040
 TITLE_FONT_FRAC = 0.072
 STORY_START_FONT_FRAC = 0.052   # starting size the auto-fit shrinks DOWN from
@@ -110,6 +111,10 @@ class PuranaShortCardRenderer:
             content_top = int(height * 0.08)
             footer_bottom = int(height * 0.68)
 
+            invocation_font = self._fit_font_to_width(
+                draw, card.story.invocation_te, max_width=content_width,
+                start_size=int(width * INVOCATION_FONT_FRAC), weight="Bold",
+            )
             series_font = self._fonts.get_font(size=int(width * SERIES_LABEL_FONT_FRAC), weight="SemiBold")
             title_font = self._fit_font_to_width(
                 draw, card.story.title_te, max_width=content_width,
@@ -133,6 +138,7 @@ class PuranaShortCardRenderer:
             # validated on the alert/rashi cards -- the story body then
             # gets whatever vertical space is left, and fits itself into
             # exactly that.
+            invocation_h = int(invocation_font.size * 1.2)
             series_h = int(series_font.size * 1.2)
             title_h = int(title_font.size * 1.2)
             moral_h = int(moral_font.size * 1.2)
@@ -147,7 +153,9 @@ class PuranaShortCardRenderer:
             source_top = icon_row_top - block_gap - source_h
             moral_top = source_top - int(block_gap * 0.6) - moral_h
 
-            story_box_top = content_top + series_h + block_gap + title_h + block_gap
+            story_box_top = (
+                content_top + invocation_h + block_gap + series_h + block_gap + title_h + block_gap
+            )
             story_box_bottom = moral_top - block_gap
             story_box_height = max(story_box_bottom - story_box_top, int(height * 0.1))
 
@@ -167,6 +175,10 @@ class PuranaShortCardRenderer:
             story_top = story_box_top + max((story_box_height - story_block_height) // 2, 0)
 
             cursor_y = content_top
+            cursor_y = self._draw_centered_line(
+                draw, card.story.invocation_te, invocation_font, width, cursor_y, COLOR_GOLD,
+            )
+            cursor_y += block_gap
             cursor_y = self._draw_centered_line(draw, series_label, series_font, width, cursor_y, COLOR_GOLD)
             cursor_y += block_gap
             self._draw_centered_line(draw, card.story.title_te, title_font, width, cursor_y, COLOR_TEXT_LIGHT)

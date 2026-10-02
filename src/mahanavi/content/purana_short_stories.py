@@ -30,6 +30,19 @@ images/purana_short_card_renderer.py shrinks the story's font size (down
 to a floor) to fit whatever length a given entry happens to be, rather
 than requiring every entry be exactly the same length -- so entries here
 can vary somewhat in length; the renderer handles it.
+
+INVOCATION LINE (per explicit request, 2026-10-02: "above purana katha
+text there should be Om namah sivaya / om namo naaraayanaaya / sri
+matre namaha etc as per that story"): each entry carries the salutation
+mantra of the DEITY THAT STORY IS ABOUT, shown above the series label
+on the card -- not one fixed mantra for every story. Picked per story's
+actual protagonist deity: a Vishnu-avatar story (Gajendra, Dhruva,
+Prahlada/Narasimha, Vamana, Matsya, Kurma, Varaha) gets "ఓం నమో
+నారాయణాయ"; a Shiva-centered story (Markandeya) gets "ఓం నమః శివాయ";
+Ganesha's own story gets his own mantra rather than his father Shiva's;
+and the one story centered on the Goddess herself (Sati) gets "శ్రీ
+మాత్రే నమః" -- the exact three examples given in the request, applied
+by actual protagonist rather than defaulted to one for everything.
 """
 
 from __future__ import annotations
@@ -41,6 +54,7 @@ from dataclasses import dataclass
 class PuranaShortStory:
     title_te: str          # short story title, e.g. "గజేంద్ర మోక్షం"
     title_en: str           # transliterated/English title, for SEO
+    invocation_te: str       # this story's deity salutation, e.g. "ఓం నమో నారాయణాయ"
     story_te: str            # the condensed story itself, one block of Telugu text
     moral_te: str             # one-line moral/benefit, shown in gold on the card
     moral_en: str              # English gloss of the moral, for SEO
@@ -138,6 +152,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
     PuranaShortStory(
         title_te="గజేంద్ర మోక్షం",
         title_en="Gajendra Moksham",
+        invocation_te="ఓం నమో నారాయణాయ",
         story_te=_GAJENDRA_STORY,
         moral_te="నిస్వార్థ భక్తికి భగవంతుడు తక్షణమే స్పందిస్తాడు",
         moral_en="God answers a devotee's sincere, selfless call instantly",
@@ -147,6 +162,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
     PuranaShortStory(
         title_te="ధ్రువుడి తపస్సు",
         title_en="Dhruva's Penance",
+        invocation_te="ఓం నమో నారాయణాయ",
         story_te=_DHRUVA_STORY,
         moral_te="చిన్న వయసైనా దృఢసంకల్పం ముందు అసాధ్యం కూడా సాధ్యమే",
         moral_en="Unwavering determination makes even the impossible possible, at any age",
@@ -156,6 +172,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
     PuranaShortStory(
         title_te="ప్రహ్లాద నరసింహ లీల",
         title_en="Prahlada and Narasimha",
+        invocation_te="ఓం నమో నారాయణాయ",
         story_te=_PRAHLADA_STORY,
         moral_te="నిశ్చలమైన భక్తిని ఏ శక్తీ అణచలేదు",
         moral_en="No power can suppress unwavering devotion",
@@ -165,6 +182,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
     PuranaShortStory(
         title_te="మార్కండేయుడి వరం",
         title_en="Markandeya's Boon",
+        invocation_te="ఓం నమః శివాయ",
         story_te=_MARKANDEYA_STORY,
         moral_te="నిశ్చలభక్తి మృత్యువును కూడా జయిస్తుంది",
         moral_en="Steadfast devotion can conquer even death itself",
@@ -174,6 +192,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
     PuranaShortStory(
         title_te="సతీదేవి త్యాగం",
         title_en="Sati's Sacrifice",
+        invocation_te="శ్రీ మాత్రే నమః",
         story_te=_SATI_STORY,
         moral_te="గౌరవం లేని చోట ఉండటం కన్నా నిష్క్రమించటం ధర్మం",
         moral_en="Walking away with dignity is better than staying where none is given",
@@ -183,6 +202,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
     PuranaShortStory(
         title_te="గణేశుడి విరిగిన దంతం",
         title_en="Ganesha's Broken Tusk",
+        invocation_te="ఓం గం గణపతయే నమః",
         story_te=_GANESHA_STORY,
         moral_te="పెద్దల మాటకు, వారి వస్తువుకు ఇచ్చే గౌరవమే నిజమైన వినయం",
         moral_en="True humility is the respect shown to elders and what they value",
@@ -192,6 +212,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
     PuranaShortStory(
         title_te="వామనావతారం",
         title_en="Vamana Avatara",
+        invocation_te="ఓం నమో నారాయణాయ",
         story_te=_VAMANA_STORY,
         moral_te="నిజమైన దాతృత్వానికి ఎదురుగా అహంకారం నిలవదు",
         moral_en="True generosity leaves no room for pride to stand",
@@ -201,6 +222,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
     PuranaShortStory(
         title_te="మత్స్యావతారం",
         title_en="Matsya Avatara",
+        invocation_te="ఓం నమో నారాయణాయ",
         story_te=_MATSYA_STORY,
         moral_te="చిన్న జీవి పట్ల చూపిన దయ కూడా గొప్ప రక్షణగా తిరిగొస్తుంది",
         moral_en="Compassion shown even to the smallest life can return as great protection",
@@ -210,6 +232,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
     PuranaShortStory(
         title_te="కూర్మావతారం - క్షీరసాగర మథనం",
         title_en="Kurma Avatara and the Churning of the Ocean",
+        invocation_te="ఓం నమో నారాయణాయ",
         story_te=_KURMA_STORY,
         moral_te="కష్టసమయంలో ఏకమైన ప్రయత్నానికి భగవంతుడి తోడు తప్పక ఉంటుంది",
         moral_en="United effort in hard times always finds divine support",
@@ -219,6 +242,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
     PuranaShortStory(
         title_te="వరాహావతారం",
         title_en="Varaha Avatara",
+        invocation_te="ఓం నమో నారాయణాయ",
         story_te=_VARAHA_STORY,
         moral_te="ధర్మాన్ని కాపాడటానికి భగవంతుడు ఏ రూపమైనా ధరిస్తాడు",
         moral_en="God takes any form necessary to protect righteousness",
