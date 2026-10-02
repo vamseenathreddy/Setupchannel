@@ -1,0 +1,126 @@
+name: Post Purana Concept Short
+
+# Manual-trigger-only (same reasoning as post-purana-short.yml -- GitHub's
+# own scheduler has a confirmed reliability bug) -- driven externally by
+# a cron-job.org watchdog calling this workflow's workflow_dispatch
+# endpoint repeatedly through the 11 AM-1 PM IST window.
+# scripts/ci/purana_concept_gate.py decides on each call whether THIS is
+# the day's randomly-chosen post time, so the actual post time varies
+# day to day within the window, per explicit request (2026-10-02:
+# "rotate above 6 concepts daily from all 18 puranas in another short
+# between 11 am to 1 pm").
+on:
+  workflow_dispatch:
+    inputs:
+      public:
+        description: "Upload as public. Uncheck for an unlisted test/review run."
+        required: false
+        type: boolean
+        default: true
+      bypass_gate:
+        description: >-
+          Post immediately, ignoring the 11 AM-1 PM time window and
+          today's already-posted marker. For manual testing/review runs
+          only -- never set this on the recurring cron-job.org calls.
+        required: false
+        type: boolean
+        default: false
+      force_concept:
+        description: >-
+          Force a specific entry instead of the next one in rotation --
+          an index (0-17), or a title like "Hanuman". Leave blank for
+          normal rotation behavior. A forced run does NOT advance the
+          stored rotation state.
+        required: false
+        default: ''
+
+concurrency:
+  group: post-concept-short
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  post-concept-short:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync + gate
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Decide whether this call should post today
+        id: gate
+        env:
+          BYPASS_GATE: ${{ inputs.bypass_gate && 'true' || 'false' }}
+        run: python scripts/ci/purana_concept_gate.py
+
+      - name: Install ffmpeg
+        if: steps.gate.outputs.target == 'post'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install full Python dependencies
+        if: steps.gate.outputs.target == 'post'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Run Purana Concept Short pipeline
+        if: steps.gate.outputs.target == 'post'
+        env:
+          MAHANAVI_IMAGES_ROOT: ./Images
+          MAHANAVI_ASSETS_DIR: ./assets
+          MAHANAVI_OUTPUT_DIR: ./data/generated
+          MAHANAVI_DATABASE_PATH: ./data/mahanavi.db
+          MAHANAVI_LOG_DIR: ./data/logs
+          MAHANAVI_TIMEZONE: Asia/Kolkata
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+        run: |
+          ARGS=""
+          if [ "${{ inputs.public }}" = "true" ]; then
+            ARGS="$ARGS --public"
+          fi
+          if [ -n "${{ inputs.force_concept }}" ]; then
+            ARGS="$ARGS --concept ${{ inputs.force_concept }}"
+          fi
+          python3 -m mahanavi.scripts.post_concept_short $ARGS
+
+      # Deliberately NO `if: always()` -- only runs if the pipeline step
+      # above actually succeeded, so a failed upload leaves today's
+      # marker unset and the next cron-job.org call retries today's
+      # post instead of skipping it.
+      - name: Mark today done
+        if: steps.gate.outputs.target == 'post'
+        run: python scripts/ci/drive_state_sync.py mark-done purana_concept
+
+      - name: Push state to Drive
+        if: always() && steps.gate.outputs.target == 'post'
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py push
+
+      - name: Upload run output as artifact (debugging)
+        if: steps.gate.outputs.target == 'post'
+        uses: actions/upload-artifact@v4
+        with:
+          name: concept-short-run-${{ github.run_id }}
+          path: |
+            data/logs/
+            data/generated/
+          if-no-files-found: ignore
+          retention-days: 14

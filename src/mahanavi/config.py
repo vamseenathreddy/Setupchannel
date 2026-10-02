@@ -117,6 +117,14 @@ class Settings(BaseSettings):
     # seam kept invisible (LOOP_FRIENDLY_FADE_*_SECONDS, both 0.0).
     purana_short_duration_seconds: float = Field(default=5.0, gt=0)
 
+    # Purana Concept Shorts (post_concept_short.py) -- the sixth series,
+    # 11 AM-1 PM IST window, rotating through 6 non-story concepts drawn
+    # from all 18 Puranas (2026-10-02: "rotate above 6 concepts daily
+    # from all 18 puranas in another short between 11 am to 1 pm"). Same
+    # loop-friendly, no-fade, short-duration design as every other Short
+    # on this channel.
+    purana_concept_short_duration_seconds: float = Field(default=5.0, gt=0)
+
     # fal.ai (AI-generated Purana scene visuals: FLUX.1 [dev] stills +
     # Kling 2.5 Turbo Pro image-to-video animation) -- get a key at
     # fal.ai/dashboard/keys. Pay-as-you-go, no plan to pick; add a

@@ -27,7 +27,14 @@ from mahanavi.exceptions import YouTubeUploadError
 
 logger = logging.getLogger(__name__)
 
-SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+# youtube.force-ssl is a SUPERSET of youtube.upload -- it also covers
+# commentThreads.insert, needed by post_comment() below (the Purana
+# Concept Shorts series posts the full text as a comment when it
+# doesn't fit on the card). A token saved with only youtube.upload
+# cannot be silently upgraded to this scope -- it needs a one-time
+# re-run of scripts/youtube_shorts_auth_setup.py (which also requests
+# this scope now) to get a fresh token with comment permission.
+SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
 
 # "People & Blogs" -- a reasonable general-purpose default for
 # devotional/informational content. Override via the category_id
@@ -123,7 +130,58 @@ class YouTubeShortsUploader:
         # when opened this way, so nothing is lost for actual Shorts.
         post_url = f"https://www.youtube.com/watch?v={video_id}" if video_id else None
         logger.info("Uploaded video: %s", post_url)
-        return UploadResult(target=PublishTarget.YOUTUBE, success=True, post_url=post_url)
+        return UploadResult(target=PublishTarget.YOUTUBE, success=True, post_url=post_url, video_id=video_id)
+
+    def post_comment(self, video_id: str, text: str) -> bool:
+        """Posts `text` as a top-level comment on `video_id`. Used by the
+        Purana Concept Shorts series (post_concept_short.py) when the
+        card's own auto-fit text still overflowed at its legibility floor
+        -- rather than silently clipping content off-frame, the FULL,
+        un-truncated text is posted as a comment so nothing is lost, per
+        explicit request (2026-10-02: "text should be compressed upto
+        readable for users if its still more and occupying copay same
+        text and put it in comment section while posting").
+
+        REQUIRES the youtube.force-ssl scope (see SCOPES above) -- a
+        token saved before that scope existed will get a 403 here; re-run
+        scripts/youtube_shorts_auth_setup.py once to fix it. Returns
+        False (and logs a warning) rather than raising on failure, since
+        a failed comment shouldn't fail the whole posting pipeline -- the
+        video itself already uploaded successfully by the time this is
+        called."""
+        try:
+            youtube = self._build_service()
+        except YouTubeUploadError as exc:
+            logger.warning("Could not post comment on %s (service build failed): %s", video_id, exc)
+            return False
+
+        try:
+            from googleapiclient.errors import HttpError
+        except ImportError as exc:
+            logger.warning("Could not post comment on %s (missing package): %s", video_id, exc)
+            return False
+
+        try:
+            youtube.commentThreads().insert(
+                part="snippet",
+                body={
+                    "snippet": {
+                        "videoId": video_id,
+                        "topLevelComment": {"snippet": {"textOriginal": text}},
+                    }
+                },
+            ).execute()
+            logger.info("Posted full-text comment on video %s", video_id)
+            return True
+        except HttpError as exc:
+            logger.warning(
+                "Could not post comment on %s -- likely needs a re-run of "
+                "youtube_shorts_auth_setup.py for the broadened scope: %s", video_id, exc,
+            )
+            return False
+        except Exception as exc:  # genuinely need to catch anything else the SDK can raise
+            logger.warning("Unexpected error posting comment on %s: %s", video_id, exc)
+            return False
 
     def _build_service(self) -> "Any":  # googleapiclient's Resource type isn't meaningfully annotable
         try:

@@ -70,3 +70,10 @@ class UploadResult:
     post_url: str | None = None
     error_message: str | None = None
     screenshot_path: Path | None = None
+    # The raw YouTube video ID (distinct from post_url) -- needed when a
+    # caller wants to take a FOLLOW-UP API action on this exact upload,
+    # such as YouTubeShortsUploader.post_comment(), which the Purana
+    # Concept Shorts series uses to post the full text as a comment when
+    # it didn't fit on the card itself (2026-10-02: "if its still more
+    # and occupying copy same text and put it in comment section").
+    video_id: str | None = None

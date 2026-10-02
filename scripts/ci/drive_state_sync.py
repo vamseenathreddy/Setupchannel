@@ -14,6 +14,8 @@ files that must survive between runs:
   - data/last_rashi_index.txt                 (0-11, which rashi the Rashi Mantra series posts next)
   - data/last_purana_short_index.txt          (0-9, which story the Purana Story series posts next)
   - data/purana_short_episode_count.txt       (ever-incrementing "పురాణ కథ - N" display count, never wraps)
+  - data/last_purana_concept_index.txt        (0-17, which concept entry the Purana Concept series posts next)
+  - data/last_run_date_purana_concept.txt     (IST date Purana Concept Short last posted)
 
 The Shorts got separate marker files (replacing one combined
 last_run_date.txt) when the workflow moved to hourly ticks with an
@@ -101,6 +103,16 @@ failure documented above, and every run will silently restart the
 displayed count at "1" instead of advancing, even though the content
 rotation itself keeps advancing correctly.
 
+*** AND TO last_purana_concept_index.txt / last_run_date_purana_concept.txt,
+ADDED 2026-10-02 for the new Purana Concept Shorts series (11 AM-1 PM
+IST window) *** -- same fix, same reason, one more time: before this
+series' first real run, create two empty (or "0"-containing, for the
+index file) text files named exactly "last_purana_concept_index.txt" and
+"last_run_date_purana_concept.txt" in the same Drive folder. Skipping
+this means the content rotation silently resets to entry 0 every run,
+and/or the daily gate never finds a "posted today" marker and could post
+more than once in the same window.
+
 Usage:
     python scripts/ci/drive_state_sync.py pull                    # Drive -> ./data
     python scripts/ci/drive_state_sync.py push                     # ./data -> Drive
@@ -133,6 +145,8 @@ STATE_FILES = [
     "last_purana_short_index.txt",
     "last_run_date_purana_short.txt",
     "purana_short_episode_count.txt",
+    "last_purana_concept_index.txt",
+    "last_run_date_purana_concept.txt",
 ]
 
 

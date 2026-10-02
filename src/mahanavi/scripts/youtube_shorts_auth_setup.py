@@ -24,10 +24,16 @@ import sys
 
 from mahanavi.config import get_settings
 
-# youtube.upload is the minimum scope needed to upload videos -- NOT
-# requesting broader scopes (like full account read/write) than this
-# actually needs.
-SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+# youtube.force-ssl (not just youtube.upload) -- the Purana Concept
+# Shorts series (post_concept_short.py) needs commentThreads.insert as
+# well as video upload, per explicit request (2026-10-02: "put it in
+# comment section while posting"). youtube.force-ssl is the scope that
+# covers both upload and comments; a token saved under the narrower
+# youtube.upload (from before this change) does NOT get upgraded by
+# itself -- re-run this script once to get a fresh token with the
+# broader scope, then push the refreshed data/youtube_token.json to
+# Drive (python scripts/ci/drive_state_sync.py push) so CI picks it up.
+SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
 
 
 def main() -> int:
