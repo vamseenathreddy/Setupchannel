@@ -85,11 +85,29 @@ ICON_ROW_TOP = int(ALERT_CARD_HEIGHT * 0.06)
 # Fixed, generous sizes (fraction of width) -- long content WRAPS instead
 # of shrinking these, so a short line always stays this large.
 TITLE_FONT_FRAC = 0.10
-DATE_FONT_FRAC = 0.042
 LABEL_FONT_FRAC = 0.048
 VALUE_FONT_FRAC = 0.062
 SUBSCRIBE_FONT_FRAC = 0.045
 SECONDARY_FONT_FRAC = 0.032  # notably smaller than LABEL_FONT_FRAC -- for de-emphasized extra info
+
+# DATE BADGE (replaced plain small date text, 2026-10-02): real channel
+# feedback was that every card uses the same template day to day, so a
+# returning viewer could mistake today's post for yesterday's at a glance
+# -- the date was there, but at DATE_FONT_FRAC=0.042, plain Regular
+# weight, same color as everything else, it didn't stand out. Now drawn
+# as a solid pill/badge instead of inline text: bigger, bold, and in the
+# channel's existing gold accent (same tone as the icons/muggu artwork
+# elsewhere), positioned as the very first content element right below
+# the icon row -- so it reads clearly even from a single frozen thumbnail
+# frame, not just on close viewing. Deliberately NOT animated: animation
+# adds real ffmpeg complexity and another failure point, and doesn't even
+# help the thumbnail (a single static frame), which is what most viewers
+# actually judge before tapping in.
+DATE_BADGE_FONT_FRAC = 0.050
+DATE_BADGE_BG = (230, 190, 90)   # gold accent, matches the rest of the channel
+DATE_BADGE_TEXT = (40, 20, 5)    # dark, for contrast against the gold fill
+DATE_BADGE_PAD_X_FRAC = 0.035
+DATE_BADGE_PAD_Y_FRAC = 0.012
 
 DEFAULT_SUBSCRIBE_TEXT = "ప్రతిరోజు ముహూర్తాలకొరకు సబ్‌స్క్రైబ్ చేయండి"  # "Subscribe for daily muhurtams"
 
@@ -130,11 +148,16 @@ class AlertCardRenderer:
 
             icons_bottom = self._draw_icon_row(canvas, card.icon_paths, width)
 
+            # Fixed element, drawn before the distributed content below
+            # (same treatment the icon row already gets) -- NOT part of
+            # the shrink-to-fit/gap-distribution math further down, since
+            # it has its own fixed size and position rather than flowing
+            # with the rest of the card's content.
+            badge_top_y = icons_bottom + int(height * 0.035) if icons_bottom else 0
+            badge_bottom = self._draw_date_badge(draw, card.date_text, width, content_width, badge_top_y)
+
             title_font = self._fit_font_to_width(
                 draw, card.title, max_width=content_width, start_size=int(width * TITLE_FONT_FRAC), weight="Bold",
-            )
-            date_font = self._fit_font_to_width(
-                draw, card.date_text, max_width=content_width, start_size=int(width * DATE_FONT_FRAC), weight="Regular",
             )
             subscribe_font = self._fit_font_to_width(
                 draw, card.subscribe_text, max_width=content_width,
@@ -143,11 +166,6 @@ class AlertCardRenderer:
 
             title_bbox = draw.textbbox((0, 0), card.title, font=title_font)
             title_h = int(title_bbox[3] - title_bbox[1])
-
-            date_h = 0
-            if card.date_text:
-                date_bbox = draw.textbbox((0, 0), card.date_text, font=date_font)
-                date_h = int(date_bbox[3] - date_bbox[1])
 
             subscribe_bbox = draw.textbbox((0, 0), card.subscribe_text, font=subscribe_font)
             subscribe_h = int(subscribe_bbox[3] - subscribe_bbox[1])
@@ -181,11 +199,13 @@ class AlertCardRenderer:
             footer_block_h = subscribe_h + (comment_h + footer_line_gap if card.comment_prompt_text else 0)
             footer_top = footer_bottom - footer_block_h
 
-            content_top = icons_bottom + int(height * 0.05) if icons_bottom else int(height * 0.30)
+            content_top = badge_bottom + int(height * 0.04) if card.date_text else (
+                icons_bottom + int(height * 0.05) if icons_bottom else int(height * 0.30)
+            )
             available_bottom = footer_top - int(height * 0.03)
             available_height = max(available_bottom - content_top, 0)
 
-            n_gaps = len(card.lines) + 1 + (1 if card.date_text else 0) + (1 if card.secondary_info else 0)
+            n_gaps = len(card.lines) + 1 + (1 if card.secondary_info else 0)
             min_gap = 2
             line_gap = int(height * 0.012)
 
@@ -219,7 +239,7 @@ class AlertCardRenderer:
                     secondary_h = self._block_height(draw, secondary_wrapped, secondary_font)
 
                 total_lines_height = sum(h for _, _, h in wrapped_lines)
-                needed_at_min_gap = title_h + date_h + secondary_h + n_gaps * min_gap + total_lines_height
+                needed_at_min_gap = title_h + secondary_h + n_gaps * min_gap + total_lines_height
 
                 if needed_at_min_gap <= available_height or font_scale <= 0.65:
                     break
@@ -236,7 +256,7 @@ class AlertCardRenderer:
             # The font-shrink loop above already guarantees
             # content_fixed_height + n_gaps*min_gap <= available_height,
             # so this quotient is always >= min_gap when that holds.
-            content_fixed_height = title_h + date_h + secondary_h + total_lines_height
+            content_fixed_height = title_h + secondary_h + total_lines_height
             ideal_gap = (available_height - content_fixed_height) // n_gaps
             gap = max(ideal_gap, min_gap)
 
@@ -247,15 +267,6 @@ class AlertCardRenderer:
                 card.title, font=title_font, fill=COLOR_TEXT_LIGHT,
             )
             cursor_y += title_h + gap
-
-            if card.date_text:
-                date_bbox = draw.textbbox((0, 0), card.date_text, font=date_font)
-                date_w = date_bbox[2] - date_bbox[0]
-                draw.text(
-                    ((width - date_w) // 2, cursor_y - date_bbox[1]),
-                    card.date_text, font=date_font, fill=COLOR_TEXT_LIGHT,
-                )
-                cursor_y += date_h + gap
 
             for label_wrapped, value_wrapped, _ in wrapped_lines:
                 cursor_y = self._draw_centered_block(draw, label_wrapped, label_font, width, cursor_y)
@@ -326,6 +337,43 @@ class AlertCardRenderer:
             x += icon.width + ICON_GAP
 
         return ICON_ROW_TOP + max_h
+
+    def _draw_date_badge(
+        self, draw: ImageDraw.ImageDraw, date_text: str, width: int, content_width: int, top_y: int,
+    ) -> int:
+        """Draw the date as a solid gold pill/badge (see DATE_BADGE_* docs
+        above) rather than plain inline text, so it reads as a clearly
+        distinct element even in a single frozen thumbnail frame. Returns
+        the y-coordinate just below the badge (or top_y unchanged if
+        date_text is empty, matching _draw_icon_row's "0 if nothing drawn"
+        convention)."""
+        if not date_text:
+            return top_y
+
+        pad_x = int(width * DATE_BADGE_PAD_X_FRAC)
+        pad_y = int(width * DATE_BADGE_PAD_Y_FRAC)
+        font = self._fit_font_to_width(
+            draw, date_text, max_width=content_width - 2 * pad_x,
+            start_size=int(width * DATE_BADGE_FONT_FRAC), weight="Bold",
+        )
+        bbox = draw.textbbox((0, 0), date_text, font=font)
+        text_w = bbox[2] - bbox[0]
+        text_h = bbox[3] - bbox[1]
+
+        badge_w = text_w + 2 * pad_x
+        badge_h = text_h + 2 * pad_y
+        badge_top = top_y if top_y else ICON_ROW_TOP
+        badge_left = (width - badge_w) // 2
+
+        draw.rounded_rectangle(
+            [badge_left, badge_top, badge_left + badge_w, badge_top + badge_h],
+            radius=badge_h // 2, fill=DATE_BADGE_BG,
+        )
+        draw.text(
+            (badge_left + pad_x, badge_top + pad_y - bbox[1]),
+            date_text, font=font, fill=DATE_BADGE_TEXT,
+        )
+        return badge_top + badge_h
 
     def _wrap_text(
         self, draw: ImageDraw.ImageDraw, text: str, font: "ImageFont.FreeTypeFont", max_width: int,
