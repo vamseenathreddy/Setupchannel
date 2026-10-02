@@ -1,0 +1,102 @@
+name: Post Purana Story Short (Manual)
+
+# Manual-only -- no schedule: trigger, same reasoning as post-rashi-mantra.yml:
+# this series is evergreen content, not a date-specific Panchang alert, and
+# the user runs it via their own external trigger (cron-job.org, calling
+# this workflow's workflow_dispatch endpoint at 6:30 PM IST) rather than
+# relying on GitHub's own schedule: trigger (see daily-shorts.yml's history
+# for why that trigger is not relied on for anything time-sensitive here).
+# One run posts ONE story -- the next one in the rotation
+# (data/last_purana_short_index.txt, synced via Drive, same pattern as the
+# Rashi Mantra series' rotation index) -- not all of them at once.
+on:
+  workflow_dispatch:
+    inputs:
+      public:
+        description: >-
+          Upload as public. Leave unchecked to upload unlisted first and
+          review the result in YouTube Studio before making it public.
+        required: false
+        type: boolean
+        default: false
+      force_story:
+        description: >-
+          Force a specific story instead of the next one in rotation --
+          an index (0-9), or a title like "Gajendra". Leave blank for
+          normal rotation behavior. A forced run does NOT advance the
+          stored rotation state (it's a one-off re-post/test).
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  post-purana-short:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install full Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Run Purana Story Short pipeline
+        env:
+          MAHANAVI_IMAGES_ROOT: ./Images
+          MAHANAVI_ASSETS_DIR: ./assets
+          MAHANAVI_OUTPUT_DIR: ./data/generated
+          MAHANAVI_DATABASE_PATH: ./data/mahanavi.db
+          MAHANAVI_LOG_DIR: ./data/logs
+          MAHANAVI_TIMEZONE: Asia/Kolkata
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+        run: |
+          ARGS=""
+          if [ "${{ inputs.public }}" = "true" ]; then
+            ARGS="$ARGS --public"
+          fi
+          if [ -n "${{ inputs.force_story }}" ]; then
+            ARGS="$ARGS --story ${{ inputs.force_story }}"
+          fi
+          python3 -m mahanavi.scripts.post_purana_short $ARGS
+
+      # Pushes the advanced rotation index (data/last_purana_short_index.txt)
+      # back to Drive, plus any refreshed YouTube token. Runs even on
+      # failure so a token refresh is never lost.
+      - name: Push state to Drive
+        if: always()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py push
+
+      - name: Upload run output as artifact (debugging)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: purana-short-run-${{ github.run_id }}
+          path: |
+            data/logs/
+            data/generated/
+          if-no-files-found: ignore
+          retention-days: 14

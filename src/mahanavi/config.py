@@ -109,6 +109,13 @@ class Settings(BaseSettings):
     # docstring (explicit request, 2026-10-01) for the full reasoning.
     rashi_mantra_short_duration_seconds: float = Field(default=8.0, gt=0)
 
+    # Purana Story Shorts (post_purana_short.py) -- same loop-friendly,
+    # no-fade design as the Rashi Mantra Shorts above, but given a
+    # slightly longer base duration since a condensed story is more text
+    # than a rashi card's mantra block and needs a touch more time per
+    # loop pass to stay readable rather than feeling rushed.
+    purana_short_duration_seconds: float = Field(default=12.0, gt=0)
+
     # fal.ai (AI-generated Purana scene visuals: FLUX.1 [dev] stills +
     # Kling 2.5 Turbo Pro image-to-video animation) -- get a key at
     # fal.ai/dashboard/keys. Pay-as-you-go, no plan to pick; add a

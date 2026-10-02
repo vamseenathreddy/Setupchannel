@@ -12,6 +12,7 @@ files that must survive between runs:
   - data/last_run_date_shubha_ghadiyalu.txt   (IST date Shubha Ghadiyalu last posted)
   - data/last_run_date_durmuhurtham.txt       (IST date Durmuhurtham last posted)
   - data/last_rashi_index.txt                 (0-11, which rashi the Rashi Mantra series posts next)
+  - data/last_purana_short_index.txt          (0-9, which story the Purana Story series posts next)
 
 The Shorts got separate marker files (replacing one combined
 last_run_date.txt) when the workflow moved to hourly ticks with an
@@ -71,6 +72,13 @@ push() will then hit the exact same storageQuotaExceeded failure
 documented above, and the rotation will silently reset to Mesha every
 single run instead of advancing -- it just won't be obvious until
 several runs in a row all post the same rashi.
+
+*** THIS ALSO APPLIES TO last_purana_short_index.txt, ADDED 2026-10-02
+*** -- same fix, same reason: before the Purana Story series' first
+real run, create an empty (or containing just "0") text file named
+exactly "last_purana_short_index.txt" in the same Drive folder. Skipping
+it means every run silently reposts story 0 (Gajendra Moksham) instead
+of advancing through the rotation.
 
 Usage:
     python scripts/ci/drive_state_sync.py pull                    # Drive -> ./data
