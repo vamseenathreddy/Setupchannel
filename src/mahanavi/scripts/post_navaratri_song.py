@@ -112,10 +112,14 @@ SCENES: dict[str, SceneSpec] = {
     "bridge": SceneSpec(
         key="bridge",
         image_prompt=(
-            "Divine radiant golden light rays emanating softly around a temple "
-            "Goddess idol silhouette, cosmic devotional atmosphere, soft clouds and "
-            "golden light particles, ethereal and powerful, respectful sacred art "
-            "style, photorealistic with painterly divine glow"
+            "Divine radiant golden light rays emanating softly around a clearly "
+            "Hindu Goddess Durga idol silhouette -- EIGHT ARMS each holding a "
+            "weapon (trishul, chakra, sword, bow), tall ornate crown (mukutam), "
+            "seated astride her lion vehicle (simha vahanam), silhouette unmistakably "
+            "female and multi-armed, cosmic devotional atmosphere, soft clouds and "
+            "golden light particles, ethereal and powerful, respectful South Indian "
+            "temple sacred art style, photorealistic with painterly divine glow. "
+            "This is Goddess Durga, NOT a seated meditating monk or Buddha figure."
         ),
         motion_prompt=(
             "slow motion golden light particles drifting upward, gentle pulsing "
@@ -125,14 +129,18 @@ SCENES: dict[str, SceneSpec] = {
     "outro": SceneSpec(
         key="outro",
         image_prompt=(
-            "Wide shot of a temple aarti ceremony at dusk, priest waving a lit brass "
-            "aarti lamp before a Goddess idol, golden flame light illuminating the "
-            "temple hall, devotees with folded hands, warm orange and gold tones, "
-            "deeply devotional, photorealistic"
+            "Wide shot of a temple aarti ceremony at dusk, priest holding the long "
+            "metal HANDLE of a traditional multi-wick brass aarti lamp (deepam) "
+            "firmly in his fist, flames burning only from the lamp's wick tips well "
+            "above his hand, waving the lamp before a Goddess idol, golden flame "
+            "light illuminating the temple hall, devotees with folded hands, warm "
+            "orange and gold tones, deeply devotional, photorealistic. The priest's "
+            "hand holds the lamp's handle only -- no fire touches his skin anywhere."
         ),
         motion_prompt=(
-            "slow motion circular sweep of the aarti flame, gentle flicker of fire, "
-            "soft golden light, extremely slow and reverent camera movement"
+            "slow motion circular sweep of the aarti lamp by its handle, gentle "
+            "flicker of the lamp's flame, soft golden light, extremely slow and "
+            "reverent camera movement, hand stays on the handle throughout"
         ),
     ),
 }
@@ -147,6 +155,31 @@ SCENE_SEQUENCE: list[tuple[str, float]] = [
     ("bridge", 0.16),
     ("outro", 0.12),
 ]
+
+# Burned-in lyric caption for each section, shown centered near the
+# bottom of frame for that whole section's screen time (added
+# 2026-10-03 per explicit request -- "text according to singer singing
+# lyrics at bottom"). One line per section, not word-by-word karaoke
+# timing, since that's the granularity SCENE_SEQUENCE already gives us
+# (each section IS one scene's screen time). "chorus" is sung
+# identically both times it appears, so the same line is correct for
+# both occurrences.
+#
+# *** PLACEHOLDER -- fill these in with the EXACT lines from the real
+# Suno lyrics before the next run; leaving any of these empty just
+# means that section plays with no caption, it will not break the
+# pipeline. *** (see this script's module docstring: the actual lyric
+# text lives in chat history, not committed to this repo, so it could
+# not be filled in here without risking putting the wrong words under
+# the real singing.)
+LYRIC_LINES: dict[str, str] = {
+    "intro": "",
+    "verse1": "",
+    "chorus": "",
+    "verse2": "",
+    "bridge": "",
+    "outro": "",
+}
 
 
 def _run(cmd: list[str]) -> None:
@@ -166,9 +199,24 @@ def _audio_duration_seconds(audio_path: Path) -> float:
     return float(result.stdout.strip())
 
 
-def _make_pingpong_loop(clip_path: Path, target_seconds: float, out_path: Path) -> None:
+def _escape_drawtext(text: str) -> str:
+    """Escapes a string for safe use inside an ffmpeg drawtext filter's
+    text='...' value -- drawtext treats :, ', \\, and % specially."""
+    return (
+        text.replace("\\", "\\\\\\\\")
+        .replace(":", "\\:")
+        .replace("'", "\\'")
+        .replace("%", "\\%")
+    )
+
+
+def _make_pingpong_loop(clip_path: Path, target_seconds: float, out_path: Path, caption: str = "") -> None:
     """Extends a short clip into a seamless ping-pong loop (forward +
-    reverse, concatenated, then looped) of exactly target_seconds."""
+    reverse, concatenated, then looped) of exactly target_seconds.
+
+    If `caption` is non-empty, burns it in centered near the bottom of
+    frame for this entire segment -- one lyric line per scene/section,
+    not word-by-word karaoke timing (see LYRIC_LINES' docstring)."""
     reversed_path = clip_path.with_name(clip_path.stem + "_rev.mp4")
     _run(["ffmpeg", "-y", "-i", str(clip_path), "-vf", "reverse", "-an", str(reversed_path)])
 
@@ -179,10 +227,21 @@ def _make_pingpong_loop(clip_path: Path, target_seconds: float, out_path: Path) 
 
     unit_duration = _audio_duration_seconds(unit_path)
     loops_needed = int(target_seconds // unit_duration) + 2  # generous over-shoot, trimmed below
+
+    vf_parts = ["scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2"]
+    if caption.strip():
+        font_path = get_settings().telugu_font_path
+        escaped = _escape_drawtext(caption.strip())
+        vf_parts.append(
+            f"drawtext=fontfile='{font_path}':text='{escaped}':"
+            "fontcolor=white:fontsize=52:x=(w-tw)/2:y=h-th-130:"
+            "box=1:boxcolor=black@0.45:boxborderw=18:"
+            "borderw=2:bordercolor=black@0.8"
+        )
     _run([
         "ffmpeg", "-y", "-stream_loop", str(loops_needed), "-i", str(unit_path),
         "-t", f"{target_seconds:.3f}",
-        "-vf", "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2",
+        "-vf", ",".join(vf_parts),
         "-an", "-r", "25", str(out_path),
     ])
 
@@ -241,7 +300,7 @@ def main() -> int:
         for i, (key, weight) in enumerate(SCENE_SEQUENCE):
             target_seconds = total_duration * weight
             seg_out = WORK_DIR / f"segment_{i:02d}_{key}.mp4"
-            _make_pingpong_loop(clip_paths[key], target_seconds, seg_out)
+            _make_pingpong_loop(clip_paths[key], target_seconds, seg_out, caption=LYRIC_LINES.get(key, ""))
             segment_paths.append(seg_out)
             print(f"Segment {i} ('{key}'): {target_seconds:.1f}s -> {seg_out}")
 

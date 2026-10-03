@@ -73,7 +73,19 @@ class SceneSpec:
     negative_prompt: str = (
         "text, watermark, logo, extra limbs, distorted hands, blurry, "
         "low quality, modern clothing, sunglasses, western dress, "
-        "disrespectful depiction"
+        "disrespectful depiction, "
+        # Added 2026-10-03: a real run put a Buddha statue where a
+        # Durga idol/silhouette was intended (any sufficiently vague
+        # "seated serene glowing figure" prompt apparently defaults
+        # toward Buddha imagery in FLUX's training distribution), and
+        # a separate scene showed a devotee with bare fire touching
+        # their hands instead of fire contained in an aarti lamp --
+        # both are now explicitly excluded here so every scene using
+        # the default negative_prompt is protected, not just the two
+        # that misfired.
+        "Buddha, Buddha statue, Buddhist monk, bald monk, Gautama Buddha, "
+        "Buddhist iconography, fire on bare hands, burning hands, hands "
+        "engulfed in flames, fire touching skin, self-immolation"
     )
 
 
