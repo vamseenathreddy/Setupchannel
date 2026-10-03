@@ -178,36 +178,55 @@ class FalSceneGenerator:
         access URL -- Kling needs a URL, not raw bytes, so the
         locally-downloaded FLUX still gets re-uploaded here first.
 
-        The single-POST "https://fal.run/storage/upload" endpoint this
-        used to hit no longer exists (404 "Application 'upload' not
-        found" on a real run, 2026-10-03). Replaced with the
-        two-step "storage/upload/initiate" flow fal.ai's own fal-client
-        package uses for its simpler (non-CDN-token) upload repository:
-        POST rest.fal.ai/storage/upload/initiate with the same
-        "Authorization: Key ..." header already used everywhere else
-        in this class to get a one-time signed PUT url + the final
-        access url, then PUT the raw bytes there directly.
+        THIRD attempt at this method (real-run failures, 2026-10-03):
+        1. The original single-POST "https://fal.run/storage/upload"
+           endpoint no longer exists (404 "Application 'upload' not found").
+        2. The "storage/upload/initiate?storage_type=gcs" two-step flow
+           (fal-client's older/fallback "fal" upload repository) is
+           ALSO rejected live: 400 "Invalid storage type" -- that
+           backend appears to have been retired too, even though it's
+           still in fal-client 1.0.3's source.
+        3. This is fal-client's actual DEFAULT upload path ("fal_v3"
+           repository) -- a short-lived CDN token, then a direct POST
+           of the raw bytes to fal's v3 CDN:
+             a. POST rest.fal.ai/storage/auth/token?storage_type=fal-cdn-v3
+                with the normal "Authorization: Key ..." header ->
+                {"token", "token_type", "base_url", "expires_at"}
+             b. POST https://v3.fal.media/files/upload with
+                "Authorization: {token_type} {token}" (NOT the API
+                key) and the raw bytes as the body -> {"access_url"}
         """
-        init_resp = requests.post(
-            "https://rest.fal.ai/storage/upload/initiate?storage_type=gcs",
-            headers={"Authorization": f"Key {self._key}", "Content-Type": "application/json"},
-            json={"file_name": path.name, "content_type": "image/png"},
-            timeout=60,
+        token_resp = requests.post(
+            "https://rest.fal.ai/storage/auth/token?storage_type=fal-cdn-v3",
+            headers={
+                "Authorization": f"Key {self._key}",
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+            json={},
+            timeout=30,
         )
-        if init_resp.status_code >= 400:
-            raise FalGenerationError(f"fal.ai upload-initiate failed: {init_resp.status_code} {init_resp.text[:500]}")
-        init_data = init_resp.json()
-        upload_url = init_data.get("upload_url")
-        file_url = init_data.get("file_url")
-        if not upload_url or not file_url:
-            raise FalGenerationError(f"fal.ai upload-initiate returned an unexpected shape: {init_data}")
+        if token_resp.status_code >= 400:
+            raise FalGenerationError(f"fal.ai CDN token request failed: {token_resp.status_code} {token_resp.text[:500]}")
+        token_data = token_resp.json()
+        token = token_data.get("token")
+        token_type = token_data.get("token_type")
+        if not token or not token_type:
+            raise FalGenerationError(f"fal.ai CDN token response had an unexpected shape: {token_data}")
 
-        put_resp = requests.put(
-            upload_url,
-            headers={"Content-Type": "image/png"},
+        upload_resp = requests.post(
+            "https://v3.fal.media/files/upload",
+            headers={
+                "Authorization": f"{token_type} {token}",
+                "Content-Type": "image/png",
+                "X-Fal-File-Name": path.name,
+            },
             data=path.read_bytes(),
             timeout=120,
         )
-        if put_resp.status_code >= 400:
-            raise FalGenerationError(f"fal.ai file upload (PUT) failed: {put_resp.status_code} {put_resp.text[:500]}")
-        return str(file_url)
+        if upload_resp.status_code >= 400:
+            raise FalGenerationError(f"fal.ai CDN file upload failed: {upload_resp.status_code} {upload_resp.text[:500]}")
+        access_url = upload_resp.json().get("access_url")
+        if not access_url:
+            raise FalGenerationError(f"fal.ai CDN upload returned no access_url: {upload_resp.text[:500]}")
+        return str(access_url)
