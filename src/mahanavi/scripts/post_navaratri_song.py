@@ -41,9 +41,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+from PIL import Image, ImageDraw
+
 from mahanavi.config import get_settings
 from mahanavi.content.navaratri_song_seo import build_navaratri_song_seo
 from mahanavi.exceptions import MahanaviError, YouTubeUploadError
+from mahanavi.images.fonts import FontManager
 from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
 from mahanavi.video.fal_scene_generator import FalGenerationError, FalSceneGenerator, SceneSpec
 
@@ -157,28 +160,54 @@ SCENE_SEQUENCE: list[tuple[str, float]] = [
 ]
 
 # Burned-in lyric caption for each section, shown centered near the
-# bottom of frame for that whole section's screen time (added
-# 2026-10-03 per explicit request -- "text according to singer singing
-# lyrics at bottom"). One line per section, not word-by-word karaoke
-# timing, since that's the granularity SCENE_SEQUENCE already gives us
-# (each section IS one scene's screen time). "chorus" is sung
-# identically both times it appears, so the same line is correct for
-# both occurrences.
+# bottom of frame (added 2026-10-03 per explicit request -- "text
+# according to singer singing lyrics at bottom"). Each section's lines
+# are shown ONE AT A TIME, evenly timed across that section's actual
+# screen duration (see _make_pingpong_loop's caption_lines handling) --
+# not all 4 lines at once, and not full word-level karaoke, but still
+# roughly tracking where the singer is in each section. "chorus" is
+# sung identically both times it appears in SCENE_SEQUENCE, so the
+# same lines are correct both times.
 #
-# *** PLACEHOLDER -- fill these in with the EXACT lines from the real
-# Suno lyrics before the next run; leaving any of these empty just
-# means that section plays with no caption, it will not break the
-# pipeline. *** (see this script's module docstring: the actual lyric
-# text lives in chat history, not committed to this repo, so it could
-# not be filled in here without risking putting the wrong words under
-# the real singing.)
-LYRIC_LINES: dict[str, str] = {
-    "intro": "",
-    "verse1": "",
-    "chorus": "",
-    "verse2": "",
-    "bridge": "",
-    "outro": "",
+# Exact lyrics as given by the channel owner (sourced from the real
+# Suno lyrics box, 2026-10-03) -- see post_navaratri_song.py's module
+# docstring for why this couldn't be filled in from this repo alone.
+LYRIC_LINES: dict[str, list[str]] = {
+    "intro": [
+        "ఓం ఐం హ్రీం క్లీం చాముండాయై విచ్చే",
+        "జయ జయ దుర్గమ్మా జగదంబా",
+        "ఇంద్రకీలాద్రి వాసా కనకదుర్గమ్మా",
+    ],
+    "verse1": [
+        "కృష్ణా నదీ తీరాన కొలువైన తల్లీ",
+        "ఇంద్రకీలాద్రి శిఖరాన వెలిగే జ్యోతి",
+        "త్రిశూలం ధరియించి రాక్షస సంహారీ",
+        "సింహవాహినివై నడయాడే శక్తి",
+    ],
+    "chorus": [
+        "స్వర్ణకవచధారిణి కనకదుర్గమ్మా",
+        "శరణు శరణు అంటూ మొక్కేము తల్లీ",
+        "చల్లని చూపులతో కాపాడవమ్మా",
+        "వరములు కురిపించు కనకదుర్గమ్మా",
+    ],
+    "verse2": [
+        "నవరాత్రి వేళలో అలంకారం నీదే",
+        "బంగారు కవచాన శోభిల్లే రూపం",
+        "భక్తుల గుండెల్లో భక్తి దీపం వెలిగించి",
+        "చీకటిని పారద్రోలే వెలుగై నిలుచుంటివి",
+    ],
+    "bridge": [
+        "అష్టాదశ శక్తి పీఠాలలో వెలసిన తల్లి",
+        "ఆది శక్తి రూపానివి నీవే అమ్మా",
+        "దుష్ట శిక్షణ శిష్ట రక్షణ చేసే తల్లి",
+        "జగన్మాత నీకిదె మా వందనం",
+    ],
+    "outro": [
+        "జయ జయ కనకదుర్గా జగజ్జననీ",
+        "స్వర్ణకవచధారిణి కనకదుర్గమ్మా",
+        "ఓం శ్రీ దుర్గాదేవ్యై నమః",
+        "ఓం శ్రీ దుర్గాదేవ్యై నమః",
+    ],
 }
 
 
@@ -199,24 +228,64 @@ def _audio_duration_seconds(audio_path: Path) -> float:
     return float(result.stdout.strip())
 
 
-def _escape_drawtext(text: str) -> str:
-    """Escapes a string for safe use inside an ffmpeg drawtext filter's
-    text='...' value -- drawtext treats :, ', \\, and % specially."""
-    return (
-        text.replace("\\", "\\\\\\\\")
-        .replace(":", "\\:")
-        .replace("'", "\\'")
-        .replace("%", "\\%")
+_CANVAS_W, _CANVAS_H = 1920, 1080
+
+
+def _render_caption_png(text: str, out_path: Path) -> None:
+    """Renders ONE lyric line onto a full-frame (1920x1080) transparent
+    PNG, text centered near the bottom in a semi-transparent box --
+    meant to be overlaid onto a video frame via ffmpeg's `overlay`
+    filter at (0,0).
+
+    Uses PIL + the project's own FontManager (RAQM/HarfBuzz layout),
+    NOT ffmpeg's drawtext -- drawtext has no complex-script shaping
+    (see images/fonts.py's module docstring) and visibly garbles
+    Telugu conjuncts/vowel signs. Every other Telugu text image in
+    this project already goes through PIL+RAQM for the same reason;
+    this keeps lyric captions consistent with that, instead of
+    reintroducing the same bug fresh via ffmpeg.
+    """
+    settings = get_settings()
+    fonts = FontManager(settings.telugu_font_path)
+    font = fonts.get_font(size=50, weight="Bold")
+
+    canvas = Image.new("RGBA", (_CANVAS_W, _CANVAS_H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(canvas)
+
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_w, text_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    pad_x, pad_y = 36, 18
+    box_w, box_h = text_w + 2 * pad_x, text_h + 2 * pad_y
+    box_x0 = (_CANVAS_W - box_w) / 2
+    box_y0 = _CANVAS_H - 160 - box_h
+    draw.rounded_rectangle(
+        [box_x0, box_y0, box_x0 + box_w, box_y0 + box_h], radius=14, fill=(0, 0, 0, 130),
     )
+    text_x = box_x0 + pad_x - bbox[0]
+    text_y = box_y0 + pad_y - bbox[1]
+    # Thin dark outline (drawn as 4 offset copies) so the white text
+    # stays readable over bright parts of the background video too.
+    for ox, oy in ((-2, 0), (2, 0), (0, -2), (0, 2)):
+        draw.text((text_x + ox, text_y + oy), text, font=font, fill=(0, 0, 0, 220))
+    draw.text((text_x, text_y), text, font=font, fill=(255, 255, 255, 255))
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    canvas.save(out_path)
 
 
-def _make_pingpong_loop(clip_path: Path, target_seconds: float, out_path: Path, caption: str = "") -> None:
+def _make_pingpong_loop(
+    clip_path: Path, target_seconds: float, out_path: Path, caption_lines: list[str] | None = None,
+) -> None:
     """Extends a short clip into a seamless ping-pong loop (forward +
     reverse, concatenated, then looped) of exactly target_seconds.
 
-    If `caption` is non-empty, burns it in centered near the bottom of
-    frame for this entire segment -- one lyric line per scene/section,
-    not word-by-word karaoke timing (see LYRIC_LINES' docstring)."""
+    If `caption_lines` is given, that section's lyric lines are shown
+    ONE AT A TIME, each for an even share of target_seconds (e.g. 4
+    lines over a 36s segment -> 9s each), composited in via chained
+    `overlay` filters with an `enable` time window -- not all 4 lines
+    at once, and not full word-level karaoke, but still roughly
+    tracking the singer's position within the section (see
+    LYRIC_LINES' docstring)."""
     reversed_path = clip_path.with_name(clip_path.stem + "_rev.mp4")
     _run(["ffmpeg", "-y", "-i", str(clip_path), "-vf", "reverse", "-an", str(reversed_path)])
 
@@ -228,22 +297,50 @@ def _make_pingpong_loop(clip_path: Path, target_seconds: float, out_path: Path, 
     unit_duration = _audio_duration_seconds(unit_path)
     loops_needed = int(target_seconds // unit_duration) + 2  # generous over-shoot, trimmed below
 
-    vf_parts = ["scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2"]
-    if caption.strip():
-        font_path = get_settings().telugu_font_path
-        escaped = _escape_drawtext(caption.strip())
-        vf_parts.append(
-            f"drawtext=fontfile='{font_path}':text='{escaped}':"
-            "fontcolor=white:fontsize=52:x=(w-tw)/2:y=h-th-130:"
-            "box=1:boxcolor=black@0.45:boxborderw=18:"
-            "borderw=2:bordercolor=black@0.8"
+    lines = [line.strip() for line in (caption_lines or []) if line.strip()]
+    if not lines:
+        _run([
+            "ffmpeg", "-y", "-stream_loop", str(loops_needed), "-i", str(unit_path),
+            "-t", f"{target_seconds:.3f}",
+            "-vf", f"scale={_CANVAS_W}:{_CANVAS_H}:force_original_aspect_ratio=decrease,"
+                   f"pad={_CANVAS_W}:{_CANVAS_H}:(ow-iw)/2:(oh-ih)/2",
+            "-an", "-r", "25", str(out_path),
+        ])
+        return
+
+    caption_paths: list[Path] = []
+    for i, line in enumerate(lines):
+        cap_path = clip_path.with_name(clip_path.stem + f"_cap{i}.png")
+        _render_caption_png(line, cap_path)
+        caption_paths.append(cap_path)
+
+    slice_seconds = target_seconds / len(lines)
+    cmd = ["ffmpeg", "-y", "-stream_loop", str(loops_needed), "-i", str(unit_path)]
+    for cap_path in caption_paths:
+        cmd += ["-loop", "1", "-i", str(cap_path)]
+
+    filter_parts = [
+        f"[0:v]scale={_CANVAS_W}:{_CANVAS_H}:force_original_aspect_ratio=decrease,"
+        f"pad={_CANVAS_W}:{_CANVAS_H}:(ow-iw)/2:(oh-ih)/2[base]"
+    ]
+    prev_label = "base"
+    for i in range(len(lines)):
+        start = i * slice_seconds
+        end = target_seconds if i == len(lines) - 1 else (i + 1) * slice_seconds
+        out_label = f"v{i}"
+        filter_parts.append(
+            f"[{prev_label}][{i + 1}:v]overlay=0:0:"
+            f"enable='between(t\\,{start:.3f}\\,{end:.3f})'[{out_label}]"
         )
-    _run([
-        "ffmpeg", "-y", "-stream_loop", str(loops_needed), "-i", str(unit_path),
+        prev_label = out_label
+
+    cmd += [
+        "-filter_complex", ";".join(filter_parts),
+        "-map", f"[{prev_label}]",
         "-t", f"{target_seconds:.3f}",
-        "-vf", ",".join(vf_parts),
         "-an", "-r", "25", str(out_path),
-    ])
+    ]
+    _run(cmd)
 
 
 def _assemble(song_path: Path, segment_paths: list[Path], watermark_text: str, out_path: Path) -> None:
@@ -300,7 +397,7 @@ def main() -> int:
         for i, (key, weight) in enumerate(SCENE_SEQUENCE):
             target_seconds = total_duration * weight
             seg_out = WORK_DIR / f"segment_{i:02d}_{key}.mp4"
-            _make_pingpong_loop(clip_paths[key], target_seconds, seg_out, caption=LYRIC_LINES.get(key, ""))
+            _make_pingpong_loop(clip_paths[key], target_seconds, seg_out, caption_lines=LYRIC_LINES.get(key))
             segment_paths.append(seg_out)
             print(f"Segment {i} ('{key}'): {target_seconds:.1f}s -> {seg_out}")
 
