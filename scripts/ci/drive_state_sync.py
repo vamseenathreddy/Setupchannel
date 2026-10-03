@@ -12,6 +12,7 @@ files that must survive between runs:
   - data/last_run_date_shubha_ghadiyalu.txt   (IST date Shubha Ghadiyalu last posted)
   - data/last_run_date_durmuhurtham.txt       (IST date Durmuhurtham last posted)
   - data/last_rashi_index.txt                 (0-11, which rashi the Rashi Mantra series posts next)
+  - data/last_run_date_rashi_mantra.txt       (IST date Rashi Mantra Short last posted)
   - data/last_purana_short_index.txt          (0-9, which story the Purana Story series posts next)
   - data/purana_short_episode_count.txt       (ever-incrementing "పురాణ కథ - N" display count, never wraps)
   - data/last_purana_concept_index.txt        (0-17, which concept entry the Purana Concept series posts next)
@@ -123,6 +124,18 @@ IST window) *** -- same fix, same reason: create two empty (or
 "last_gita_sloka_index.txt" and "last_run_date_gita_sloka.txt" in the
 same Drive folder before this series' first real run.
 
+*** AND TO last_run_date_rashi_mantra.txt, ADDED 2026-10-03 when the
+Rashi Mantra series moved from manual-test-only to a recurring daily
+gate (8-9 AM IST window, scripts/ci/rashi_mantra_gate.py) *** -- same
+fix, same reason: this is the "already posted today" marker the gate
+checks (last_rashi_index.txt itself already exists in Drive from the
+earlier manual test run, so only this NEW marker file needs
+pre-creating). Create an empty text file named exactly
+"last_run_date_rashi_mantra.txt" in the same Drive folder before
+relying on the daily gate -- otherwise every gate-passing call in the
+window would see "not posted today" and the series could post more
+than once in the same 8-9 AM window.
+
 Usage:
     python scripts/ci/drive_state_sync.py pull                    # Drive -> ./data
     python scripts/ci/drive_state_sync.py push                     # ./data -> Drive
@@ -159,6 +172,7 @@ STATE_FILES = [
     "last_run_date_purana_concept.txt",
     "last_gita_sloka_index.txt",
     "last_run_date_gita_sloka.txt",
+    "last_run_date_rashi_mantra.txt",
 ]
 
 

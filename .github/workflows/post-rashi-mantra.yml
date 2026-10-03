@@ -1,19 +1,47 @@
-name: Post Rashi Mantra Short (Manual)
+name: Post Rashi Mantra Short
 
-# Manual-only -- no schedule: trigger, by explicit request: this series
-# is evergreen (a rashi's ruling-planet mantra), not a date-specific
-# Panchang alert, and the user wants to run it themselves at a chosen
-# time (researched evening window 7:30-8:30 PM IST) rather than have it
-# auto-fire. One run posts ONE rashi -- the next one in the 12-rashi
-# rotation (data/last_rashi_index.txt, synced via Drive, same pattern as
-# the alert Shorts' "posted today" markers) -- not all 12 at once.
+# Moved 2026-10-03 from manual-only to a recurring daily post, once a
+# day, at a TIME THAT VARIES DAY TO DAY within an 8:00-9:00 AM IST
+# window -- same pattern as post-purana-short.yml / post-gita-sloka.yml
+# / post-concept-short.yml: driven externally by a cron-job.org
+# watchdog that calls this workflow's workflow_dispatch endpoint
+# repeatedly through the window (e.g. every 5 minutes, 08:00-08:55 IST).
+# scripts/ci/rashi_mantra_gate.py decides on each call whether THIS is
+# the day's randomly-chosen post time -- so although the trigger itself
+# fires on a fixed schedule, the actual post time varies day to day.
+#
+# One gated run posts ONE rashi -- the next one in the 12-rashi
+# rotation (data/last_rashi_index.txt, synced via Drive) -- not all 12
+# at once.
+#
+# Posts PUBLIC by default now that the series is reviewed and live.
+# Uncheck `public` for a one-off unlisted test/review run from the
+# Actions UI.
+#
+# *** DRIVE SETUP REQUIRED BEFORE THE FIRST GATED RUN *** -- this adds
+# a NEW marker file, last_run_date_rashi_mantra.txt, to
+# scripts/ci/drive_state_sync.py's STATE_FILES. Per that script's
+# module docstring (the storageQuotaExceeded issue), create an empty
+# text file named exactly "last_run_date_rashi_mantra.txt" in the same
+# Drive folder as the other marker files BEFORE relying on the daily
+# gate -- otherwise every gate-passing call in the window would see
+# "not posted today" and could post more than once in the same 8-9 AM
+# window. (last_rashi_index.txt itself already exists in Drive from the
+# earlier manual test run, so only this one new file is needed.)
 on:
   workflow_dispatch:
     inputs:
       public:
+        description: "Upload as public. Uncheck for an unlisted test/review run."
+        required: false
+        type: boolean
+        default: true
+      bypass_gate:
         description: >-
-          Upload as public. Leave unchecked to upload unlisted first and
-          review the result in YouTube Studio before making it public.
+          Post immediately, ignoring the 8-9 AM time window and today's
+          already-posted marker. For manual testing/review runs only --
+          never set this on the recurring cron-job.org calls, or it
+          will post on every single call instead of once a day.
         required: false
         type: boolean
         default: false
@@ -25,6 +53,13 @@ on:
           stored rotation state (it's a one-off re-post/test).
         required: false
         default: ''
+
+# Serializes runs so two near-simultaneous cron-job.org calls can never
+# execute the pipeline in parallel -- same reasoning as the other
+# gated series.
+concurrency:
+  group: post-rashi-mantra
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -41,7 +76,7 @@ jobs:
           python-version: "3.13"
           cache: "pip"
 
-      - name: Install minimal deps for state sync
+      - name: Install minimal deps for state sync + gate
         run: pip install google-auth google-api-python-client
 
       - name: Restore persistent state from Google Drive
@@ -50,16 +85,25 @@ jobs:
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
         run: python scripts/ci/drive_state_sync.py pull
 
+      - name: Decide whether this call should post today
+        id: gate
+        env:
+          BYPASS_GATE: ${{ inputs.bypass_gate && 'true' || 'false' }}
+        run: python scripts/ci/rashi_mantra_gate.py
+
       - name: Install ffmpeg
+        if: steps.gate.outputs.target == 'post'
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
       - name: Install full Python dependencies
+        if: steps.gate.outputs.target == 'post'
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -e .
 
       - name: Run Rashi Mantra Short pipeline
+        if: steps.gate.outputs.target == 'post'
         env:
           MAHANAVI_IMAGES_ROOT: ./Images
           MAHANAVI_ASSETS_DIR: ./assets
@@ -79,21 +123,28 @@ jobs:
           fi
           python3 -m mahanavi.scripts.post_rashi_mantra_short $ARGS
 
-      # Pushes the advanced rotation index (data/last_rashi_index.txt)
-      # back to Drive so the NEXT run knows to post the next rashi, plus
-      # any refreshed YouTube token. Runs even on failure so a token
-      # refresh is never lost, but a failed run's rotation index is
-      # simply whatever the script left locally (unchanged, since
-      # _write_rotation_index only runs after a successful upload).
+      # Marks today's post done -- deliberately NO `if: always()` here:
+      # this step only runs if the pipeline step above actually
+      # succeeded, so a failed upload leaves today's marker unset and
+      # the NEXT cron-job.org call in the window correctly retries
+      # today's post instead of skipping it.
+      - name: Mark today done
+        if: steps.gate.outputs.target == 'post'
+        run: python scripts/ci/drive_state_sync.py mark-done rashi_mantra
+
+      # Pushes state (including the advanced rotation index and any
+      # refreshed YouTube token) back to Drive. Unconditional `always()`
+      # here so a refreshed token is never lost even if the pipeline
+      # step above failed.
       - name: Push state to Drive
-        if: always()
+        if: always() && steps.gate.outputs.target == 'post'
         env:
           GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
         run: python scripts/ci/drive_state_sync.py push
 
       - name: Upload run output as artifact (debugging)
-        if: always()
+        if: steps.gate.outputs.target == 'post'
         uses: actions/upload-artifact@v4
         with:
           name: rashi-mantra-run-${{ github.run_id }}
