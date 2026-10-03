@@ -88,7 +88,7 @@ DEFAULT_SUBSCRIBE_TEXT = (
 DEFAULT_QUESTION = "ఈ శ్లోకం ఏ అధ్యాయం, శ్లోకం?"
 DEFAULT_CTA = "సమాధానం కామెంట్‌లో చెప్పండి! నిర్ధారణ కోసం నిన్నటి Short చూడండి 👆"
 
-NEXT_HINT_LABEL_TEXT = "రేపటి ఎపిసోడ్ హింట్"
+NEXT_HINT_LABEL_TEXT = "రేపటి ఎపిసోడ్‌లో"
 NEXT_HINT_LABEL_FONT_FRAC = 0.034
 NEXT_HINT_TEXT_START_FONT_FRAC = 0.036
 NEXT_HINT_TEXT_MIN_FONT_FRAC = 0.026
