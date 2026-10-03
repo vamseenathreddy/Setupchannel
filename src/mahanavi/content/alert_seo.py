@@ -51,6 +51,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
+from mahanavi.content.branding import brand_tagline
+
 # Niche hashtags specific to each alert type. Kept small and specific
 # per the "specific beats generic" guidance (#రాహుకాలం beats #పంచాంగం
 # alone) -- these are the 2-3 "niche identifier" tags in the researched
@@ -384,7 +386,10 @@ def build_rahu_kalam_seo(
         f"{hook_te}\n\nఈరోజు {weekday_te} రాహు కాలం: {rahu_kalam_range} — {cta_te}\n\n{comment_prompt_te}"
     )
     description_en = f"{hook_en}\n\nToday's ({weekday_en}) Rahu Kalam: {rahu_kalam_range} — {cta_en}\n\n{comment_en}"
-    description = f"{description_te}\n\n{_CHANNEL_FOOTER_TE}\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
+    description = (
+        f"{brand_tagline('rahu_kalam')}\n\n{description_te}\n\n{_CHANNEL_FOOTER_TE}"
+        f"\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
+    )
 
     hashtags = ["#Shorts", *_RAHU_KALAM_HASHTAGS]
     if festival:
@@ -416,7 +421,10 @@ def build_shubha_ghadiyalu_seo(
     description_en = (
         f"{hook_en}\n\nToday's ({weekday_en}) auspicious timings: {lines} — {cta_en}\n\n{comment_en}"
     )
-    description = f"{description_te}\n\n{_CHANNEL_FOOTER_TE}\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
+    description = (
+        f"{brand_tagline('shubha_ghadiyalu')}\n\n{description_te}\n\n{_CHANNEL_FOOTER_TE}"
+        f"\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
+    )
 
     hashtags = ["#Shorts", *_SHUBHA_GHADIYALU_HASHTAGS]
     if festival:
@@ -449,7 +457,10 @@ def build_durmuhurtham_seo(
     description_en = (
         f"{hook_en}\n\nToday's ({weekday_en}) Durmuhurtham: {durmuhurtham_range} — {cta_en}\n\n{comment_en}"
     )
-    description = f"{description_te}\n\n{_CHANNEL_FOOTER_TE}\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
+    description = (
+        f"{brand_tagline('durmuhurtham')}\n\n{description_te}\n\n{_CHANNEL_FOOTER_TE}"
+        f"\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
+    )
 
     hashtags = ["#Shorts", *_DURMUHURTHAM_HASHTAGS]
     if festival:

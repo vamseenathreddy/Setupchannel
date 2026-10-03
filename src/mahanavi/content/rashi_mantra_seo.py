@@ -45,6 +45,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from mahanavi.content.alert_seo import ShortSeoContent  # reuse the same shape
+from mahanavi.content.branding import brand_tagline
 from mahanavi.content.rashi_current_transits import ShaniTransitStatus
 from mahanavi.content.rashi_mantra_content import RashiMantraContent
 
@@ -200,7 +201,10 @@ def build_rashi_mantra_seo(
     # single consistent channel identity across both series.
     from mahanavi.content.alert_seo import _CHANNEL_FOOTER_EN, _CHANNEL_FOOTER_TE  # local import: these are intentionally "private" module constants, reused here rather than duplicated
 
-    description = f"{description_te}\n\n{_CHANNEL_FOOTER_TE}\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
+    description = (
+        f"{brand_tagline('rashi_mantra')}\n\n{description_te}\n\n{_CHANNEL_FOOTER_TE}"
+        f"\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
+    )
 
     hashtags = ["#Shorts", *_RASHI_HASHTAGS, f"#{content.name_en.split(' ')[0]}"]
     hashtags.append(_pick_rotating(_ROTATING_POOL, rashi_pick_index))

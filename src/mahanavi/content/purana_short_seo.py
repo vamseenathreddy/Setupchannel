@@ -17,6 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from mahanavi.content.alert_seo import ShortSeoContent  # reuse the same shape
+from mahanavi.content.branding import brand_tagline
 from mahanavi.content.purana_short_stories import PuranaShortStory
 
 _PURANA_HASHTAGS = ["#పురాణకథలు", "#PuranaStories", "#భక్తికథలు"]
@@ -110,7 +111,10 @@ def build_purana_short_seo(story: PuranaShortStory, story_index: int, for_date_o
 
     from mahanavi.content.alert_seo import _CHANNEL_FOOTER_EN, _CHANNEL_FOOTER_TE  # reused, not duplicated
 
-    description = f"{description_te}\n\n{_CHANNEL_FOOTER_TE}\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
+    description = (
+        f"{brand_tagline('purana_short')}\n\n{description_te}\n\n{_CHANNEL_FOOTER_TE}"
+        f"\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
+    )
 
     hashtags = ["#Shorts", *_PURANA_HASHTAGS]
     hashtags.append(_pick_rotating(_ROTATING_POOL, pick_index))

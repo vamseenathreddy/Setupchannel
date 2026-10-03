@@ -19,6 +19,7 @@ Shorts, per explicit request.
 from __future__ import annotations
 
 from mahanavi.content.alert_seo import ShortSeoContent  # reuse the same shape
+from mahanavi.content.branding import brand_tagline
 from mahanavi.content.purana_concept_shorts import ConceptType, PuranaConceptShort
 
 _CONCEPT_HASHTAGS = ["#పురాణవిశేషాలు", "#PuranaFacts", "#భక్తి"]
@@ -134,7 +135,10 @@ def build_purana_concept_seo(
 
     from mahanavi.content.alert_seo import _CHANNEL_FOOTER_EN, _CHANNEL_FOOTER_TE  # reused, not duplicated
 
-    description = f"{description_te}\n\n{_CHANNEL_FOOTER_TE}\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
+    description = (
+        f"{brand_tagline('purana_concept')}\n\n{description_te}\n\n{_CHANNEL_FOOTER_TE}"
+        f"\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
+    )
 
     hashtags = ["#Shorts", *_CONCEPT_HASHTAGS]
     hashtags.append(_pick_rotating(_ROTATING_POOL, pick_index))

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from mahanavi.content.alert_seo import ShortSeoContent  # reuse the same shape
 from mahanavi.content.bhagavad_gita_slokas import GitaSloka
+from mahanavi.content.branding import brand_tagline
 
 _GITA_HASHTAGS = ["#భగవద్గీత", "#BhagavadGita", "#GitaWisdom"]
 
@@ -100,7 +101,10 @@ def build_gita_sloka_seo(sloka: GitaSloka, sloka_index: int, for_date_ordinal: i
 
     from mahanavi.content.alert_seo import _CHANNEL_FOOTER_EN, _CHANNEL_FOOTER_TE  # reused, not duplicated
 
-    description = f"{description_te}\n\n{_CHANNEL_FOOTER_TE}\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
+    description = (
+        f"{brand_tagline('gita_sloka')}\n\n{description_te}\n\n{_CHANNEL_FOOTER_TE}"
+        f"\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
+    )
 
     hashtags = ["#Shorts", *_GITA_HASHTAGS]
     hashtags.append(_pick_rotating(_ROTATING_POOL, pick_index))
