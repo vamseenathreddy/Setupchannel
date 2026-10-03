@@ -15,10 +15,11 @@ shows it) -- the whole point is that the answer can only be confirmed
 by finding yesterday's Short on the channel again, not read directly
 off this card.
 
-Shares the exact same palette, border, and Krishna-Arjuna chariot
-watermark as GitaSlokaCardRenderer (imported from that module, not
-redefined) so quiz-day and verse-day cards read as the same series,
-just a different day's format -- not two different channels.
+Shares the exact same palette, border, and real Krishna-Arjuna
+background photo as GitaSlokaCardRenderer (imported constants, same
+_build_background technique) so quiz-day and verse-day cards read as
+the same series, just a different day's format -- not two different
+channels.
 """
 
 from __future__ import annotations
@@ -27,7 +28,7 @@ import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
+from PIL import Image, ImageDraw, ImageFont, ImageOps, UnidentifiedImageError
 
 from mahanavi.config import Settings
 from mahanavi.content.gita_sloka_quiz import GitaQuizOptions
@@ -36,17 +37,14 @@ from mahanavi.images.fonts import FontManager
 from mahanavi.images.gita_sloka_card_renderer import (
     BORDER_ACCENT,
     BORDER_OUTER_MARGIN_FRAC,
-    CHARIOT_ALPHA,
-    CHARIOT_BASELINE_Y_FRAC,
-    CHARIOT_SCALE_FRAC,
     COLOR_GITA_BOTTOM,
     COLOR_GITA_TOP,
     COLOR_GOLD,
     COLOR_TEXT_LIGHT,
     DEFAULT_INVOCATION,
+    GITA_BG_OVERLAY_ALPHA,
     TEXT_LINE_SPACING,
 )
-from mahanavi.images.krishna_arjuna_motif import draw_krishna_arjuna_chariot
 from mahanavi.images.layout import vertical_gradient
 
 logger = logging.getLogger(__name__)
@@ -94,9 +92,8 @@ class GitaQuizCardRenderer:
         content_width = width - 2 * margin_x
 
         try:
-            canvas = vertical_gradient(width, height, COLOR_GITA_TOP, COLOR_GITA_BOTTOM).convert("RGBA")
+            canvas = self._build_background(width, height)
             self._draw_border(canvas)
-            self._draw_chariot_watermark(canvas, width, height)
 
             draw = ImageDraw.Draw(canvas)
             target = card.quiz.target
@@ -218,16 +215,24 @@ class GitaQuizCardRenderer:
             outline=BORDER_ACCENT, width=2,
         )
 
-    def _draw_chariot_watermark(self, canvas: Image.Image, width: int, height: int) -> None:
-        watermark = Image.new("RGBA", (width, height), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(watermark)
-        scale = int(width * CHARIOT_SCALE_FRAC)
-        baseline_y = int(height * CHARIOT_BASELINE_Y_FRAC)
-        draw_krishna_arjuna_chariot(
-            draw, center_x=width // 2, baseline_y=baseline_y, scale=scale,
-            accent=(*COLOR_GOLD, CHARIOT_ALPHA), line_width=3,
-        )
-        canvas.alpha_composite(watermark)
+    def _build_background(self, width: int, height: int) -> Image.Image:
+        """Same real Krishna-Arjuna background as GitaSlokaCardRenderer
+        (imported constants) -- see that class's _build_background for
+        the full reasoning."""
+        bg_path = self._settings.gita_background_image_path
+        if bg_path is not None and bg_path.exists():
+            try:
+                with Image.open(bg_path) as raw:
+                    fitted = ImageOps.fit(raw.convert("RGB"), (width, height), method=Image.Resampling.LANCZOS)
+                canvas = fitted.convert("RGBA")
+                overlay = Image.new("RGBA", (width, height), (0, 0, 0, GITA_BG_OVERLAY_ALPHA))
+                return Image.alpha_composite(canvas, overlay)
+            except (OSError, UnidentifiedImageError) as exc:
+                logger.warning(
+                    "Could not load Gita background image at %s (%s) -- falling back to plain gradient.",
+                    bg_path, exc,
+                )
+        return vertical_gradient(width, height, COLOR_GITA_TOP, COLOR_GITA_BOTTOM).convert("RGBA")
 
     def _fit_block_to_box(
         self, draw: ImageDraw.ImageDraw, text: str, max_width: int, max_height: int,

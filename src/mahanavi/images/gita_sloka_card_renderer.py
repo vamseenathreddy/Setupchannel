@@ -15,11 +15,17 @@ navy-violet). Teal/peacock-blue is also a deliberate thematic nod to
 Krishna iconography (the peacock feather) without depicting anything
 specific enough to be "a copy" of any one artwork.
 
-KRISHNA-ARJUNA MOTIF: a static (not rotating -- unlike the Sri Chakra
-cards, no rotation was requested for this series) line-art chariot
-silhouette (images/krishna_arjuna_motif.py), drawn as a low-alpha gold
-watermark behind the text -- see that module's docstring for why it's
-abstract/geometric rather than a realistic depiction.
+KRISHNA-ARJUNA BACKGROUND: originally an abstract line-art chariot
+silhouette (images/krishna_arjuna_motif.py) drawn as a low-alpha
+watermark. Replaced (explicit request, 2026-10-03: "background image i
+want to change to this make it faade and text should be visible
+cleanly") with the user's own real Krishna-Arjuna chariot artwork
+(assets/images/gita_krishna_arjuna_bg.png, settings.
+gita_background_image_path) as the actual card background, dimmed
+under a dark overlay (_build_background / GITA_BG_OVERLAY_ALPHA below)
+so text stays cleanly readable over it. Falls back to the old plain
+gradient if that settings path is missing, so the card never breaks if
+the asset isn't present.
 
 BORDER: same thin double-line gold border technique used on every other
 card on this channel.
@@ -36,13 +42,12 @@ import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
+from PIL import Image, ImageDraw, ImageFont, ImageOps, UnidentifiedImageError
 
 from mahanavi.config import Settings
 from mahanavi.content.bhagavad_gita_slokas import GitaSloka
 from mahanavi.exceptions import ImageRenderError
 from mahanavi.images.fonts import FontManager
-from mahanavi.images.krishna_arjuna_motif import draw_krishna_arjuna_chariot
 from mahanavi.images.layout import vertical_gradient
 
 logger = logging.getLogger(__name__)
@@ -81,9 +86,19 @@ BORDER_ACCENT = (230, 190, 90)
 
 # Chariot motif sizing/placement -- see images/krishna_arjuna_motif.py.
 # Kept low-alpha, same watermark treatment as the Sri Chakra cards.
+# No longer drawn in THIS file (superseded by the real background photo
+# below), but these constants stay here since gita_quiz_card_renderer.py
+# still imports them for its own (still line-art) watermark.
 CHARIOT_ALPHA = 95
 CHARIOT_SCALE_FRAC = 0.30       # motif "wheel diameter" as a fraction of card width
 CHARIOT_BASELINE_Y_FRAC = 0.655  # where the wheel's bottom sits on the full card
+
+# Real background photo (gita_krishna_arjuna_bg.png) dimmed under a
+# flat dark overlay of this alpha so Sanskrit/Telugu text stays cleanly
+# readable on top -- explicit request, 2026-10-03: "make it faade and
+# text should be visible cleanly". Pure black (not tinted) for maximum,
+# unambiguous text contrast regardless of the photo's own colors.
+GITA_BG_OVERLAY_ALPHA = 165
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,9 +124,8 @@ class GitaSlokaCardRenderer:
         content_width = width - 2 * margin_x
 
         try:
-            canvas = vertical_gradient(width, height, COLOR_GITA_TOP, COLOR_GITA_BOTTOM).convert("RGBA")
+            canvas = self._build_background(width, height)
             self._draw_border(canvas)
-            self._draw_chariot_watermark(canvas, width, height)
 
             draw = ImageDraw.Draw(canvas)
             sloka = card.sloka
@@ -223,16 +237,25 @@ class GitaSlokaCardRenderer:
             outline=BORDER_ACCENT, width=2,
         )
 
-    def _draw_chariot_watermark(self, canvas: Image.Image, width: int, height: int) -> None:
-        watermark = Image.new("RGBA", (width, height), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(watermark)
-        scale = int(width * CHARIOT_SCALE_FRAC)
-        baseline_y = int(height * CHARIOT_BASELINE_Y_FRAC)
-        draw_krishna_arjuna_chariot(
-            draw, center_x=width // 2, baseline_y=baseline_y, scale=scale,
-            accent=(*COLOR_GOLD, CHARIOT_ALPHA), line_width=3,
-        )
-        canvas.alpha_composite(watermark)
+    def _build_background(self, width: int, height: int) -> Image.Image:
+        """Real Krishna-Arjuna artwork, cover-fit to the card and dimmed
+        under a flat dark overlay so text stays readable -- falls back
+        to the plain gradient if the configured image is missing/
+        unreadable, so a missing asset never breaks the render."""
+        bg_path = self._settings.gita_background_image_path
+        if bg_path is not None and bg_path.exists():
+            try:
+                with Image.open(bg_path) as raw:
+                    fitted = ImageOps.fit(raw.convert("RGB"), (width, height), method=Image.Resampling.LANCZOS)
+                canvas = fitted.convert("RGBA")
+                overlay = Image.new("RGBA", (width, height), (0, 0, 0, GITA_BG_OVERLAY_ALPHA))
+                return Image.alpha_composite(canvas, overlay)
+            except (OSError, UnidentifiedImageError) as exc:
+                logger.warning(
+                    "Could not load Gita background image at %s (%s) -- falling back to plain gradient.",
+                    bg_path, exc,
+                )
+        return vertical_gradient(width, height, COLOR_GITA_TOP, COLOR_GITA_BOTTOM).convert("RGBA")
 
     def _fit_block_to_box(
         self, draw: ImageDraw.ImageDraw, text: str, max_width: int, max_height: int,

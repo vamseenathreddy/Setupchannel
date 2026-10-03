@@ -145,6 +145,15 @@ class Settings(BaseSettings):
     # above) -- was 6.0 before this change.
     gita_sloka_short_duration_seconds: float = Field(default=5.0, gt=0)
 
+    # Real Krishna-Arjuna chariot artwork (user-supplied, 2026-10-03),
+    # replacing the abstract line-art chariot watermark as the Gita
+    # Sloka/Quiz cards' actual background -- faded under a dark overlay
+    # so the Sanskrit/Telugu text on top stays cleanly readable (see
+    # images/gita_sloka_card_renderer.py's _build_background).
+    gita_background_image_path: Path | None = Field(
+        default=PROJECT_ROOT / "assets" / "images" / "gita_krishna_arjuna_bg.png"
+    )
+
     # fal.ai (AI-generated Purana scene visuals: FLUX.1 [dev] stills +
     # Kling 2.5 Turbo Pro image-to-video animation) -- get a key at
     # fal.ai/dashboard/keys. Pay-as-you-go, no plan to pick; add a
