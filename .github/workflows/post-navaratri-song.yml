@@ -59,7 +59,23 @@ jobs:
           MAHANAVI_FAL_API_KEY: ${{ secrets.MAHANAVI_FAL_API_KEY }}
           MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
           MAHANAVI_PLAYLIST_ID_NAVARATRI_SONGS: ${{ secrets.MAHANAVI_PLAYLIST_ID_NAVARATRI_SONGS }}
-        run: python3 -m mahanavi.scripts.post_navaratri_song
+        run: |
+          set -o pipefail
+          python3 -m mahanavi.scripts.post_navaratri_song 2>&1 | tee data/navaratri_song_error.log
+
+      # Diagnostic hand-off (added 2026-10-03): this environment can't
+      # fetch GitHub Actions job logs directly (they redirect to blob
+      # storage that's blocked here), so on failure push the captured
+      # output to the same Drive folder, readable via a normal Drive
+      # account. The destination file must already exist in Drive
+      # (service-account create() has no quota -- see
+      # push_drive_asset.py's docstring).
+      - name: Push error log to Drive (on failure)
+        if: failure()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/push_drive_asset.py data/navaratri_song_error.log navaratri_song_error.log
 
       - name: Upload generated video as a run artifact (for review before it's live)
         if: always()
