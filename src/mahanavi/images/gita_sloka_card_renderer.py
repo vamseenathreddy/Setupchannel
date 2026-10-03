@@ -146,7 +146,15 @@ CHARIOT_BASELINE_Y_FRAC = 0.655  # where the wheel's bottom sits on the full car
 # readable on top -- explicit request, 2026-10-03: "make it faade and
 # text should be visible cleanly". Pure black (not tinted) for maximum,
 # unambiguous text contrast regardless of the photo's own colors.
-GITA_BG_OVERLAY_ALPHA = 165
+#
+# Raised from 165 to 210 per explicit follow-up request (2026-10-03:
+# "make gita slokas and quiz bacground image more dark 50% from
+# current") -- at alpha=165 the photo showed through at (255-165)/255
+# ~= 35% brightness; halving that visible brightness (~35% -> ~17.6%)
+# works out to alpha=210. Shared by both the verse card (this file) and
+# the quiz card (gita_quiz_card_renderer.py imports this constant), so
+# both stay visually consistent.
+GITA_BG_OVERLAY_ALPHA = 210
 
 
 @dataclass(frozen=True, slots=True)
