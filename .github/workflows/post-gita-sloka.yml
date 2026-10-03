@@ -85,6 +85,7 @@ jobs:
           MAHANAVI_LOG_DIR: ./data/logs
           MAHANAVI_TIMEZONE: Asia/Kolkata
           MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+          MAHANAVI_PLAYLIST_ID_GITA_SLOKA: ${{ secrets.MAHANAVI_PLAYLIST_ID_GITA_SLOKA }}
         run: |
           ARGS=""
           if [ "${{ inputs.public }}" = "true" ]; then
@@ -116,3 +117,10 @@ jobs:
             data/generated/
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/ci/notify_failure.py "Post Bhagavad Gita Sloka Short"

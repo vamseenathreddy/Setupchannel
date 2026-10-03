@@ -45,6 +45,8 @@ from mahanavi.config import Settings, get_settings
 from mahanavi.content.category_comments import build_category_comment
 from mahanavi.content.purana_concept_seo import build_purana_concept_seo
 from mahanavi.content.purana_concept_shorts import PURANA_CONCEPT_SHORTS, PuranaConceptShort
+from mahanavi.database.db import DatabaseManager
+from mahanavi.database.repositories import UploadLogRepository
 from mahanavi.exceptions import MahanaviError
 from mahanavi.images.purana_concept_card_renderer import PuranaConceptCard, PuranaConceptCardRenderer
 from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
@@ -188,6 +190,16 @@ def main() -> int:
                 print(f"Posted category comment: {category_tag}")
             else:
                 print("Note: could not post category comment (non-fatal).")
+
+        if result.video_id:
+            db = DatabaseManager(settings.database_path)
+            UploadLogRepository(db).log_upload(result.video_id, "puranas", seo.title, today)
+
+            if settings.playlist_id_puranas:
+                if uploader.add_to_playlist(result.video_id, settings.playlist_id_puranas):
+                    print("Added to playlist.")
+                else:
+                    print("Note: could not add to playlist (non-fatal).")
 
         if not forced:
             next_index = (concept_index + 1) % len(PURANA_CONCEPT_SHORTS)

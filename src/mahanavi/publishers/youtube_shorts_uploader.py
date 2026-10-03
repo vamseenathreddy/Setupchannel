@@ -183,6 +183,78 @@ class YouTubeShortsUploader:
             logger.warning("Unexpected error posting comment on %s: %s", video_id, exc)
             return False
 
+    def add_to_playlist(self, video_id: str, playlist_id: str) -> bool:
+        """Adds `video_id` to `playlist_id` -- added 2026-10-03 (pipeline
+        health review suggestion #2, "no playlists"). playlist_id comes
+        from one of settings.playlist_id_* (see
+        scripts/youtube_playlists_setup.py for how those are created).
+        Same non-fatal, logs-a-warning-and-returns-False pattern as
+        post_comment() -- the video itself already uploaded successfully
+        by the time this is called, so a failed playlist add must never
+        fail the whole run."""
+        try:
+            youtube = self._build_service()
+        except YouTubeUploadError as exc:
+            logger.warning("Could not add %s to playlist %s (service build failed): %s", video_id, playlist_id, exc)
+            return False
+
+        try:
+            from googleapiclient.errors import HttpError
+        except ImportError as exc:
+            logger.warning("Could not add %s to playlist (missing package): %s", video_id, exc)
+            return False
+
+        try:
+            youtube.playlistItems().insert(
+                part="snippet",
+                body={
+                    "snippet": {
+                        "playlistId": playlist_id,
+                        "resourceId": {"kind": "youtube#video", "videoId": video_id},
+                    }
+                },
+            ).execute()
+            logger.info("Added video %s to playlist %s", video_id, playlist_id)
+            return True
+        except HttpError as exc:
+            logger.warning("Could not add %s to playlist %s: %s", video_id, playlist_id, exc)
+            return False
+        except Exception as exc:  # genuinely need to catch anything else the SDK can raise
+            logger.warning("Unexpected error adding %s to playlist %s: %s", video_id, playlist_id, exc)
+            return False
+
+    def check_token_health(self) -> tuple[bool, str]:
+        """Makes the cheapest possible authenticated call (channels.list
+        mine=true) to confirm the saved token still works -- added
+        2026-10-03 (pipeline health review suggestion #4, "token-expiry
+        risk is a single point of failure"). Used by
+        scripts/token_health_check.py, run on its own daily schedule
+        BEFORE the night's posting window, so a dead/revoked token is
+        caught and alerted on well before it would otherwise silently
+        stop every single series at once.
+
+        Returns (True, "") on success, or (False, human-readable reason)
+        on any failure -- deliberately returns rather than raises, same
+        as every other method on this class, so the caller decides what
+        to do (here: send a Telegram alert)."""
+        try:
+            youtube = self._build_service()
+        except YouTubeUploadError as exc:
+            return False, str(exc)
+
+        try:
+            from googleapiclient.errors import HttpError
+        except ImportError as exc:
+            return False, f"Missing package: {exc}"
+
+        try:
+            youtube.channels().list(part="id", mine=True).execute()
+            return True, ""
+        except HttpError as exc:
+            return False, f"YouTube API call failed: {exc}"
+        except Exception as exc:  # genuinely need to catch anything else the SDK can raise
+            return False, f"Unexpected error: {exc}"
+
     def _build_service(self) -> "Any":  # googleapiclient's Resource type isn't meaningfully annotable
         try:
             from google.auth.transport.requests import Request

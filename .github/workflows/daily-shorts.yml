@@ -93,6 +93,7 @@ jobs:
           MAHANAVI_PROKERALA_CLIENT_ID_2: ${{ secrets.MAHANAVI_PROKERALA_CLIENT_ID_2 }}
           MAHANAVI_PROKERALA_CLIENT_SECRET_2: ${{ secrets.MAHANAVI_PROKERALA_CLIENT_SECRET_2 }}
           MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+          MAHANAVI_PLAYLIST_ID_MUHURTAS: ${{ secrets.MAHANAVI_PLAYLIST_ID_MUHURTAS }}
         run: python3 -m mahanavi.scripts.post_alert_shorts --public --only rahu_kalam
 
       - name: Mark Rahu Kalam done and push state to Drive
@@ -119,6 +120,7 @@ jobs:
           MAHANAVI_PROKERALA_CLIENT_ID_2: ${{ secrets.MAHANAVI_PROKERALA_CLIENT_ID_2 }}
           MAHANAVI_PROKERALA_CLIENT_SECRET_2: ${{ secrets.MAHANAVI_PROKERALA_CLIENT_SECRET_2 }}
           MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+          MAHANAVI_PLAYLIST_ID_MUHURTAS: ${{ secrets.MAHANAVI_PLAYLIST_ID_MUHURTAS }}
         run: python3 -m mahanavi.scripts.post_alert_shorts --public --only shubha_ghadiyalu
 
       - name: Mark Shubha Ghadiyalu done and push state to Drive
@@ -145,6 +147,7 @@ jobs:
           MAHANAVI_PROKERALA_CLIENT_ID_2: ${{ secrets.MAHANAVI_PROKERALA_CLIENT_ID_2 }}
           MAHANAVI_PROKERALA_CLIENT_SECRET_2: ${{ secrets.MAHANAVI_PROKERALA_CLIENT_SECRET_2 }}
           MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+          MAHANAVI_PLAYLIST_ID_MUHURTAS: ${{ secrets.MAHANAVI_PLAYLIST_ID_MUHURTAS }}
         run: python3 -m mahanavi.scripts.post_alert_shorts --public --only durmuhurtham
 
       - name: Mark Durmuhurtham done and push state to Drive
@@ -166,3 +169,10 @@ jobs:
             data/generated/
           if-no-files-found: ignore
           retention-days: 14
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/ci/notify_failure.py "Daily Shorts Post"

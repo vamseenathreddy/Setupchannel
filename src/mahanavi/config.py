@@ -185,6 +185,25 @@ class Settings(BaseSettings):
     youtube_client_secrets_file: Path | None = Field(default=PROJECT_ROOT / "client_secrets.json")
     youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token.json")
 
+    # --- Telegram alerts (pipeline health review, 2026-10-03) ---
+    # See notifications/telegram_alert.py's module docstring for the
+    # one-time @BotFather setup. Both unset = alerts are silently
+    # skipped everywhere (never a hard failure on their own).
+    telegram_bot_token: str | None = Field(default=None)
+    telegram_chat_id: str | None = Field(default=None)
+
+    # --- YouTube playlists (pipeline health review, 2026-10-03) ---
+    # One playlist per series, created once via
+    # scripts/youtube_playlists_setup.py -- each posting script adds
+    # its video to the matching playlist after a successful upload
+    # (non-fatal if unset/missing, same pattern as comments). Grouping
+    # the two Gita modes (verse + quiz) into ONE playlist since they're
+    # literally one alternating series, not two.
+    playlist_id_muhurtas: str | None = Field(default=None)
+    playlist_id_gita_sloka: str | None = Field(default=None)
+    playlist_id_puranas: str | None = Field(default=None)
+    playlist_id_rashi: str | None = Field(default=None)
+
     max_retries: int = Field(default=3, ge=0)
     retry_backoff_seconds: float = Field(default=5.0, ge=0)
 

@@ -78,3 +78,49 @@ class PuranaHistoryRepository:
         ImageHistoryRepository.reset_folder_history."""
         with self._db.connection() as conn:
             conn.execute("DELETE FROM purana_usage")
+
+
+class UploadLogRepository:
+    """
+    One row per successful upload, keyed by video_id and tagged with
+    its series -- added 2026-10-03 so weekly_performance_report.py can
+    ask "which video_ids belong to the Gita Sloka series over the last
+    7 days?" without parsing titles. Every posting script calls
+    log_upload() right after a successful upload, non-fatal on failure
+    (same spirit as post_comment()/add_to_playlist() -- a failed log
+    write must never fail the pipeline that already succeeded).
+    """
+
+    def __init__(self, db: DatabaseManager) -> None:
+        self._db = db
+
+    def log_upload(self, video_id: str, series: str, title: str, posted_on: date) -> None:
+        with self._db.connection() as conn:
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO uploads (video_id, series, title, posted_on)
+                VALUES (?, ?, ?, ?)
+                """,
+                (video_id, series, title, posted_on.isoformat()),
+            )
+
+    def video_ids_for_series(self, series: str, since: date) -> list[str]:
+        """All video_ids for `series` posted on or after `since` -- used
+        by the weekly performance report to scope its Analytics query."""
+        with self._db.connection() as conn:
+            rows = conn.execute(
+                "SELECT video_id FROM uploads WHERE series = ? AND posted_on >= ? ORDER BY posted_on",
+                (series, since.isoformat()),
+            ).fetchall()
+        return [row["video_id"] for row in rows]
+
+    def all_video_ids_since(self, since: date) -> list[tuple[str, str]]:
+        """(video_id, series) pairs for every upload on or after `since`,
+        across all series -- used by the weekly report to do one batched
+        Analytics query instead of one per series."""
+        with self._db.connection() as conn:
+            rows = conn.execute(
+                "SELECT video_id, series FROM uploads WHERE posted_on >= ? ORDER BY posted_on",
+                (since.isoformat(),),
+            ).fetchall()
+        return [(row["video_id"], row["series"]) for row in rows]

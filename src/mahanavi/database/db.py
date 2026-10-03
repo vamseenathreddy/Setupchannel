@@ -32,6 +32,24 @@ CREATE TABLE IF NOT EXISTS image_usage (
 
 CREATE INDEX IF NOT EXISTS idx_image_usage_folder ON image_usage(folder_name);
 
+-- Added 2026-10-03 (pipeline health review): one row per successful
+-- upload across every series, keyed by YouTube video_id. Lets
+-- weekly_performance_report.py map a video's Analytics stats back to
+-- WHICH series it belongs to (muhurtas / gita_sloka / puranas / rashi)
+-- without parsing titles -- the series is known for certain at upload
+-- time, so it's recorded then.
+CREATE TABLE IF NOT EXISTS uploads (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    video_id      TEXT NOT NULL UNIQUE,
+    series        TEXT NOT NULL,          -- "muhurtas" | "gita_sloka" | "puranas" | "rashi"
+    title         TEXT NOT NULL,
+    posted_on     TEXT NOT NULL,          -- ISO date string
+    created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_uploads_series ON uploads(series);
+CREATE INDEX IF NOT EXISTS idx_uploads_posted_on ON uploads(posted_on);
+
 CREATE TABLE IF NOT EXISTS purana_usage (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     purana_name   TEXT NOT NULL,

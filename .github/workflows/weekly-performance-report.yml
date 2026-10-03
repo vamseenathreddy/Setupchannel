@@ -1,0 +1,71 @@
+name: Weekly Performance Report
+
+# Weekly summary of views/likes/retention per series over the last 7
+# days, sent via Telegram -- added 2026-10-03 (pipeline health review
+# suggestion #3, "no performance feedback loop"). See
+# weekly_performance_report.py's docstring for the one-time
+# yt-analytics.readonly re-auth this needs before it'll return real
+# data (it fails gracefully with clear instructions until then).
+on:
+  schedule:
+    # Monday 9:00 AM IST = 3:30 AM UTC.
+    - cron: '30 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "How many days back to report on."
+        required: false
+        default: '7'
+
+permissions:
+  contents: read
+
+jobs:
+  weekly-performance-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Install full Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Build and send the report
+        env:
+          MAHANAVI_DATABASE_PATH: ./data/mahanavi.db
+          MAHANAVI_TIMEZONE: Asia/Kolkata
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+          MAHANAVI_TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          MAHANAVI_TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python3 -m mahanavi.scripts.weekly_performance_report --days "${{ inputs.days || '7' }}"
+
+      - name: Push state to Drive
+        if: always()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py push
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/ci/notify_failure.py "Weekly Performance Report"

@@ -43,6 +43,8 @@ from mahanavi.config import Settings, get_settings
 from mahanavi.content.category_comments import build_category_comment
 from mahanavi.content.purana_short_seo import build_purana_short_seo
 from mahanavi.content.purana_short_stories import PURANA_SHORT_STORIES, PuranaShortStory
+from mahanavi.database.db import DatabaseManager
+from mahanavi.database.repositories import UploadLogRepository
 from mahanavi.exceptions import MahanaviError
 from mahanavi.images.purana_short_card_renderer import PuranaShortCard, PuranaShortCardRenderer
 from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
@@ -202,6 +204,15 @@ def main() -> int:
                 print(f"Posted category comment: {comment_text}")
             else:
                 print("Note: could not post category comment (non-fatal).")
+
+            db = DatabaseManager(settings.database_path)
+            UploadLogRepository(db).log_upload(result.video_id, "puranas", seo.title, today)
+
+            if settings.playlist_id_puranas:
+                if uploader.add_to_playlist(result.video_id, settings.playlist_id_puranas):
+                    print("Added to playlist.")
+                else:
+                    print("Note: could not add to playlist (non-fatal).")
 
         _write_episode_count(episode_number)
         print(f"Episode count advanced: next run will show 'పురాణ కథ - {episode_number + 1}'")

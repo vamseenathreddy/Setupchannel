@@ -58,6 +58,8 @@ from mahanavi.content.alert_seo import (
 from mahanavi.content.category_comments import build_category_comment
 from mahanavi.content.data import DEITY_CONTENT, WEEKDAY_DEITY_MAP, pick_beeja_mantram
 from mahanavi.core.models import PanchangData
+from mahanavi.database.db import DatabaseManager
+from mahanavi.database.repositories import UploadLogRepository
 from mahanavi.exceptions import MahanaviError
 from mahanavi.images.alert_card_renderer import (
     COLOR_DURMUHURTHAM_BOTTOM,
@@ -364,6 +366,15 @@ def _process_one(
                     print(f"Posted category comment: {comment_text}")
                 else:
                     print("Note: could not post category comment (non-fatal).")
+
+                db = DatabaseManager(settings.database_path)
+                UploadLogRepository(db).log_upload(result.video_id, "muhurtas", seo.title, for_date)
+
+                if settings.playlist_id_muhurtas:
+                    if uploader.add_to_playlist(result.video_id, settings.playlist_id_muhurtas):
+                        print("Added to playlist.")
+                    else:
+                        print("Note: could not add to playlist (non-fatal).")
             return True
         print(f"Upload FAILED: {result.error_message}", file=sys.stderr)
         return False

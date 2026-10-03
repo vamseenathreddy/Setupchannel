@@ -41,6 +41,8 @@ from zoneinfo import ZoneInfo
 from mahanavi.config import Settings, get_settings
 from mahanavi.content.category_comments import build_category_comment
 from mahanavi.content.rashi_current_transits import AFFECTED_RASHIS
+from mahanavi.database.db import DatabaseManager
+from mahanavi.database.repositories import UploadLogRepository
 from mahanavi.content.rashi_mantra_content import RASHI_MANTRAS, RashiMantraContent
 from mahanavi.content.rashi_mantra_seo import build_rashi_mantra_seo
 from mahanavi.exceptions import MahanaviError
@@ -188,6 +190,15 @@ def main() -> int:
                 print(f"Posted category comment: {comment_text}")
             else:
                 print("Note: could not post category comment (non-fatal).")
+
+            db = DatabaseManager(settings.database_path)
+            UploadLogRepository(db).log_upload(result.video_id, "rashi", seo.title, today)
+
+            if settings.playlist_id_rashi:
+                if uploader.add_to_playlist(result.video_id, settings.playlist_id_rashi):
+                    print("Added to playlist.")
+                else:
+                    print("Note: could not add to playlist (non-fatal).")
 
         if not forced:
             next_index = (rashi_index + 1) % len(RASHI_MANTRAS)

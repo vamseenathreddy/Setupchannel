@@ -28,12 +28,22 @@ from mahanavi.config import get_settings
 # Shorts series (post_concept_short.py) needs commentThreads.insert as
 # well as video upload, per explicit request (2026-10-02: "put it in
 # comment section while posting"). youtube.force-ssl is the scope that
-# covers both upload and comments; a token saved under the narrower
-# youtube.upload (from before this change) does NOT get upgraded by
-# itself -- re-run this script once to get a fresh token with the
-# broader scope, then push the refreshed data/youtube_token.json to
-# Drive (python scripts/ci/drive_state_sync.py push) so CI picks it up.
-SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
+# covers both upload and comments (and playlists -- see
+# YouTubeShortsUploader.add_to_playlist); a token saved under the
+# narrower youtube.upload (from before this change) does NOT get
+# upgraded by itself -- re-run this script once to get a fresh token
+# with the broader scope, then push the refreshed
+# data/youtube_token.json to Drive (python scripts/ci/drive_state_sync.py
+# push) so CI picks it up.
+#
+# yt-analytics.readonly -- added 2026-10-03 for
+# weekly_performance_report.py (pipeline health review suggestion #3).
+# A token saved before this change doesn't have it either; same
+# one-time re-run-this-script-then-push-to-Drive fix applies.
+SCOPES = [
+    "https://www.googleapis.com/auth/youtube.force-ssl",
+    "https://www.googleapis.com/auth/yt-analytics.readonly",
+]
 
 
 def main() -> int:

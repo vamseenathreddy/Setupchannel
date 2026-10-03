@@ -68,6 +68,8 @@ from mahanavi.content.bhagavad_gita_slokas import GITA_SLOKAS, GitaSloka
 from mahanavi.content.category_comments import build_category_comment
 from mahanavi.content.gita_sloka_quiz import MIN_SLOKAS_FOR_QUIZ, build_quiz_options
 from mahanavi.content.gita_sloka_seo import build_gita_sloka_quiz_seo, build_gita_sloka_seo
+from mahanavi.database.db import DatabaseManager
+from mahanavi.database.repositories import UploadLogRepository
 from mahanavi.exceptions import MahanaviError
 from mahanavi.images.gita_quiz_card_renderer import GitaQuizCard, GitaQuizCardRenderer
 from mahanavi.images.gita_sloka_card_renderer import GitaSlokaCard, GitaSlokaCardRenderer, pick_invocation
@@ -280,6 +282,17 @@ def main() -> int:
                 print(f"Posted category comment: {comment_text}")
             else:
                 print("Note: could not post category comment (non-fatal).")
+
+            db = DatabaseManager(settings.database_path)
+            # One playlist for the whole series (verse AND quiz days) --
+            # they're one alternating series, not two separate ones.
+            UploadLogRepository(db).log_upload(result.video_id, "gita_sloka", seo.title, today)
+
+            if settings.playlist_id_gita_sloka:
+                if uploader.add_to_playlist(result.video_id, settings.playlist_id_gita_sloka):
+                    print("Added to playlist.")
+                else:
+                    print("Note: could not add to playlist (non-fatal).")
 
         if not forced:
             if mode == "verse":
