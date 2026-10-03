@@ -12,6 +12,7 @@ from __future__ import annotations
 from mahanavi.config import Settings
 from mahanavi.core.interfaces import PanchangProvider
 from mahanavi.exceptions import ConfigError
+from mahanavi.notifications.telegram_alert import send_telegram_alert
 from mahanavi.panchang.api_provider import ApiPanchangProvider
 from mahanavi.panchang.dummy_provider import DummyPanchangProvider
 from mahanavi.panchang.fallback_provider import FallbackPanchangProvider
@@ -65,7 +66,23 @@ def get_panchang_provider(settings: Settings) -> PanchangProvider:
                 longitude=settings.panchang_longitude,
                 token_cache_path=settings.output_dir.parent / "prokerala_token_2.json",
             )
-            return FallbackPanchangProvider([primary, secondary])
+
+            # Explicit request (2026-10-03): an FYI Telegram ping whenever
+            # Key 1's monthly quota runs out and Key 2 silently picks up
+            # the slack -- not an error (the post still goes out fine),
+            # just visibility so the owner isn't surprised later. See
+            # FallbackPanchangProvider's module docstring for why this
+            # lives here and not inside that provider-agnostic class.
+            def _notify_fallback(failed_index: int, succeeded_label: str) -> None:
+                send_telegram_alert(
+                    "Prokerala Key 1 failed (likely monthly quota exhausted) -- "
+                    f"automatically switched to {succeeded_label} for this request. "
+                    "No action needed; posting continues normally. It will switch "
+                    "back to Key 1 on its own once that key's quota resets.",
+                    settings,
+                )
+
+            return FallbackPanchangProvider([primary, secondary], on_fallback=_notify_fallback)
         return primary
 
     if provider_name == "scraper":

@@ -85,3 +85,41 @@ def test_tries_three_providers_in_order() -> None:
     assert first.calls == 1
     assert second.calls == 1
     assert third.calls == 1
+
+
+def test_on_fallback_called_with_failed_index_and_succeeded_label() -> None:
+    first = _AlwaysFailsProvider("primary account quota exceeded")
+    second = _AlwaysSucceedsProvider()
+    calls: list[tuple[int, str]] = []
+    provider = FallbackPanchangProvider([first, second], on_fallback=lambda i, label: calls.append((i, label)))
+
+    provider.fetch(date(2026, 9, 26))
+
+    assert len(calls) == 1
+    assert calls[0][0] == 1
+    assert "_AlwaysSucceedsProvider" in calls[0][1]
+
+
+def test_on_fallback_not_called_when_first_provider_succeeds() -> None:
+    first = _AlwaysSucceedsProvider()
+    second = _AlwaysFailsProvider()
+    calls: list[tuple[int, str]] = []
+    provider = FallbackPanchangProvider([first, second], on_fallback=lambda i, label: calls.append((i, label)))
+
+    provider.fetch(date(2026, 9, 26))
+
+    assert calls == []
+
+
+def test_on_fallback_exception_does_not_break_the_fetch() -> None:
+    first = _AlwaysFailsProvider()
+    second = _AlwaysSucceedsProvider()
+
+    def _broken_callback(i: int, label: str) -> None:
+        raise RuntimeError("Telegram is down")
+
+    provider = FallbackPanchangProvider([first, second], on_fallback=_broken_callback)
+
+    result = provider.fetch(date(2026, 9, 26))
+
+    assert result.date_ == date(2026, 9, 26)

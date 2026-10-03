@@ -15,12 +15,27 @@ COMPLIANCE NOTE: check Prokerala's own terms of service on multiple
 accounts before relying on this for production traffic -- some API
 providers explicitly prohibit creating extra accounts to get around a
 rate limit or quota.
+
+NOTIFY-ON-FALLBACK (added 2026-10-03, explicit request): this class
+itself stays provider-agnostic and has no idea what Telegram or
+Settings are -- it just accepts an optional `on_fallback` callback and
+invokes it whenever the primary provider wasn't the one that
+succeeded. factory.py is what wires that callback to an actual
+Telegram alert (see get_panchang_provider's prokerala branch). This is
+purely an FYI signal, not an error: the whole point of this class is
+that falling back WORKED and the post went out fine -- the callback
+just lets the channel owner know Key 1's monthly quota ran out without
+having to dig through CI logs, so they're not surprised when Key 2
+eventually also needs a fresh month. A callback failure must never
+break the actual Panchang fetch it's just annotating, so it's wrapped
+in its own try/except here.
 """
 
 from __future__ import annotations
 
 import logging
 from datetime import date
+from typing import Callable
 
 from mahanavi.core.interfaces import PanchangProvider
 from mahanavi.core.models import PanchangData
@@ -34,10 +49,15 @@ class FallbackPanchangProvider(PanchangProvider):
     result. Raises PanchangFetchError (listing every provider's error)
     only if ALL of them fail."""
 
-    def __init__(self, providers: list[PanchangProvider]) -> None:
+    def __init__(
+        self,
+        providers: list[PanchangProvider],
+        on_fallback: Callable[[int, str], None] | None = None,
+    ) -> None:
         if not providers:
             raise ValueError("FallbackPanchangProvider requires at least one provider.")
         self._providers = providers
+        self._on_fallback = on_fallback
 
     def fetch(self, for_date: date) -> PanchangData:
         errors: list[str] = []
@@ -50,6 +70,11 @@ class FallbackPanchangProvider(PanchangProvider):
                         "Panchang provider #%d failed for %s -- fell back to %s, which succeeded.",
                         i, for_date, provider_label,
                     )
+                    if self._on_fallback is not None:
+                        try:
+                            self._on_fallback(i, provider_label)
+                        except Exception as notify_exc:  # never let a notification failure break the real fetch
+                            logger.warning("on_fallback callback itself failed: %s", notify_exc)
                 return data
             except PanchangFetchError as exc:
                 logger.warning("Panchang provider %s failed for %s: %s", provider_label, for_date, exc)
