@@ -1,24 +1,47 @@
 """
 post_gita_sloka_short.py: posts ONE "Bhagavad Gita Sloka" Short per run,
-cycling through content/bhagavad_gita_slokas.py's GITA_SLOKAS via a
-persisted rotation index -- same one-per-run rotation design as the
-other series on this channel.
+alternating VERSE days and QUIZ days -- not one verse every single day.
 
-Flow: read the rotation state (data/last_gita_sloka_index.txt, default 0
-if missing/first run) -> pick that verse -> render it as one static card
-(GitaSlokaCardRenderer.render() -- Sanskrit verse + Telugu meaning,
-auto-fit, static Krishna-Arjuna chariot watermark, no rotation layers
-needed for this series) -> assemble into a .mp4 via the plain
-video/assembler.assemble_short() (loop-friendly, no fades) -> build SEO
-(gita_sloka_seo.py) -> upload -> advance the rotation index (wraps back
-to 0 after the last verse), UNLESS --sloka was used to force a specific
-one.
+CADENCE (explicit request, 2026-10-03: "i want to change plan to not
+every day one sloka it should be like one day verse nextday quiz with
+4 options on before days verse so total 1400 days this pipeline will
+work. so users will learn from yesterday also we have to push them to
+know answer look yesterday verse post number"):
 
-CONTENT SCOPE: GITA_SLOKAS currently holds 11 well-known, verified
-verses (phase 1 -- see that module's docstring). More verses get added
-over time; this script doesn't need to change as the list grows.
+  Day 1 (VERSE): post the next verse in GITA_SLOKAS (Sanskrit + Telugu
+    meaning + its chapter/verse badge, same card as before).
+  Day 2 (QUIZ):  post a 4-option "which chapter & verse was THAT verse?"
+    quiz (gita_sloka_quiz.py / GitaQuizCardRenderer) -- shows the same
+    Sanskrit verse again but WITHOUT the chapter/verse badge, so the
+    only way to confirm the answer is to go find yesterday's Short on
+    the channel again. That's the deliberate engagement mechanic: it
+    pulls viewers back through the channel's own back-catalog instead
+    of just testing scriptural memory in isolation.
+  Day 3 (VERSE): the NEXT verse (rotation advances only after a quiz
+    day, not after a verse day) -- and so on.
 
-POSTING TIME: 3-4 PM IST (scripts/ci/gita_sloka_gate.py).
+Once all 700 Bhagavad Gita verses are in GITA_SLOKAS, this pipeline
+runs for 700 * 2 = 1400 days before it needs to loop back to verse 1.
+
+STATE: a single rotation state (data/last_gita_sloka_index.txt) now
+stores "MODE:INDEX" (e.g. "verse:3" or "quiz:3") instead of a bare
+index -- MODE says what to post THIS run, INDEX says which verse it's
+about. After a verse-day post, state becomes "quiz:<same index>" (the
+quiz is about what was JUST posted). After a quiz-day post, state
+becomes "verse:<index + 1>" (advance to the next verse, wrapping back
+to 0 after the last one). A legacy bare-integer state file (from
+before this cadence existed) is still read correctly, treated as
+"verse:<that index>".
+
+CONTENT SCOPE: GITA_SLOKAS currently holds a phase-1 subset of verses
+(see that module's docstring) -- more get added over time; this script
+doesn't need to change as the list grows. If GITA_SLOKAS doesn't yet
+have enough verses for a 4-option quiz (gita_sloka_quiz.MIN_SLOKAS_FOR_QUIZ),
+a quiz-day run falls back to posting another verse instead, so the
+pipeline never breaks while the verse list is still small.
+
+POSTING TIME: 3-4 PM IST (scripts/ci/gita_sloka_gate.py) -- same single
+daily window for both verse days and quiz days.
 
 SAFETY: uploads as "unlisted" by default, same as every other posting
 script in this repo -- pass --public once you've reviewed it.
@@ -26,8 +49,10 @@ script in this repo -- pass --public once you've reviewed it.
 Usage:
     python -m mahanavi.scripts.post_gita_sloka_short
     python -m mahanavi.scripts.post_gita_sloka_short --public
-    python -m mahanavi.scripts.post_gita_sloka_short --sloka 0       # force by index
-    python -m mahanavi.scripts.post_gita_sloka_short --sloka 2.47    # force by "chapter.verse"
+    python -m mahanavi.scripts.post_gita_sloka_short --sloka 0            # force verse by index
+    python -m mahanavi.scripts.post_gita_sloka_short --sloka 2.47         # force verse by "chapter.verse"
+    python -m mahanavi.scripts.post_gita_sloka_short --mode quiz          # force a quiz on the current rotation verse
+    python -m mahanavi.scripts.post_gita_sloka_short --sloka 2.47 --mode quiz   # force a quiz on a specific verse
 """
 
 from __future__ import annotations
@@ -40,8 +65,10 @@ from zoneinfo import ZoneInfo
 
 from mahanavi.config import Settings, get_settings
 from mahanavi.content.bhagavad_gita_slokas import GITA_SLOKAS, GitaSloka
-from mahanavi.content.gita_sloka_seo import build_gita_sloka_seo
+from mahanavi.content.gita_sloka_quiz import MIN_SLOKAS_FOR_QUIZ, build_quiz_options
+from mahanavi.content.gita_sloka_seo import build_gita_sloka_quiz_seo, build_gita_sloka_seo
 from mahanavi.exceptions import MahanaviError
+from mahanavi.images.gita_quiz_card_renderer import GitaQuizCard, GitaQuizCardRenderer
 from mahanavi.images.gita_sloka_card_renderer import GitaSlokaCard, GitaSlokaCardRenderer
 from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
 from mahanavi.video.assembler import assemble_short
@@ -64,19 +91,34 @@ def _icon_paths(settings: Settings) -> list[Path]:
     return paths
 
 
-def _read_rotation_index() -> int:
+def _read_state() -> tuple[str, int]:
+    """Returns (mode, index). Missing file -> ("verse", 0) -- the very
+    first run ever has no previous verse to quiz on, so it must be a
+    verse day. Also accepts a legacy bare-integer file (pre-dates the
+    verse/quiz cadence), read as ("verse", that index)."""
     if not STATE_FILE.exists():
-        return 0
+        return "verse", 0
+    raw = STATE_FILE.read_text().strip()
+    if ":" not in raw:
+        try:
+            return "verse", int(raw) % len(GITA_SLOKAS)
+        except ValueError:
+            print(f"Note: {STATE_FILE} had unreadable content, starting at verse 0.")
+            return "verse", 0
+    mode, _, idx_s = raw.partition(":")
+    if mode not in ("verse", "quiz"):
+        print(f"Note: {STATE_FILE} had unrecognized mode '{mode}', starting at verse 0.")
+        return "verse", 0
     try:
-        return int(STATE_FILE.read_text().strip()) % len(GITA_SLOKAS)
+        return mode, int(idx_s) % len(GITA_SLOKAS)
     except ValueError:
-        print(f"Note: {STATE_FILE} had unreadable content, starting rotation at sloka 0.")
-        return 0
+        print(f"Note: {STATE_FILE} had unreadable index, starting at verse 0.")
+        return "verse", 0
 
 
-def _write_rotation_index(next_index: int) -> None:
+def _write_state(mode: str, index: int) -> None:
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    STATE_FILE.write_text(str(next_index % len(GITA_SLOKAS)))
+    STATE_FILE.write_text(f"{mode}:{index % len(GITA_SLOKAS)}")
 
 
 def _resolve_forced_sloka(spec: str) -> int:
@@ -114,6 +156,12 @@ def main() -> int:
         help="Force a specific verse instead of the next one in rotation (index, or 'chapter.verse' "
              "like '2.47'). A forced run does NOT advance the stored rotation state.",
     )
+    parser.add_argument(
+        "--mode", choices=["verse", "quiz"], default=None,
+        help="Force verse or quiz mode instead of the persisted rotation state. Combine with --sloka "
+             "to target a specific verse; without --sloka, targets whatever verse is currently in "
+             "rotation. A forced run does NOT advance the stored rotation state.",
+    )
     args = parser.parse_args()
 
     settings = get_settings()
@@ -121,37 +169,78 @@ def main() -> int:
     if not args.public:
         print("Uploading as UNLISTED (default). Pass --public once you're happy with the result.")
 
-    forced = args.sloka is not None
+    forced = args.sloka is not None or args.mode is not None
     try:
-        sloka_index = _resolve_forced_sloka(args.sloka) if forced else _read_rotation_index()
+        state_mode, state_index = _read_state()
+        target_index = _resolve_forced_sloka(args.sloka) if args.sloka is not None else state_index
     except MahanaviError as exc:
         print(f"FAILED: {exc}", file=sys.stderr)
         return 1
 
-    sloka: GitaSloka = GITA_SLOKAS[sloka_index]
-    print(f"Posting sloka {sloka_index} ({sloka.chapter}.{sloka.verse}){' [FORCED]' if forced else ''}")
+    # --sloka alone (no --mode) means "force this verse", matching the
+    # series' pre-existing CLI convention. --mode alone targets whatever
+    # verse rotation is currently on.
+    mode = args.mode or ("verse" if args.sloka is not None else state_mode)
+
+    if mode == "quiz" and len(GITA_SLOKAS) < MIN_SLOKAS_FOR_QUIZ:
+        print(
+            f"Note: only {len(GITA_SLOKAS)} verse(s) in GITA_SLOKAS, need {MIN_SLOKAS_FOR_QUIZ} "
+            "for a 4-option quiz -- posting a verse instead today."
+        )
+        mode = "verse"
 
     tz = ZoneInfo(settings.timezone)
     today = datetime.now(tz).date()
 
     try:
-        card = GitaSlokaCard(sloka=sloka, icon_paths=_icon_paths(settings))
-        renderer = GitaSlokaCardRenderer(settings)
-        image_path = renderer.render(card)
-        print(f"Rendered card: {image_path}")
+        if mode == "verse":
+            sloka: GitaSloka = GITA_SLOKAS[target_index]
+            print(f"Posting VERSE {target_index} ({sloka.chapter}.{sloka.verse}){' [FORCED]' if forced else ''}")
 
-        video_path = settings.output_dir / f"{today.isoformat()}_gita_{sloka.chapter}_{sloka.verse}_short.mp4"
-        assemble_short(
-            image_path=image_path,
-            output_path=video_path,
-            duration_seconds=settings.gita_sloka_short_duration_seconds,
-            audio_path=settings.alert_short_music_path,
-            fade_in_seconds=0.0,
-            fade_out_seconds=0.0,
-        )
-        print(f"Assembled (loop-friendly, {settings.gita_sloka_short_duration_seconds}s, no fades): {video_path}")
+            verse_card = GitaSlokaCard(sloka=sloka, icon_paths=_icon_paths(settings))
+            image_path = GitaSlokaCardRenderer(settings).render(verse_card)
+            print(f"Rendered card: {image_path}")
 
-        seo = build_gita_sloka_seo(sloka, sloka_index, today.toordinal())
+            video_path = settings.output_dir / f"{today.isoformat()}_gita_{sloka.chapter}_{sloka.verse}_short.mp4"
+            assemble_short(
+                image_path=image_path,
+                output_path=video_path,
+                duration_seconds=settings.gita_sloka_short_duration_seconds,
+                audio_path=settings.alert_short_music_path,
+                fade_in_seconds=0.0,
+                fade_out_seconds=0.0,
+            )
+            print(f"Assembled (loop-friendly, {settings.gita_sloka_short_duration_seconds}s, no fades): {video_path}")
+
+            seo = build_gita_sloka_seo(sloka, target_index, today.toordinal())
+
+        else:  # mode == "quiz"
+            quiz = build_quiz_options(target_index, today.toordinal())
+            print(
+                f"Posting QUIZ on verse {target_index} ({quiz.target.chapter}.{quiz.target.verse})"
+                f"{' [FORCED]' if forced else ''} -- correct answer is option {quiz.correct_letter}"
+            )
+
+            quiz_card = GitaQuizCard(quiz=quiz, icon_paths=_icon_paths(settings))
+            image_path = GitaQuizCardRenderer(settings).render(quiz_card)
+            print(f"Rendered card: {image_path}")
+
+            video_path = (
+                settings.output_dir
+                / f"{today.isoformat()}_gita_quiz_{quiz.target.chapter}_{quiz.target.verse}_short.mp4"
+            )
+            assemble_short(
+                image_path=image_path,
+                output_path=video_path,
+                duration_seconds=settings.gita_sloka_short_duration_seconds,
+                audio_path=settings.alert_short_music_path,
+                fade_in_seconds=0.0,
+                fade_out_seconds=0.0,
+            )
+            print(f"Assembled (loop-friendly, {settings.gita_sloka_short_duration_seconds}s, no fades): {video_path}")
+
+            seo = build_gita_sloka_quiz_seo(quiz, today.toordinal())
+
         uploader = YouTubeShortsUploader(settings)
         result = uploader.upload(video_path, seo, privacy_status=privacy_status)
 
@@ -162,10 +251,14 @@ def main() -> int:
         print(f"Uploaded ({privacy_status}): {result.post_url}")
 
         if not forced:
-            next_index = (sloka_index + 1) % len(GITA_SLOKAS)
-            _write_rotation_index(next_index)
-            next_sloka = GITA_SLOKAS[next_index]
-            print(f"Rotation advanced: next run will post sloka {next_index} ({next_sloka.chapter}.{next_sloka.verse})")
+            if mode == "verse":
+                _write_state("quiz", target_index)
+                print(f"State advanced: next run will QUIZ on verse {target_index} ({sloka.chapter}.{sloka.verse})")
+            else:
+                next_index = (target_index + 1) % len(GITA_SLOKAS)
+                _write_state("verse", next_index)
+                next_sloka = GITA_SLOKAS[next_index]
+                print(f"State advanced: next run will post VERSE {next_index} ({next_sloka.chapter}.{next_sloka.verse})")
         else:
             print("Forced run -- rotation state left unchanged.")
 

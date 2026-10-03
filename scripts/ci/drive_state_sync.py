@@ -16,7 +16,8 @@ files that must survive between runs:
   - data/purana_short_episode_count.txt       (ever-incrementing "పురాణ కథ - N" display count, never wraps)
   - data/last_purana_concept_index.txt        (0-17, which concept entry the Purana Concept series posts next)
   - data/last_run_date_purana_concept.txt     (IST date Purana Concept Short last posted)
-  - data/last_gita_sloka_index.txt            (which verse the Gita Sloka series posts next)
+  - data/last_gita_sloka_index.txt            ("mode:index" -- e.g. "quiz:3" -- which verse the
+                                                Gita Sloka series' alternating verse/quiz cadence is on)
   - data/last_run_date_gita_sloka.txt         (IST date Gita Sloka Short last posted)
 
 The Shorts got separate marker files (replacing one combined

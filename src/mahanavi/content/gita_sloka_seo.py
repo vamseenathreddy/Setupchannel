@@ -14,6 +14,7 @@ from __future__ import annotations
 from mahanavi.content.alert_seo import ShortSeoContent  # reuse the same shape
 from mahanavi.content.bhagavad_gita_slokas import GitaSloka
 from mahanavi.content.branding import brand_tagline
+from mahanavi.content.gita_sloka_quiz import GitaQuizOptions
 
 _GITA_HASHTAGS = ["#భగవద్గీత", "#BhagavadGita", "#GitaWisdom"]
 
@@ -107,6 +108,91 @@ def build_gita_sloka_seo(sloka: GitaSloka, sloka_index: int, for_date_ordinal: i
     )
 
     hashtags = ["#Shorts", *_GITA_HASHTAGS]
+    hashtags.append(_pick_rotating(_ROTATING_POOL, pick_index))
+
+    return ShortSeoContent(title=title, description=description, hashtags=hashtags)
+
+
+# --- Quiz-day SEO (every other day -- see gita_sloka_quiz.py) ----------
+
+_QUIZ_TITLE_TEMPLATES = [
+    "నిన్నటి శ్లోకం గుర్తుందా? Quiz Time!",
+    "Gita Quiz - నిన్నటి శ్లోకం ఏ అధ్యాయం?",
+    "మీకు గుర్తుందా? భగవద్గీత Quiz",
+    "Quiz: నిన్నటి శ్లోకం ఎక్కడిది?",
+]
+
+_QUIZ_HOOKS_TE = [
+    "నిన్నటి గీతా శ్లోకం మీకు గుర్తుందా? ఒకసారి ట్రై చేయండి!",
+    "చిన్న Quiz టైమ్ — నిన్నటి శ్లోకం ఏ అధ్యాయం, శ్లోకం అని గుర్తుందా?",
+    "మీరు నిన్న చూసిన శ్లోకం ఇదే. ఏ అధ్యాయం, శ్లోకం అో చెప్పగలరా?",
+]
+_QUIZ_HOOKS_EN = [
+    "Do you remember yesterday's Gita verse? Give this a try!",
+    "Quick quiz time — do you remember yesterday's chapter and verse?",
+    "This is the verse we posted yesterday. Can you name the chapter and verse?",
+]
+
+_QUIZ_CTAS_TE = [
+    "మీ సమాధానం (A/B/C/D) కామెంట్‌లో రాయండి!",
+    "మీ జవాబు కామెంట్‌లో చెప్పండి — సరైనదేనో చూద్దాం!",
+]
+_QUIZ_CTAS_EN = [
+    "Write your answer (A/B/C/D) in the comments!",
+    "Drop your answer in the comments — let's see if you got it right!",
+]
+
+_QUIZ_COMMENT_PROMPTS_EN = [
+    "Not sure? Check yesterday's Short on our channel to confirm!",
+    "Rewatch yesterday's video on our channel if you need a hint!",
+    "Our Shorts tab has yesterday's verse if you want to double-check!",
+]
+
+
+def build_gita_sloka_quiz_seo(quiz: GitaQuizOptions, for_date_ordinal: int) -> ShortSeoContent:
+    """Build title/description/hashtags for a Gita Sloka QUIZ-day Short.
+
+    The correct answer is deliberately NOT stated anywhere in this
+    description -- the entire point (explicit request, 2026-10-03) is
+    to send viewers back to yesterday's Short on the channel to check,
+    not to let them read the answer here."""
+    pick_index = for_date_ordinal
+    title = _pick_rotating(_QUIZ_TITLE_TEMPLATES, pick_index)
+
+    hook_te, hook_en = _pick_rotating_pair(_QUIZ_HOOKS_TE, _QUIZ_HOOKS_EN, pick_index)
+    cta_te, cta_en = _pick_rotating_pair(_QUIZ_CTAS_TE, _QUIZ_CTAS_EN, pick_index + 1)
+    comment_en = _pick_rotating(_QUIZ_COMMENT_PROMPTS_EN, pick_index + 2)
+    comment_te = "సమాధానం తెలియకపోతే నిన్నటి Short చూడండి!"
+
+    option_lines_te = "\n".join(
+        f"{letter}) అధ్యాయం {s.chapter}, శ్లోకం {s.verse}"
+        for letter, s in zip(["A", "B", "C", "D"], quiz.options)
+    )
+    option_lines_en = "\n".join(
+        f"{letter}) Chapter {s.chapter}, Verse {s.verse}"
+        for letter, s in zip(["A", "B", "C", "D"], quiz.options)
+    )
+
+    description_te = (
+        f"{hook_te}\n\n"
+        f"{quiz.target.sanskrit_deva}\n\n"
+        f"ఈ శ్లోకం ఏ అధ్యాయం, శ్లోకం?\n{option_lines_te}\n\n"
+        f"{cta_te}\n\n{comment_te}"
+    )
+    description_en = (
+        f"{hook_en}\n\n"
+        f"Which chapter & verse is this?\n{option_lines_en}\n\n"
+        f"{cta_en}\n\n{comment_en}"
+    )
+
+    from mahanavi.content.alert_seo import _CHANNEL_FOOTER_EN, _CHANNEL_FOOTER_TE  # reused, not duplicated
+
+    description = (
+        f"{brand_tagline('gita_sloka')}\n\n{description_te}\n\n{_CHANNEL_FOOTER_TE}"
+        f"\n\n---\n\n{description_en}\n\n{_CHANNEL_FOOTER_EN}"
+    )
+
+    hashtags = ["#Shorts", *_GITA_HASHTAGS, "#Quiz"]
     hashtags.append(_pick_rotating(_ROTATING_POOL, pick_index))
 
     return ShortSeoContent(title=title, description=description, hashtags=hashtags)
