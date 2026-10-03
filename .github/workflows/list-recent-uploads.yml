@@ -1,0 +1,54 @@
+name: List Recent Uploads (One-Off Utility)
+
+# Manual audit utility -- lists the channel's most recent uploads with
+# their privacy status. Added 2026-10-03 to check how many Rashi Mantra
+# test videos ended up unlisted/public after repeated manual test
+# dispatches. Runs in CI because it needs the REAL saved YouTube token,
+# restored from Drive, same reason every other posting/utility workflow
+# works this way.
+on:
+  workflow_dispatch:
+    inputs:
+      max_results:
+        description: "How many recent uploads to check"
+        required: false
+        default: "25"
+      title_filter:
+        description: "Only show titles containing this text (case-insensitive, optional)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  list-recent-uploads:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Install full Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: List recent uploads
+        env:
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+        run: python3 scripts/ci/list_recent_uploads.py "${{ inputs.max_results }}" "${{ inputs.title_filter }}"
