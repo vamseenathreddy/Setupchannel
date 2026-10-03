@@ -55,6 +55,7 @@ from mahanavi.content.alert_seo import (
     build_rahu_kalam_seo,
     build_shubha_ghadiyalu_seo,
 )
+from mahanavi.content.category_comments import build_category_comment
 from mahanavi.content.data import DEITY_CONTENT, WEEKDAY_DEITY_MAP, pick_beeja_mantram
 from mahanavi.core.models import PanchangData
 from mahanavi.exceptions import MahanaviError
@@ -337,6 +338,12 @@ def _process_one(
         result = uploader.upload(video_path, seo, privacy_status=privacy_status)
         if result.success:
             print(f"Uploaded ({privacy_status}): {result.post_url}")
+            if result.video_id:
+                comment_text = build_category_comment("muhurtas", for_date.toordinal())
+                if uploader.post_comment(result.video_id, comment_text):
+                    print(f"Posted category comment: {comment_text}")
+                else:
+                    print("Note: could not post category comment (non-fatal).")
             return True
         print(f"Upload FAILED: {result.error_message}", file=sys.stderr)
         return False

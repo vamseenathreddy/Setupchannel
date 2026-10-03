@@ -42,6 +42,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from mahanavi.config import Settings, get_settings
+from mahanavi.content.category_comments import build_category_comment
 from mahanavi.content.purana_concept_seo import build_purana_concept_seo
 from mahanavi.content.purana_concept_shorts import PURANA_CONCEPT_SHORTS, PuranaConceptShort
 from mahanavi.exceptions import MahanaviError
@@ -167,8 +168,13 @@ def main() -> int:
 
         print(f"Uploaded ({privacy_status}): {result.post_url}")
 
+        # Category tag is folded into the SAME comment as the full-text
+        # overflow (when there is one), rather than posting two separate
+        # comments on one video -- keeps to the "one comment per video"
+        # design (category_comments.py) even on this series' special case.
+        category_tag = build_category_comment("puranas", today.toordinal())
         if layers.truncated and result.video_id:
-            comment_text = f"{concept.title_te}\n\n{layers.full_body_te}\n\n— {concept.purana_name_te}"
+            comment_text = f"{concept.title_te}\n\n{layers.full_body_te}\n\n— {concept.purana_name_te}\n\n{category_tag}"
             posted = uploader.post_comment(result.video_id, comment_text)
             if posted:
                 print("Posted full text as a comment (card text was truncated).")
@@ -177,6 +183,11 @@ def main() -> int:
                     "Note: could not post full text as a comment (likely needs a re-run of "
                     "youtube_shorts_auth_setup.py for the broadened scope -- see that script's docstring).",
                 )
+        elif result.video_id:
+            if uploader.post_comment(result.video_id, category_tag):
+                print(f"Posted category comment: {category_tag}")
+            else:
+                print("Note: could not post category comment (non-fatal).")
 
         if not forced:
             next_index = (concept_index + 1) % len(PURANA_CONCEPT_SHORTS)

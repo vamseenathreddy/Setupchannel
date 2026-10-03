@@ -39,6 +39,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from mahanavi.config import Settings, get_settings
+from mahanavi.content.category_comments import build_category_comment
 from mahanavi.content.rashi_current_transits import AFFECTED_RASHIS
 from mahanavi.content.rashi_mantra_content import RASHI_MANTRAS, RashiMantraContent
 from mahanavi.content.rashi_mantra_seo import build_rashi_mantra_seo
@@ -180,6 +181,13 @@ def main() -> int:
             return 1
 
         print(f"Uploaded ({privacy_status}): {result.post_url}")
+
+        if result.video_id:
+            comment_text = build_category_comment("rashi", today.toordinal())
+            if uploader.post_comment(result.video_id, comment_text):
+                print(f"Posted category comment: {comment_text}")
+            else:
+                print("Note: could not post category comment (non-fatal).")
 
         if not forced:
             next_index = (rashi_index + 1) % len(RASHI_MANTRAS)

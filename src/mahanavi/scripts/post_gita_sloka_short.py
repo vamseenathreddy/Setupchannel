@@ -65,6 +65,7 @@ from zoneinfo import ZoneInfo
 
 from mahanavi.config import Settings, get_settings
 from mahanavi.content.bhagavad_gita_slokas import GITA_SLOKAS, GitaSloka
+from mahanavi.content.category_comments import build_category_comment
 from mahanavi.content.gita_sloka_quiz import MIN_SLOKAS_FOR_QUIZ, build_quiz_options
 from mahanavi.content.gita_sloka_seo import build_gita_sloka_quiz_seo, build_gita_sloka_seo
 from mahanavi.exceptions import MahanaviError
@@ -269,6 +270,14 @@ def main() -> int:
             return 1
 
         print(f"Uploaded ({privacy_status}): {result.post_url}")
+
+        if result.video_id:
+            comment_category = "slokas" if mode == "verse" else "quiz"
+            comment_text = build_category_comment(comment_category, today.toordinal())
+            if uploader.post_comment(result.video_id, comment_text):
+                print(f"Posted category comment: {comment_text}")
+            else:
+                print("Note: could not post category comment (non-fatal).")
 
         if not forced:
             if mode == "verse":

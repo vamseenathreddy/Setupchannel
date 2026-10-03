@@ -40,6 +40,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from mahanavi.config import Settings, get_settings
+from mahanavi.content.category_comments import build_category_comment
 from mahanavi.content.purana_short_seo import build_purana_short_seo
 from mahanavi.content.purana_short_stories import PURANA_SHORT_STORIES, PuranaShortStory
 from mahanavi.exceptions import MahanaviError
@@ -194,6 +195,13 @@ def main() -> int:
             return 1
 
         print(f"Uploaded ({privacy_status}): {result.post_url}")
+
+        if result.video_id:
+            comment_text = build_category_comment("puranas", today.toordinal())
+            if uploader.post_comment(result.video_id, comment_text):
+                print(f"Posted category comment: {comment_text}")
+            else:
+                print("Note: could not post category comment (non-fatal).")
 
         _write_episode_count(episode_number)
         print(f"Episode count advanced: next run will show 'పురాణ కథ - {episode_number + 1}'")
