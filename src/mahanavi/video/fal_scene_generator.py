@@ -85,19 +85,37 @@ class FalSceneGenerator:
         self._aspect_ratio = aspect_ratio
         self._headers = {"Authorization": f"Key {fal_api_key}", "Content-Type": "application/json"}
 
-    def _submit(self, model: str, payload: dict) -> str:
+    def _submit(self, model: str, payload: dict) -> tuple[str, str, str]:
+        """Submits a job and returns (request_id, status_url, response_url).
+
+        IMPORTANT: the status/result URLs are NOT simply
+        f"https://queue.fal.run/{model}/requests/{id}[/status]" for a
+        model id with more than two path segments (owner/alias), e.g.
+        "fal-ai/flux/dev" or "fal-ai/kling-video/v2.5-turbo/pro/image-to-video"
+        -- fal.ai's own queue routing only uses the owner/alias prefix
+        for the requests/<id> path; anything past that (the "/dev" or
+        "/v2.5-turbo/pro/image-to-video" part) belongs to the SUBMIT
+        path only. Confirmed by reading fal.ai's official fal-client
+        Python package source (AppId.from_endpoint_id + Queued/submit
+        building status_url as f"{owner}/{alias}/requests/{id}/status"
+        -- never including app_id.path). Reconstructing the URL with
+        the full model string (as an earlier version of this method
+        did) hits a route that 405s. The fix: use the status_url and
+        response_url the submit response ITSELF returns, exactly like
+        fal-client does, instead of reconstructing anything.
+        """
         resp = requests.post(f"https://queue.fal.run/{model}", headers=self._headers, json=payload, timeout=60)
         if resp.status_code >= 400:
             raise FalGenerationError(f"fal.ai submit failed for {model}: {resp.status_code} {resp.text[:500]}")
         data = resp.json()
         request_id = data.get("request_id")
-        if not request_id:
-            raise FalGenerationError(f"fal.ai submit for {model} returned no request_id: {data}")
-        return str(request_id)
+        status_url = data.get("status_url")
+        response_url = data.get("response_url")
+        if not request_id or not status_url or not response_url:
+            raise FalGenerationError(f"fal.ai submit for {model} returned an unexpected shape: {data}")
+        return str(request_id), str(status_url), str(response_url)
 
-    def _poll(self, model: str, request_id: str) -> dict:
-        status_url = f"https://queue.fal.run/{model}/requests/{request_id}/status"
-        result_url = f"https://queue.fal.run/{model}/requests/{request_id}"
+    def _poll(self, model: str, status_url: str, response_url: str, request_id: str) -> dict:
         deadline = time.monotonic() + _POLL_TIMEOUT_SECONDS
         while time.monotonic() < deadline:
             resp = requests.get(status_url, headers=self._headers, timeout=30)
@@ -105,7 +123,7 @@ class FalSceneGenerator:
                 raise FalGenerationError(f"fal.ai status check failed: {resp.status_code} {resp.text[:500]}")
             status = resp.json().get("status")
             if status == "COMPLETED":
-                result = requests.get(result_url, headers=self._headers, timeout=30)
+                result = requests.get(response_url, headers=self._headers, timeout=30)
                 if result.status_code >= 400:
                     raise FalGenerationError(f"fal.ai result fetch failed: {result.status_code} {result.text[:500]}")
                 return dict(result.json())
@@ -125,13 +143,13 @@ class FalSceneGenerator:
     def generate_still(self, scene: SceneSpec, out_dir: Path) -> Path:
         """FLUX.1 [dev] text-to-image -- one still frame for this scene."""
         logger.info("fal.ai: generating still for scene '%s'", scene.key)
-        request_id = self._submit(FLUX_MODEL, {
+        request_id, status_url, response_url = self._submit(FLUX_MODEL, {
             "prompt": scene.image_prompt,
             "negative_prompt": scene.negative_prompt,
             "image_size": "landscape_16_9" if self._aspect_ratio == "16:9" else "portrait_16_9",
             "num_images": 1,
         })
-        result = self._poll(FLUX_MODEL, request_id)
+        result = self._poll(FLUX_MODEL, status_url, response_url, request_id)
         images = result.get("images") or []
         if not images:
             raise FalGenerationError(f"FLUX returned no images for scene '{scene.key}': {result}")
@@ -142,13 +160,13 @@ class FalSceneGenerator:
         gentle, slow motion matching scene.motion_prompt."""
         logger.info("fal.ai: animating scene '%s' (%ds)", scene.key, duration_seconds)
         image_url = self._upload(still_path)
-        request_id = self._submit(KLING_MODEL, {
+        request_id, status_url, response_url = self._submit(KLING_MODEL, {
             "prompt": scene.motion_prompt,
             "image_url": image_url,
             "duration": str(duration_seconds),
             "negative_prompt": scene.negative_prompt,
         })
-        result = self._poll(KLING_MODEL, request_id)
+        result = self._poll(KLING_MODEL, status_url, response_url, request_id)
         video = result.get("video") or {}
         video_url = video.get("url")
         if not video_url:
