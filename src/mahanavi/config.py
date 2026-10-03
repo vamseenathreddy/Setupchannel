@@ -203,6 +203,10 @@ class Settings(BaseSettings):
     playlist_id_gita_sloka: str | None = Field(default=None)
     playlist_id_puranas: str | None = Field(default=None)
     playlist_id_rashi: str | None = Field(default=None)
+    # Added 2026-10-03 for the AI-generated devotional song series
+    # (Navaratri 2026 onward) -- separate from the Shorts playlists
+    # above since these are full-length songs, not Shorts.
+    playlist_id_navaratri_songs: str | None = Field(default=None)
 
     max_retries: int = Field(default=3, ge=0)
     retry_backoff_seconds: float = Field(default=5.0, ge=0)

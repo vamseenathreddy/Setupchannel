@@ -22,12 +22,13 @@ the REAL saved token, which only exists where data/youtube_token.json
 has been restored from Drive):
     see .github/workflows/setup-playlists.yml
 
-After it runs, copy the 4 printed playlist IDs into these GitHub repo
+After it runs, copy the printed playlist IDs into these GitHub repo
 secrets (Settings -> Secrets and variables -> Actions):
     MAHANAVI_PLAYLIST_ID_MUHURTAS
     MAHANAVI_PLAYLIST_ID_GITA_SLOKA
     MAHANAVI_PLAYLIST_ID_PURANAS
     MAHANAVI_PLAYLIST_ID_RASHI
+    MAHANAVI_PLAYLIST_ID_NAVARATRI_SONGS   (added 2026-10-03)
 Each posting workflow already passes these through as env vars (see
 .github/workflows/*.yml) -- once the secrets exist, every future
 upload gets added to its series playlist automatically, no further
@@ -79,6 +80,38 @@ PLAYLISTS_TO_CREATE = [
         'వేద జ్యోతిష్యంలో మొత్తం 12 రాశులు ఉంటాయి -- మేషం, వృషభం, మిథునం, కర్కాటకం, సింహం, కన్య, తుల, వృశ్చికం, ధనుస్సు, మకరం, కుంభం, మీనం. ఒక్కో రాశికి ఒక పాలక గ్రహం ఉంటుంది, ఆ గ్రహాన్ని శాంతపరచడానికి, శుభఫలితాలు పొందడానికి ఒక్కో రాశికి ఒక నిర్దిష్ట మంత్రం చెప్పబడింది -- ఉదాహరణకు కుజుడు మేష, వృశ్చిక రాశులకు, శుక్రుడు వృషభ, తుల రాశులకు, బుధుడు మిథున, కన్య రాశులకు పాలకులు. ఈ ప్లేలిస్ట్\u200cలో మేము ప్రతి వీడియోలో ఒక్కో రాశి మంత్రాన్ని, దాని పాలక గ్రహాన్ని, సరైన పఠన విధానాన్ని వివరిస్తాం, 12 రాశులను వరసగా రొటేట్ చేస్తూ.\n\nమంత్రాన్ని ఎంత సార్లు పఠించాలి, ఏ సమయంలో పఠించడం మంచిది, పఠించేటప్పుడు ఏ దిక్కుకు తిరిగి కూర్చోవాలి వంటి ప్రాక్టికల్ వివరాలు కూడా ప్రతి వీడియోలో భాగంగా ఉంటాయి. గ్రహ దోషాలు, శని దోషం, కుజ దోషం వంటివి ఉన్నవారు తమ రాశి మంత్రాన్ని నిత్యం పఠించడం ద్వారా ఉపశమనం పొందవచ్చని జ్యోతిష్య శాస్త్రం చెబుతుంది. మీ రాశి ఏదో తెలుసుకోవాలంటే మీ జన్మ నక్షత్రం లేదా చంద్ర రాశిని బట్టి నిర్ణయించాలి, పుట్టిన తేదీ ఆధారంగా సూర్య రాశిని కూడా చూడవచ్చు. పాశ్చాత్య జ్యోతిష్యంలో చెప్పే సూర్య రాశికి, వేద జ్యోతిష్యంలో చెప్పే చంద్ర రాశికి మధ్య కొంచెం తేడా ఉంటుంది, అందుకే చాలా మందికి తమ వేద రాశి ఏదో సరిగ్గా తెలియదు -- ఈ ప్లేలిస్ట్ ద్వారా అన్ని రాశుల గురించి తెలుసుకుంటే, మీ సరైన రాశి ఏదో కూడా స్పష్టంగా అర్థమవుతుంది.\n\n12 రాశులు, వాటి పాలక గ్రహాలు ఇలా ఉంటాయి -- మేషం, వృశ్చికం: కుజుడు; వృషభం, తుల: శుక్రుడు; మిథునం, కన్య: బుధుడు; కర్కాటకం: చంద్రుడు; సింహం: సూర్యుడు; ధనుస్సు, మీనం: గురుడు; మకరం, కుంభం: శని. ప్రతి రాశికి ఒక రంగు, ఒక రత్నం, ఒక అనుకూల దిక్కు కూడా సంప్రదాయంలో చెప్పబడింది, వీటిని కూడా వీడియోలలో ప్రస్తావిస్తాం. మీ రాశి మంత్రాన్ని ప్రతిరోజూ ఉదయం స్నానం చేసిన తర్వాత, ప్రశాంతమైన మనసుతో పఠించడం ఉత్తమం అని జ్యోతిష్య గ్రంథాలు సూచిస్తాయి.\n\nఈ ప్లేలిస్ట్ 12 రాశులను ఒక్కొక్కటిగా కవర్ చేస్తుంది, ఆపై మళ్లీ మొదటి నుండి రొటేట్ అవుతుంది, కాబట్టి మీ రాశి వీడియో కొన్ని రోజుల్లో మళ్లీ వస్తుంది. కామెంట్\u200cలో మీ రాశి ఏదో తెలియజేయండి, సబ్\u200cస్క్రైబ్ చేసి నోటిఫికేషన్ ఆన్ చేసుకుంటే మీ రాశి వీడియో వచ్చినప్పుడు మీకు తెలుస్తుంది. #రాశిమంత్రం #జ్యోతిష్యం #వేదఆస్ట్రాలజీ'
         "\n\n"
         "Vedic astrology recognizes 12 rashis (zodiac signs) -- Mesha, Vrishabha, Mithuna, Karkataka, Simha, Kanya, Tula, Vrishchika, Dhanassu, Makara, Kumbha and Meena -- and each one is ruled by a specific planet. Mars rules Mesha and Vrishchika, Venus rules Vrishabha and Tula, Mercury rules Mithuna and Kanya, and so on through all nine grahas. Every rashi has its own traditional mantra, chanted specifically to please that ruling planet and draw out its favorable effects. This playlist dedicates one video to each rashi in turn, explaining its ruling planet and the correct way to chant its mantra, cycling through all 12 signs one at a time.\n\nEach video also covers practical details often left out elsewhere -- how many times to repeat the mantra, the best time of day to chant it, and which direction to face while doing so. Classical astrology holds that people dealing with graha doshas -- Shani dosha, Kuja dosha and similar planetary afflictions -- can find relief through consistent chanting of their rashi's mantra. If you're unsure of your own rashi, it's determined by your Moon's position at birth (your janma nakshatra), though many people also informally go by their Sun sign based on birth date. There's a subtle but real difference between the Sun sign used in Western astrology and the Moon-based rashi used in the Vedic system, which is why many people actually don't know their correct Vedic rashi -- watching through this playlist is a simple way to learn all twelve and work out which one is genuinely yours.\n\nHere's the full rulership list: Mesha and Vrishchika are ruled by Mars, Vrishabha and Tula by Venus, Mithuna and Kanya by Mercury, Karkataka by the Moon, Simha by the Sun, Dhanassu and Meena by Jupiter, and Makara and Kumbha by Saturn. Tradition also assigns each rashi a color, a gemstone and a favorable direction, which we touch on in the videos too. Classical texts recommend chanting your rashi mantra every morning after a bath, with a calm, focused mind, for the best results.\n\nThe playlist works through all 12 rashis and then loops back to the start, so your sign's video returns roughly once every two weeks. Tell us your rashi in the comments, and subscribe with notifications on so you don't miss it when your turn comes around again. #RashiMantra #VedicAstrology #ZodiacSigns #PlanetaryMantras",
+    ),
+    # Added 2026-10-03: full-length devotional SONGS (not Shorts) --
+    # the first AI-generated-visuals series on the channel, starting
+    # with Dasara Navaratri 2026 Day 1.
+    (
+        "navaratri_songs",
+        "Dussehra Navaratri Songs 2026 | దసరా నవరాత్రి పాటలు 2026",
+        (
+            "దసరా నవరాత్రుల సందర్భంగా అమ్మవారి తొమ్మిది రూపాలను స్తుతిస్తూ మేము అందిస్తున్న "
+            "భక్తి గీతాల ప్లేలిస్ట్ ఇది. ప్రతి పాట స్వీయ రచన, స్వీయ స్వరకల్పనతో రూపొందించబడింది -- "
+            "సాహిత్యం కొత్తగా రాయబడింది, గానం మా కుటుంబ సభ్యురాలి స్వంత స్వరంతో (AI-ఆధారిత సంగీత "
+            "సాధనాల సహాయంతో రికార్డ్ చేయబడింది), దృశ్యాలు కూడా AI సాధనాలతో రూపొందించబడ్డాయి -- "
+            "ప్రతి పాట పూర్తిగా మా స్వంత సృజనే.\n\n"
+            "మొదటి పాట, 'స్వర్ణకవచధారిణి కనకదుర్గమ్మా', విజయవాడ ఇంద్రకీలాద్రిపై వెలసిన శ్రీ "
+            "కనకదుర్గమ్మ తల్లిపై రచించబడింది -- నవరాత్రుల తొలి రోజు పూజకు అంకితం. ఈ తొమ్మిది రోజుల్లో "
+            "ఒక్కో రోజుకు ఒక్కో అమ్మవారి రూపాన్ని స్తుతిస్తూ కొత్త పాట వస్తుంది కాబట్టి, భక్తి పూజా "
+            "సమయంలో ప్లే చేసుకోవడానికి ఈ ప్లేలిస్ట్\u200cని అనుసరించండి.\n\n"
+            "మా ఛానల్\u200cని సబ్‌స్క్రైబ్ చేసి బెల్ ఐకాన్ నొక్కండి -- ఈ నవరాత్రుల్లో రాబోయే ప్రతి "
+            "కొత్త పాట వెంటనే మీకు తెలిసేలా.\n\n"
+            "---\n\n"
+            "Original devotional songs for Dasara Navaratri, each one celebrating a form of "
+            "the Goddess across the nine nights. Every song here is an original composition -- "
+            "freshly written lyrics, sung in the channel family's own voice (recorded with "
+            "AI-assisted music production tools), with visuals created using AI generation "
+            "tools. Each piece is wholly original work.\n\n"
+            "The first song, 'Swarnakavachadharini Kanakadurgamma', honors Goddess Kanaka "
+            "Durga enshrined atop Indrakeeladri hill in Vijayawada, released for Navaratri "
+            "Day 1. A new song follows through the nine nights, one for each form of the "
+            "Devi -- follow this playlist and play it during your daily puja.\n\n"
+            "Subscribe with the bell on so you don't miss a day. #DasaraNavaratri2026 "
+            "#NavaratriSongs #TeluguDevotionalSongs #DurgaDevi"
+        ),
     ),
 ]
 

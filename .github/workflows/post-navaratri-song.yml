@@ -1,0 +1,78 @@
+name: Post Navaratri Song (fal.ai)
+
+# One-off manual pipeline (not scheduled) for the first AI-generated
+# devotional SONG video -- see post_navaratri_song.py's module
+# docstring for the full design. Needs TWO things in place before a
+# dispatch will succeed:
+#   1. MAHANAVI_FAL_API_KEY repo secret (fal.ai dashboard -> Keys)
+#   2. The song WAV uploaded by hand into the same synced Drive folder
+#      used for all other persistent state, saved as exactly
+#      "navaratri_durga_song_01.wav" (see post_navaratri_song.py's
+#      SONG_FILENAME)
+#
+# Uploads as a PRIVATE draft (never public) -- the channel owner
+# reviews and publishes manually from YouTube Studio.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  post-navaratri-song:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Fetch song WAV from Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/fetch_drive_asset.py navaratri_durga_song_01.wav
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install full Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Generate visuals (fal.ai), assemble, and upload as private draft
+        env:
+          MAHANAVI_FAL_API_KEY: ${{ secrets.MAHANAVI_FAL_API_KEY }}
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+          MAHANAVI_PLAYLIST_ID_NAVARATRI_SONGS: ${{ secrets.MAHANAVI_PLAYLIST_ID_NAVARATRI_SONGS }}
+        run: python3 -m mahanavi.scripts.post_navaratri_song
+
+      - name: Upload generated video as a run artifact (for review before it's live)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: navaratri-song-video-${{ github.run_id }}
+          path: data/generated/navaratri_durga_song_01.mp4
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/ci/notify_failure.py "Post Navaratri Song"
