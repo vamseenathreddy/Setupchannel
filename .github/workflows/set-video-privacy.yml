@@ -1,0 +1,57 @@
+name: Set Video Privacy (One-Off Utility)
+
+# Manual utility to flip a single video's privacyStatus, e.g. to make
+# a test upload public once it's been checked. Added 2026-10-03.
+# Runs in CI (not locally) because this needs the REAL saved YouTube
+# token, which only exists here after being restored from Drive --
+# same reason every other posting workflow works this way.
+on:
+  workflow_dispatch:
+    inputs:
+      video_id:
+        description: "YouTube video ID (the part after watch?v=)"
+        required: true
+      status:
+        description: "New privacy status"
+        required: true
+        default: "public"
+        type: choice
+        options:
+          - public
+          - unlisted
+          - private
+
+permissions:
+  contents: read
+
+jobs:
+  set-video-privacy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Install full Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Update video privacy
+        env:
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+        run: python3 scripts/ci/set_video_privacy.py "${{ inputs.video_id }}" "${{ inputs.status }}"
