@@ -97,7 +97,14 @@ class Settings(BaseSettings):
     sarvam_pace: float = Field(default=0.92, ge=0.5, le=2.0)
     sarvam_temperature: float = Field(default=0.75, ge=0.01, le=2.0)
     sarvam_speech_sample_rate: int = Field(default=24000)
-    alert_short_duration_seconds: float = Field(default=10.0, gt=0)
+    # All series' durations standardized to 5 seconds (explicit request,
+    # 2026-10-03: "I want them to make only 5 seconds. Because youtube
+    # paying per short view not short length so if it's 5 seconds it's
+    # fine") -- YouTube Shorts monetization/view-counting rewards view
+    # count and completion/loop rate, not raw length, so there is no
+    # benefit to a longer card, only more loops needed to re-count as a
+    # fresh view. Was 10.0 before this change.
+    alert_short_duration_seconds: float = Field(default=5.0, gt=0)
     # Deliberately shorter than a comfortable full read of a Rashi Mantra
     # card (5-6 text blocks, ~10-14s to read once) -- short enough that
     # most viewers loop 2-3x to finish reading, which YouTube Shorts
@@ -107,7 +114,10 @@ class Settings(BaseSettings):
     # visible/audible seam -- it should read as one stable, continuous
     # view, not a video restarting. See video/assembler.py module
     # docstring (explicit request, 2026-10-01) for the full reasoning.
-    rashi_mantra_short_duration_seconds: float = Field(default=8.0, gt=0)
+    # Standardized to 5 seconds along with every other series (explicit
+    # request, 2026-10-03, see alert_short_duration_seconds above) -- was
+    # 8.0 before this change.
+    rashi_mantra_short_duration_seconds: float = Field(default=5.0, gt=0)
 
     # Purana Story Shorts (post_purana_short.py) -- same loop-friendly,
     # no-fade design as the Rashi Mantra Shorts above. Explicitly set to
@@ -130,9 +140,10 @@ class Settings(BaseSettings):
     # day (2026-10-02: "from bhagavadgeetha get daily one sloka and
     # meening shorts card at 3 to 4 pm daily"). Same loop-friendly,
     # no-fade, short-duration design as every other Short on this
-    # channel -- slightly longer than the Purana cards since a Sanskrit
-    # verse plus its meaning is a bit more to read.
-    gita_sloka_short_duration_seconds: float = Field(default=6.0, gt=0)
+    # channel. Standardized to 5 seconds along with every other series
+    # (explicit request, 2026-10-03, see alert_short_duration_seconds
+    # above) -- was 6.0 before this change.
+    gita_sloka_short_duration_seconds: float = Field(default=5.0, gt=0)
 
     # fal.ai (AI-generated Purana scene visuals: FLUX.1 [dev] stills +
     # Kling 2.5 Turbo Pro image-to-video animation) -- get a key at

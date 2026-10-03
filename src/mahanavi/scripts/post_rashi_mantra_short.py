@@ -12,8 +12,9 @@ static card (RashiCardRenderer -- a held STILL frame, never scrolling
 text, per explicit requirement) -> assemble into a .mp4 with
 NO fade-in/fade-out (LOOP_FRIENDLY_FADE_*_SECONDS, both 0.0) at a
 duration shorter than a comfortable full read (settings.
-rashi_mantra_short_duration_seconds, 8s default) so viewers loop 2-3x to
-finish reading and the loop itself is invisible -> build SEO
+rashi_mantra_short_duration_seconds, standardized to 5s across every
+series on 2026-10-03) so viewers loop 2-3x to finish reading and the
+loop itself is invisible -> build SEO
 (rashi_mantra_seo.py) -> upload -> advance the rotation index (wraps
 back to 0/Mesha after rashi 11/Meena) and persist it, UNLESS --rashi
 was used to force a specific one (a forced run is a deliberate one-off
