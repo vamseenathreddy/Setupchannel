@@ -34,6 +34,21 @@ AUTO-FIT TEXT: the Sanskrit verse and its Telugu meaning are each
 fit-to-box independently (same shrink-and-rewrap approach as
 PuranaShortCardRenderer/PuranaConceptCardRenderer), since verse length
 varies quite a bit across the Gita.
+
+QUIZ-COMPETITION SUBSCRIBE CTA + "YESTERDAY'S Q&A" REVEAL (explicit
+request, 2026-10-03: "pratiroju oka geeta slokam nerchukondi and ma
+bhagavadgeetha quiz competion lo participate cheyyataniki subscribe
+cheyyandi ... also at bottom ninnati prasna and javabu"):
+  - DEFAULT_SUBSCRIBE_TEXT now explicitly mentions the quiz competition
+    (not just "subscribe for daily verses"), to tie the verse card back
+    to the quiz-day cards (gita_quiz_card_renderer.py) as one series.
+  - Every verse-day card (except the very first run ever, when there is
+    no previous quiz yet) now also shows, below the subscribe line,
+    yesterday's quiz question and its correct answer -- closes the loop
+    for anyone who saw yesterday's quiz but didn't go check the earlier
+    Short: today's new verse card confirms it for them directly.
+    GitaSlokaCard.previous_quiz_sloka carries that target verse; see
+    post_gita_sloka_short.py for how it's computed.
 """
 
 from __future__ import annotations
@@ -71,12 +86,22 @@ SANSKRIT_MIN_FONT_FRAC = 0.032
 MEANING_START_FONT_FRAC = 0.046
 MEANING_MIN_FONT_FRAC = 0.028
 SOURCE_FONT_FRAC = 0.030
-SUBSCRIBE_FONT_FRAC = 0.038
+SUBSCRIBE_START_FONT_FRAC = 0.038
+SUBSCRIBE_MIN_FONT_FRAC = 0.026
+YESTERDAY_LABEL_FONT_FRAC = 0.034
+YESTERDAY_ANSWER_START_FONT_FRAC = 0.036
+YESTERDAY_ANSWER_MIN_FONT_FRAC = 0.026
 
 TEXT_LINE_SPACING = 1.35
 
-DEFAULT_SUBSCRIBE_TEXT = "ప్రతిరోజు గీతా శ్లోకం కోసం సబ్‌స్క్రైబ్ చేయండి"
+# Explicitly mentions the quiz competition (see module docstring) --
+# not just a generic "subscribe for daily verses" line.
+DEFAULT_SUBSCRIBE_TEXT = (
+    "ప్రతిరోజు ఒక గీతా శ్లోకం నేర్చుకోండి — "
+    "మా భగవద్గీత క్విజ్ పోటీలో పాల్గొనడానికి సబ్‌స్క్రైబ్ చేయండి!"
+)
 DEFAULT_INVOCATION = "ఓం శ్రీ కృష్ణాయ నమః"
+YESTERDAY_LABEL_TEXT = "నిన్నటి ప్రశ్న & జవాబు"
 
 ICON_FRAC = 0.078
 ICON_GAP_FRAC = 0.045
@@ -106,6 +131,11 @@ class GitaSlokaCard:
     sloka: GitaSloka
     subscribe_text: str = DEFAULT_SUBSCRIBE_TEXT
     icon_paths: list[Path] = field(default_factory=list)
+    # The verse the PREVIOUS quiz-day card asked about -- shown at the
+    # card's bottom as "yesterday's question & answer" (see module
+    # docstring). None only on the very first run ever, when there is
+    # no previous quiz to reveal.
+    previous_quiz_sloka: GitaSloka | None = None
 
 
 class GitaSlokaCardRenderer:
@@ -144,9 +174,9 @@ class GitaSlokaCardRenderer:
                 start_size=int(width * BADGE_FONT_FRAC), weight="SemiBold",
             )
             source_font = self._fonts.get_font(size=int(width * SOURCE_FONT_FRAC), weight="Regular")
-            subscribe_font = self._fit_font_to_width(
-                draw, card.subscribe_text, max_width=content_width,
-                start_size=int(width * SUBSCRIBE_FONT_FRAC), weight="Bold",
+            subscribe_font, subscribe_lines, subscribe_h = self._fit_block_to_box(
+                draw, card.subscribe_text, max_width=content_width, max_height=int(height * 0.085),
+                start_frac=SUBSCRIBE_START_FONT_FRAC, min_frac=SUBSCRIBE_MIN_FONT_FRAC,
             )
 
             source_line = "— భగవద్గీత"
@@ -155,7 +185,6 @@ class GitaSlokaCardRenderer:
             series_h = int(series_font.size * 1.2)
             badge_h = int(badge_font.size * 1.2)
             source_h = int(source_font.size * 1.2)
-            subscribe_h = int(subscribe_font.size * 1.15)
 
             block_gap = int(height * 0.020)
             icon_size = int(width * ICON_FRAC)
@@ -207,7 +236,10 @@ class GitaSlokaCardRenderer:
             if card.icon_paths:
                 self._draw_icon_row(canvas, card.icon_paths, width, icon_row_top)
 
-            self._draw_centered_line(draw, card.subscribe_text, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT)
+            self._draw_paragraph(draw, subscribe_lines, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT)
+
+            if card.previous_quiz_sloka is not None:
+                self._draw_yesterday_block(draw, card.previous_quiz_sloka, width, content_width, footer_bottom, block_gap)
 
             output_path = self._build_output_path(card)
             final = canvas.convert("RGB")
@@ -222,6 +254,27 @@ class GitaSlokaCardRenderer:
 
         except OSError as exc:
             raise ImageRenderError(f"Gita sloka card rendering/save failed: {exc}") from exc
+
+    def _draw_yesterday_block(
+        self, draw: ImageDraw.ImageDraw, previous: GitaSloka, width: int, content_width: int,
+        footer_bottom: int, block_gap: int,
+    ) -> None:
+        """Drawn BELOW footer_bottom, in the card's lower margin (every
+        other card family on this channel leaves that space blank) --
+        reveals yesterday's quiz question and its correct answer. See
+        module docstring."""
+        label_font = self._fonts.get_font(size=int(width * YESTERDAY_LABEL_FONT_FRAC), weight="SemiBold")
+        answer_text = (
+            f"ప్రశ్న: ఏ అధ్యాయం, శ్లోకం? — జవాబు: అధ్యాయం {previous.chapter}, శ్లోకం {previous.verse}"
+        )
+        answer_font, answer_lines, answer_h = self._fit_block_to_box(
+            draw, answer_text, max_width=content_width, max_height=int(width * 0.12),
+            start_frac=YESTERDAY_ANSWER_START_FONT_FRAC, min_frac=YESTERDAY_ANSWER_MIN_FONT_FRAC,
+        )
+
+        top = footer_bottom + block_gap
+        top = self._draw_centered_line(draw, YESTERDAY_LABEL_TEXT, label_font, width, top, COLOR_GOLD)
+        self._draw_paragraph(draw, answer_lines, answer_font, width, top, COLOR_TEXT_LIGHT)
 
     def _draw_border(self, canvas: Image.Image) -> None:
         width, height = canvas.size

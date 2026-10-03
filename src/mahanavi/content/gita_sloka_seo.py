@@ -75,8 +75,16 @@ def _pick_rotating_pair(pool_te: list[str], pool_en: list[str], index: int) -> t
     return pool_te[i], pool_en[i]
 
 
-def build_gita_sloka_seo(sloka: GitaSloka, sloka_index: int, for_date_ordinal: int) -> ShortSeoContent:
-    """Build title/description/hashtags for one Gita Sloka Short."""
+def build_gita_sloka_seo(
+    sloka: GitaSloka, sloka_index: int, for_date_ordinal: int,
+    previous_quiz_sloka: GitaSloka | None = None,
+) -> ShortSeoContent:
+    """Build title/description/hashtags for one Gita Sloka Short.
+
+    previous_quiz_sloka (explicit request, 2026-10-03) -- when given,
+    echoes yesterday's quiz question and its correct answer in the
+    description too, matching the same reveal shown on the card itself
+    (gita_sloka_card_renderer.py)."""
     pick_index = for_date_ordinal + sloka_index
     ref = f"{sloka.chapter}.{sloka.verse}"
     title = _pick_rotating(_TITLE_TEMPLATES, pick_index).format(ref=ref)
@@ -86,18 +94,24 @@ def build_gita_sloka_seo(sloka: GitaSloka, sloka_index: int, for_date_ordinal: i
     comment_en = _pick_rotating(_COMMENT_PROMPTS_EN, pick_index + 2)
     comment_te = "ఈ శ్లోకం మీకు ఎలా అనిపించిందో కామెంట్‌లో చెప్పండి!"
 
+    yesterday_te = yesterday_en = ""
+    if previous_quiz_sloka is not None:
+        p = previous_quiz_sloka
+        yesterday_te = f"\n\nనిన్నటి ప్రశ్న & జవాబు: ఏ అధ్యాయం, శ్లోకం? — అధ్యాయం {p.chapter}, శ్లోకం {p.verse}"
+        yesterday_en = f"\n\nYesterday's quiz answer: Chapter {p.chapter}, Verse {p.verse}"
+
     description_te = (
         f"{hook_te}\n\n"
         f"{sloka.sanskrit_deva}\n\n"
         f"అర్థం: {sloka.telugu_meaning}\n"
         f"అధ్యాయం {sloka.chapter}, శ్లోకం {sloka.verse} — {sloka.chapter_name_te}\n\n"
-        f"{cta_te}\n\n{comment_te}"
+        f"{cta_te}\n\n{comment_te}{yesterday_te}"
     )
     description_en = (
         f"{hook_en}\n\n"
         f"Transliteration: {sloka.transliteration}\n"
         f"Bhagavad Gita, Chapter {sloka.chapter}, Verse {sloka.verse}\n\n"
-        f"{cta_en}\n\n{comment_en}"
+        f"{cta_en}\n\n{comment_en}{yesterday_en}"
     )
 
     from mahanavi.content.alert_seo import _CHANNEL_FOOTER_EN, _CHANNEL_FOOTER_TE  # reused, not duplicated
@@ -149,13 +163,19 @@ _QUIZ_COMMENT_PROMPTS_EN = [
 ]
 
 
-def build_gita_sloka_quiz_seo(quiz: GitaQuizOptions, for_date_ordinal: int) -> ShortSeoContent:
+def build_gita_sloka_quiz_seo(
+    quiz: GitaQuizOptions, for_date_ordinal: int, next_verse_hint: GitaSloka | None = None,
+) -> ShortSeoContent:
     """Build title/description/hashtags for a Gita Sloka QUIZ-day Short.
 
     The correct answer is deliberately NOT stated anywhere in this
     description -- the entire point (explicit request, 2026-10-03) is
     to send viewers back to yesterday's Short on the channel to check,
-    not to let them read the answer here."""
+    not to let them read the answer here.
+
+    next_verse_hint (explicit request, 2026-10-03: "repati short lo yem
+    nerchukobotunnamo hint or intro") -- when given, echoes the same
+    one-line "tomorrow's chapter" teaser shown on the card itself."""
     pick_index = for_date_ordinal
     title = _pick_rotating(_QUIZ_TITLE_TEMPLATES, pick_index)
 
@@ -173,16 +193,21 @@ def build_gita_sloka_quiz_seo(quiz: GitaQuizOptions, for_date_ordinal: int) -> S
         for letter, s in zip(["A", "B", "C", "D"], quiz.options)
     )
 
+    hint_te = hint_en = ""
+    if next_verse_hint is not None:
+        hint_te = f"\n\nరేపు {next_verse_hint.chapter_name_te} నుండి ఒక కొత్త శ్లోకం — మిస్ అవ్వకండి!"
+        hint_en = f"\n\nTomorrow: a new verse from {next_verse_hint.chapter_name_te} -- don't miss it!"
+
     description_te = (
         f"{hook_te}\n\n"
         f"{quiz.target.sanskrit_deva}\n\n"
         f"ఈ శ్లోకం ఏ అధ్యాయం, శ్లోకం?\n{option_lines_te}\n\n"
-        f"{cta_te}\n\n{comment_te}"
+        f"{cta_te}\n\n{comment_te}{hint_te}"
     )
     description_en = (
         f"{hook_en}\n\n"
         f"Which chapter & verse is this?\n{option_lines_en}\n\n"
-        f"{cta_en}\n\n{comment_en}"
+        f"{cta_en}\n\n{comment_en}{hint_en}"
     )
 
     from mahanavi.content.alert_seo import _CHANNEL_FOOTER_EN, _CHANNEL_FOOTER_TE  # reused, not duplicated

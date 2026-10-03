@@ -170,6 +170,10 @@ def main() -> int:
         print("Uploading as UNLISTED (default). Pass --public once you're happy with the result.")
 
     forced = args.sloka is not None or args.mode is not None
+    # Snapshot BEFORE _read_state() -- the only reliable way to tell "the
+    # very first run ever" (no previous quiz exists to reveal) apart from
+    # a legitimate "verse:0" written after the rotation wrapped around.
+    had_prior_state = STATE_FILE.exists()
     try:
         state_mode, state_index = _read_state()
         target_index = _resolve_forced_sloka(args.sloka) if args.sloka is not None else state_index
@@ -197,7 +201,15 @@ def main() -> int:
             sloka: GitaSloka = GITA_SLOKAS[target_index]
             print(f"Posting VERSE {target_index} ({sloka.chapter}.{sloka.verse}){' [FORCED]' if forced else ''}")
 
-            verse_card = GitaSlokaCard(sloka=sloka, icon_paths=_icon_paths(settings))
+            # Reveal yesterday's quiz answer on every verse-day card
+            # except the very first run ever (no previous quiz exists).
+            previous_quiz_sloka: GitaSloka | None = None
+            if len(GITA_SLOKAS) > 1 and (had_prior_state or forced):
+                previous_quiz_sloka = GITA_SLOKAS[(target_index - 1) % len(GITA_SLOKAS)]
+
+            verse_card = GitaSlokaCard(
+                sloka=sloka, icon_paths=_icon_paths(settings), previous_quiz_sloka=previous_quiz_sloka,
+            )
             image_path = GitaSlokaCardRenderer(settings).render(verse_card)
             print(f"Rendered card: {image_path}")
 
@@ -212,7 +224,7 @@ def main() -> int:
             )
             print(f"Assembled (loop-friendly, {settings.gita_sloka_short_duration_seconds}s, no fades): {video_path}")
 
-            seo = build_gita_sloka_seo(sloka, target_index, today.toordinal())
+            seo = build_gita_sloka_seo(sloka, target_index, today.toordinal(), previous_quiz_sloka=previous_quiz_sloka)
 
         else:  # mode == "quiz"
             quiz = build_quiz_options(target_index, today.toordinal())
@@ -221,7 +233,15 @@ def main() -> int:
                 f"{' [FORCED]' if forced else ''} -- correct answer is option {quiz.correct_letter}"
             )
 
-            quiz_card = GitaQuizCard(quiz=quiz, icon_paths=_icon_paths(settings))
+            # Tomorrow's verse is deterministic (next_index below) even
+            # though it isn't persisted as state until after a
+            # successful upload -- safe to tease it here.
+            next_index = (target_index + 1) % len(GITA_SLOKAS)
+            next_verse_hint: GitaSloka | None = GITA_SLOKAS[next_index] if len(GITA_SLOKAS) > 1 else None
+
+            quiz_card = GitaQuizCard(
+                quiz=quiz, icon_paths=_icon_paths(settings), next_verse_hint=next_verse_hint,
+            )
             image_path = GitaQuizCardRenderer(settings).render(quiz_card)
             print(f"Rendered card: {image_path}")
 
@@ -239,7 +259,7 @@ def main() -> int:
             )
             print(f"Assembled (loop-friendly, {settings.gita_sloka_short_duration_seconds}s, no fades): {video_path}")
 
-            seo = build_gita_sloka_quiz_seo(quiz, today.toordinal())
+            seo = build_gita_sloka_quiz_seo(quiz, today.toordinal(), next_verse_hint=next_verse_hint)
 
         uploader = YouTubeShortsUploader(settings)
         result = uploader.upload(video_path, seo, privacy_status=privacy_status)

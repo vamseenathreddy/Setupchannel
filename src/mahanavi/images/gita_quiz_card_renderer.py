@@ -20,6 +20,17 @@ background photo as GitaSlokaCardRenderer (imported constants, same
 _build_background technique) so quiz-day and verse-day cards read as
 the same series, just a different day's format -- not two different
 channels.
+
+NEXT-EPISODE HINT (explicit request, 2026-10-03: "also in quiz short
+below post repati short lo yem nerchukobotunnamo hint or intro like
+that one line at bottom") -- the quiz card also shows a one-line
+teaser at the very bottom for TOMORROW's verse (which chapter it's
+from, not the verse itself), so every Short ends by pointing at the
+next one. This is knowable in advance because the rotation is
+deterministic: see post_gita_sloka_short.py, which computes it as
+GITA_SLOKAS[(target_index + 1) % len(GITA_SLOKAS)] without yet writing
+that as the persisted state (state only advances after a successful
+upload).
 """
 
 from __future__ import annotations
@@ -31,6 +42,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont, ImageOps, UnidentifiedImageError
 
 from mahanavi.config import Settings
+from mahanavi.content.bhagavad_gita_slokas import GitaSloka
 from mahanavi.content.gita_sloka_quiz import GitaQuizOptions
 from mahanavi.exceptions import ImageRenderError
 from mahanavi.images.fonts import FontManager
@@ -64,9 +76,22 @@ CTA_MIN_FONT_FRAC = 0.024
 ICON_FRAC = 0.078
 ICON_GAP_FRAC = 0.045
 
-DEFAULT_SUBSCRIBE_TEXT = "ప్రతిరోజు గీతా శ్లోకం కోసం సబ్‌స్క్రైబ్ చేయండి"
+SUBSCRIBE_START_FONT_FRAC = 0.038
+SUBSCRIBE_MIN_FONT_FRAC = 0.026
+
+# Same quiz-competition CTA as GitaSlokaCardRenderer -- explicit
+# request, 2026-10-03 (see that module's docstring).
+DEFAULT_SUBSCRIBE_TEXT = (
+    "ప్రతిరోజు ఒక గీతా శ్లోకం నేర్చుకోండి — "
+    "మా భగవద్గీత క్విజ్ పోటీలో పాల్గొనడానికి సబ్‌స్క్రైబ్ చేయండి!"
+)
 DEFAULT_QUESTION = "ఈ శ్లోకం ఏ అధ్యాయం, శ్లోకం?"
 DEFAULT_CTA = "సమాధానం కామెంట్‌లో చెప్పండి! నిర్ధారణ కోసం నిన్నటి Short చూడండి 👆"
+
+NEXT_HINT_LABEL_TEXT = "రేపటి ఎపిసోడ్ హింట్"
+NEXT_HINT_LABEL_FONT_FRAC = 0.034
+NEXT_HINT_TEXT_START_FONT_FRAC = 0.036
+NEXT_HINT_TEXT_MIN_FONT_FRAC = 0.026
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,6 +101,10 @@ class GitaQuizCard:
     question_text: str = DEFAULT_QUESTION
     cta_text: str = DEFAULT_CTA
     icon_paths: list[Path] = field(default_factory=list)
+    # Tomorrow's verse -- shown at the card's bottom as a one-line
+    # teaser (chapter name only, not the verse itself). See module
+    # docstring's "NEXT-EPISODE HINT" section. None skips the teaser.
+    next_verse_hint: GitaSloka | None = None
 
 
 class GitaQuizCardRenderer:
@@ -111,15 +140,14 @@ class GitaQuizCardRenderer:
                 start_size=int(width * QUESTION_FONT_FRAC), weight="Bold",
             )
             option_font = self._fonts.get_font(size=int(width * OPTION_FONT_FRAC), weight="SemiBold")
-            subscribe_font = self._fit_font_to_width(
-                draw, card.subscribe_text, max_width=content_width,
-                start_size=int(width * 0.038), weight="Bold",
+            subscribe_font, subscribe_lines, subscribe_h = self._fit_block_to_box(
+                draw, card.subscribe_text, max_width=content_width, max_height=int(height * 0.085),
+                start_frac=SUBSCRIBE_START_FONT_FRAC, min_frac=SUBSCRIBE_MIN_FONT_FRAC,
             )
 
             invocation_h = int(invocation_font.size * 1.2)
             series_h = int(series_font.size * 1.2)
             question_h = int(question_font.size * 1.3)
-            subscribe_h = int(subscribe_font.size * 1.15)
 
             block_gap = int(height * 0.018)
             icon_size = int(width * ICON_FRAC)
@@ -182,7 +210,12 @@ class GitaQuizCardRenderer:
             if card.icon_paths:
                 self._draw_icon_row(canvas, card.icon_paths, width, icon_row_top)
 
-            self._draw_centered_line(draw, card.subscribe_text, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT)
+            self._draw_paragraph(draw, subscribe_lines, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT)
+
+            if card.next_verse_hint is not None:
+                self._draw_next_hint_block(
+                    draw, card.next_verse_hint, width, content_width, footer_bottom, block_gap,
+                )
 
             output_path = self._build_output_path(card)
             final = canvas.convert("RGB")
@@ -200,6 +233,25 @@ class GitaQuizCardRenderer:
 
         except OSError as exc:
             raise ImageRenderError(f"Gita quiz card rendering/save failed: {exc}") from exc
+
+    def _draw_next_hint_block(
+        self, draw: ImageDraw.ImageDraw, next_sloka: GitaSloka, width: int, content_width: int,
+        footer_bottom: int, block_gap: int,
+    ) -> None:
+        """Drawn BELOW footer_bottom, in the card's lower margin (same
+        spot GitaSlokaCardRenderer uses for its "yesterday's Q&A"
+        block) -- a one-line teaser for tomorrow's verse: which chapter
+        it's from, not the verse itself. See module docstring."""
+        label_font = self._fonts.get_font(size=int(width * NEXT_HINT_LABEL_FONT_FRAC), weight="SemiBold")
+        hint_text = f"రేపు {next_sloka.chapter_name_te} నుండి ఒక కొత్త శ్లోకం — మిస్ అవ్వకండి!"
+        hint_font, hint_lines, _ = self._fit_block_to_box(
+            draw, hint_text, max_width=content_width, max_height=int(width * 0.12),
+            start_frac=NEXT_HINT_TEXT_START_FONT_FRAC, min_frac=NEXT_HINT_TEXT_MIN_FONT_FRAC,
+        )
+
+        top = footer_bottom + block_gap
+        top = self._draw_centered_line(draw, NEXT_HINT_LABEL_TEXT, label_font, width, top, COLOR_GOLD)
+        self._draw_paragraph(draw, hint_lines, hint_font, width, top, COLOR_TEXT_LIGHT)
 
     def _draw_border(self, canvas: Image.Image) -> None:
         width, height = canvas.size
