@@ -174,18 +174,40 @@ class FalSceneGenerator:
         return self._download(video_url, out_dir / f"{scene.key}_clip.mp4")
 
     def _upload(self, path: Path) -> str:
-        """fal.ai's own file-upload endpoint -- Kling needs a URL, not
-        raw bytes, so the locally-downloaded FLUX still gets re-uploaded
-        here first."""
-        resp = requests.post(
-            "https://fal.run/storage/upload",
-            headers={"Authorization": f"Key {self._key}"},
-            files={"file": (path.name, path.read_bytes(), "image/png")},
+        """Uploads a local file to fal.ai's storage and returns its
+        access URL -- Kling needs a URL, not raw bytes, so the
+        locally-downloaded FLUX still gets re-uploaded here first.
+
+        The single-POST "https://fal.run/storage/upload" endpoint this
+        used to hit no longer exists (404 "Application 'upload' not
+        found" on a real run, 2026-10-03). Replaced with the
+        two-step "storage/upload/initiate" flow fal.ai's own fal-client
+        package uses for its simpler (non-CDN-token) upload repository:
+        POST rest.fal.ai/storage/upload/initiate with the same
+        "Authorization: Key ..." header already used everywhere else
+        in this class to get a one-time signed PUT url + the final
+        access url, then PUT the raw bytes there directly.
+        """
+        init_resp = requests.post(
+            "https://rest.fal.ai/storage/upload/initiate?storage_type=gcs",
+            headers={"Authorization": f"Key {self._key}", "Content-Type": "application/json"},
+            json={"file_name": path.name, "content_type": "image/png"},
             timeout=60,
         )
-        if resp.status_code >= 400:
-            raise FalGenerationError(f"fal.ai file upload failed: {resp.status_code} {resp.text[:500]}")
-        url = resp.json().get("url")
-        if not url:
-            raise FalGenerationError(f"fal.ai file upload returned no url: {resp.text[:500]}")
-        return str(url)
+        if init_resp.status_code >= 400:
+            raise FalGenerationError(f"fal.ai upload-initiate failed: {init_resp.status_code} {init_resp.text[:500]}")
+        init_data = init_resp.json()
+        upload_url = init_data.get("upload_url")
+        file_url = init_data.get("file_url")
+        if not upload_url or not file_url:
+            raise FalGenerationError(f"fal.ai upload-initiate returned an unexpected shape: {init_data}")
+
+        put_resp = requests.put(
+            upload_url,
+            headers={"Content-Type": "image/png"},
+            data=path.read_bytes(),
+            timeout=120,
+        )
+        if put_resp.status_code >= 400:
+            raise FalGenerationError(f"fal.ai file upload (PUT) failed: {put_resp.status_code} {put_resp.text[:500]}")
+        return str(file_url)
