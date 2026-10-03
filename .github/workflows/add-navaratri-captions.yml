@@ -1,0 +1,66 @@
+name: Add Navaratri Captions and Comment (One-Time)
+
+# One-off manual step: uploads a real Telugu subtitle/caption track
+# (timed to match the burned-in lyric captions exactly) onto the live
+# "Swarnakavachadharini Kanakadurgamma" video, replacing reliance on
+# the wrong-language auto-generated English track, and posts a
+# lyrics-excerpt comment to seed engagement. See
+# add_navaratri_captions_and_comment.py's module docstring.
+#
+# Needs the song WAV, same as the Post Navaratri Song workflow, to
+# compute exact caption timing from the real audio duration.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  add-captions-and-comment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Fetch song WAV from Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/fetch_drive_asset.py navaratri_durga_song_01.wav
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install full Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Add captions and comment
+        env:
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+        run: |
+          set -o pipefail
+          python scripts/ci/add_navaratri_captions_and_comment.py 2>&1 | tee data/navaratri_captions_log.txt
+
+      - name: Push result log to Drive
+        if: always()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/push_drive_asset.py data/navaratri_captions_log.txt navaratri_captions_log.txt
