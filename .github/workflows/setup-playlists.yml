@@ -54,3 +54,10 @@ jobs:
           GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
         run: python scripts/ci/drive_state_sync.py push
+
+      - name: Push printed playlist IDs to Drive (readable without a job-log fetch)
+        if: always()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/push_drive_asset.py data/playlist_ids.txt playlist_ids.txt

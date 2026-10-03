@@ -38,6 +38,7 @@ action needed.
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 from mahanavi.config import get_settings
 from mahanavi.exceptions import YouTubeUploadError
@@ -178,8 +179,19 @@ def main() -> int:
         results[key] = playlist_id
 
     print("\n=== Copy these into GitHub repo secrets (Settings -> Secrets and variables -> Actions) ===")
-    for key, playlist_id in results.items():
-        print(f"MAHANAVI_PLAYLIST_ID_{key.upper()}={playlist_id}")
+    lines = [f"MAHANAVI_PLAYLIST_ID_{key.upper()}={playlist_id}" for key, playlist_id in results.items()]
+    for line in lines:
+        print(line)
+
+    # Also write to a local file (added 2026-10-03) so the caller can
+    # push it to Drive -- see scripts/ci/push_drive_asset.py. A GitHub
+    # Actions job log is only readable via a blob-storage redirect,
+    # which isn't reachable from every environment that needs these
+    # IDs, so Drive is the more reliable hand-off.
+    out_path = Path("data") / "playlist_ids.txt"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"\nAlso wrote these to {out_path}")
 
     return 0
 
