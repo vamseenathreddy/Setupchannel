@@ -86,6 +86,7 @@ def main() -> int:
                 "snippet": {
                     "title": seo.title,
                     "description": seo.full_caption(),
+                    "defaultAudioLanguage": "te",
                     "tags": seo.hashtags,
                     "categoryId": category_id,
                 },
