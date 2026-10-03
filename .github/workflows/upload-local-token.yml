@@ -1,0 +1,73 @@
+name: Upload Refreshed YouTube Token to Drive
+
+# Utility workflow for getting a freshly re-authed
+# data/youtube_token.json (produced by running
+# youtube_shorts_auth_setup.py LOCALLY, since it needs a real browser)
+# into Google Drive -- without needing to know the Drive folder ID or
+# set up the service-account env vars locally. CI already has
+# GDRIVE_SA_KEY_JSON/GDRIVE_FOLDER_ID as secrets, so this just reuses
+# those.
+#
+# USAGE:
+#   1. Run `python -m mahanavi.scripts.youtube_shorts_auth_setup`
+#      locally, sign in, approve permissions.
+#   2. Open the resulting data/youtube_token.json in a text editor,
+#      copy its ENTIRE contents.
+#   3. Add/update a GitHub repo secret named LOCAL_YOUTUBE_TOKEN_JSON
+#      with that content (Settings -> Secrets and variables -> Actions).
+#   4. Run this workflow (workflow_dispatch, below).
+#   5. Once confirmed working, you can delete the
+#      LOCAL_YOUTUBE_TOKEN_JSON secret again (it's only needed for the
+#      duration of this one run each time you use this workflow).
+#
+# Pulls existing Drive state first and only overwrites
+# data/youtube_token.json, so every other series' rotation state is
+# left untouched.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  upload-local-token:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Overwrite youtube_token.json from secret
+        env:
+          LOCAL_YOUTUBE_TOKEN_JSON: ${{ secrets.LOCAL_YOUTUBE_TOKEN_JSON }}
+        run: |
+          python3 -c "
+          import json, os, sys
+          content = os.environ.get('LOCAL_YOUTUBE_TOKEN_JSON', '').strip()
+          if not content:
+              print('LOCAL_YOUTUBE_TOKEN_JSON secret is empty -- add it first.', file=sys.stderr)
+              sys.exit(1)
+          json.loads(content)  # validate it's real JSON before writing
+          with open('data/youtube_token.json', 'w', encoding='utf-8') as f:
+              f.write(content)
+          print('Wrote data/youtube_token.json from secret.')
+          "
+
+      - name: Push state to Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py push
