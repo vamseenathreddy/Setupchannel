@@ -109,7 +109,13 @@ DATE_BADGE_TEXT = (40, 20, 5)    # dark, for contrast against the gold fill
 DATE_BADGE_PAD_X_FRAC = 0.035
 DATE_BADGE_PAD_Y_FRAC = 0.012
 
-DEFAULT_SUBSCRIBE_TEXT = "ప్రతిరోజు ముహూర్తాలకొరకు సబ్‌స్క్రైబ్ చేయండి"  # "Subscribe for daily muhurtams"
+# Dead in practice -- post_alert_shorts.py always passes an explicit
+# subscribe_text from its own rotating per-series pools (see
+# _RAHU_KALAM_SUBSCRIBE_LINES etc.), never relies on this default. Kept
+# in sync anyway (2026-10-03: added the bell-icon mention, same reason
+# as those pools) in case this renderer is ever called directly without
+# one.
+DEFAULT_SUBSCRIBE_TEXT = "ప్రతిరోజు ముహూర్తాలకొరకు సబ్‌స్క్రైబ్ చేసి బెల్ ఐకాన్ నొక్కండి"  # "Subscribe and press the bell icon for daily muhurtams"
 
 
 @dataclass(frozen=True, slots=True)
