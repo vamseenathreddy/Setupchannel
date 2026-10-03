@@ -105,6 +105,9 @@ class GitaQuizCard:
     # teaser (chapter name only, not the verse itself). See module
     # docstring's "NEXT-EPISODE HINT" section. None skips the teaser.
     next_verse_hint: GitaSloka | None = None
+    # Krishna/Vishnu invocation shown at the very top -- same rotation
+    # as the verse-day card (see gita_sloka_card_renderer.pick_invocation).
+    invocation_text: str = DEFAULT_INVOCATION
 
 
 class GitaQuizCardRenderer:
@@ -131,7 +134,7 @@ class GitaQuizCardRenderer:
             footer_bottom = int(height * 0.68)
 
             invocation_font = self._fit_font_to_width(
-                draw, DEFAULT_INVOCATION, max_width=content_width,
+                draw, card.invocation_text, max_width=content_width,
                 start_size=int(width * INVOCATION_FONT_FRAC), weight="Bold",
             )
             series_font = self._fonts.get_font(size=int(width * SERIES_LABEL_FONT_FRAC), weight="SemiBold")
@@ -190,7 +193,7 @@ class GitaQuizCardRenderer:
             options_top = body_box_top + sanskrit_box_height + block_gap
 
             cursor_y = content_top
-            cursor_y = self._draw_centered_line(draw, DEFAULT_INVOCATION, invocation_font, width, cursor_y, COLOR_GOLD)
+            cursor_y = self._draw_centered_line(draw, card.invocation_text, invocation_font, width, cursor_y, COLOR_GOLD)
             cursor_y += block_gap
             cursor_y = self._draw_centered_line(draw, "నేటి క్విజ్ — Quiz Time!", series_font, width, cursor_y, COLOR_GOLD)
             cursor_y += block_gap

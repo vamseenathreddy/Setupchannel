@@ -103,6 +103,29 @@ DEFAULT_SUBSCRIBE_TEXT = (
 DEFAULT_INVOCATION = "ఓం శ్రీ కృష్ణాయ నమః"
 YESTERDAY_LABEL_TEXT = "నిన్నటి ప్రశ్న & జవాబు"
 
+# Krishna/Vishnu invocation chants, rotated day-to-day instead of always
+# showing the single fixed DEFAULT_INVOCATION line above -- explicit
+# request, 2026-10-03: "in bhagavadgeetha shorts also rotate krishna
+# and vishnu mantras". Krishna is himself the Gita's speaker and a
+# Vishnu avatar, so both are in scope for this card's invocation line.
+# Same deterministic by-date rotation pattern used everywhere else in
+# this codebase (pool[date.toordinal() % len(pool)]).
+INVOCATION_POOL = [
+    "ఓం శ్రీ కృష్ణాయ నమః",
+    "ఓం నమో భగవతే వాసుదేవాయ",
+    "హరే కృష్ణ హరే కృష్ణ కృష్ణ కృష్ణ హరే హరే",
+    "ఓం నమో నారాయణాయ",
+    "ఓం విష్ణవే నమః",
+]
+
+
+def pick_invocation(for_date_ordinal: int) -> str:
+    """Deterministic day-to-day rotation through INVOCATION_POOL --
+    reproducible for a given date, varies day to day. Used for both
+    verse-day (GitaSlokaCard) and quiz-day (GitaQuizCard) cards so the
+    whole series rotates together."""
+    return INVOCATION_POOL[for_date_ordinal % len(INVOCATION_POOL)]
+
 ICON_FRAC = 0.078
 ICON_GAP_FRAC = 0.045
 
@@ -136,6 +159,10 @@ class GitaSlokaCard:
     # docstring). None only on the very first run ever, when there is
     # no previous quiz to reveal.
     previous_quiz_sloka: GitaSloka | None = None
+    # Krishna/Vishnu invocation shown at the very top -- defaults to the
+    # original fixed line, but post_gita_sloka_short.py overrides it
+    # with pick_invocation(for_date) so it rotates day-to-day.
+    invocation_text: str = DEFAULT_INVOCATION
 
 
 class GitaSlokaCardRenderer:
@@ -164,7 +191,7 @@ class GitaSlokaCardRenderer:
             footer_bottom = int(height * 0.68)
 
             invocation_font = self._fit_font_to_width(
-                draw, DEFAULT_INVOCATION, max_width=content_width,
+                draw, card.invocation_text, max_width=content_width,
                 start_size=int(width * INVOCATION_FONT_FRAC), weight="Bold",
             )
             series_font = self._fonts.get_font(size=int(width * SERIES_LABEL_FONT_FRAC), weight="SemiBold")
@@ -222,7 +249,7 @@ class GitaSlokaCardRenderer:
             )
 
             cursor_y = content_top
-            cursor_y = self._draw_centered_line(draw, DEFAULT_INVOCATION, invocation_font, width, cursor_y, COLOR_GOLD)
+            cursor_y = self._draw_centered_line(draw, card.invocation_text, invocation_font, width, cursor_y, COLOR_GOLD)
             cursor_y += block_gap
             cursor_y = self._draw_centered_line(draw, "నేటి గీతా శ్లోకం", series_font, width, cursor_y, COLOR_GOLD)
             cursor_y += block_gap

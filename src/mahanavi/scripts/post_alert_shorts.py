@@ -288,20 +288,40 @@ def _pick_comment_prompt(pool: list[str], for_date: date, offset: int) -> str:
     return pool[(for_date.toordinal() + offset) % len(pool)]
 
 
-def _mantra_lines(for_date: date) -> list[tuple[str, str]]:
-    """Today's deity's mantra and beeja mantram, as extra lines for both
-    alert cards -- fills the empty space below the muhurtam block with
-    genuinely relevant devotional content instead of leaving it blank.
+def _mantra_lines(for_date: date, offset: int) -> list[tuple[str, str]]:
+    """Mantra + beeja-mantram line for one alert card, rotated BOTH
+    day-to-day AND across the three alert Shorts posted on the same day
+    (explicit request, 2026-10-03: "see all this 3 posts today showing
+    same mantram let's rotate that ... Also other gods on that day" --
+    previously this returned ONE fixed pick per date and all three
+    cards shared it verbatim, which is exactly what the screenshot
+    showed).
 
-    The beeja mantram is rotated day-to-day through that deity's pool
-    (see pick_beeja_mantram in content/data.py) instead of always
-    showing the same fixed chant -- explicit request, since the same
-    Monday chant every single week felt repetitive."""
-    deity = WEEKDAY_DEITY_MAP[for_date.weekday()]
-    content = DEITY_CONTENT[deity]
-    beeja = pick_beeja_mantram(content, for_date)
+    `offset` distinguishes the three callers (Rahu Kalam=0, Shubha
+    Ghadiyalu=1, Durmuhurtham=2) so each gets a different pool entry on
+    the same date.
+
+    Today's weekday deity (WEEKDAY_DEITY_MAP) still anchors the pool --
+    most entries are ITS OWN mantra namalu variants (content.
+    mantra_namalu), per the explicit request to rotate Venkateswara's
+    own names/mantras -- but two entries from OTHER deities are folded
+    in too, so not all three of a day's Shorts have to be the same
+    deity. Which other deities appear also varies day to day."""
+    today_deity = WEEKDAY_DEITY_MAP[for_date.weekday()]
+    today_content = DEITY_CONTENT[today_deity]
+    beeja_today = pick_beeja_mantram(today_content, for_date)
+
+    pool: list[tuple[str, str]] = [(namam, beeja_today) for namam in today_content.mantra_namalu]
+
+    other_deities = [d for d in DEITY_CONTENT if d != today_deity]
+    for i in range(2):
+        other_deity = other_deities[(for_date.toordinal() + i) % len(other_deities)]
+        other_content = DEITY_CONTENT[other_deity]
+        pool.append((other_content.mantra_namalu[0], pick_beeja_mantram(other_content, for_date)))
+
+    mantra, beeja = pool[(for_date.toordinal() + offset) % len(pool)]
     return [
-        ("మంత్రం", content.mantra),
+        ("మంత్రం", mantra),
         ("బీజ మంత్రం (శుభఫలితాల కోసం 11 సార్లు పఠించండి)", beeja),
     ]
 
@@ -411,7 +431,6 @@ def main() -> int:
         return 1
 
     icon_paths = _icon_paths(settings)
-    mantra_lines = _mantra_lines(for_date)
     date_text = format_telugu_date(for_date)
 
     rahu_ok = True
@@ -419,7 +438,7 @@ def main() -> int:
         rahu_comment_prompt = _pick_comment_prompt(_COMMENT_PROMPT_LINES, for_date, offset=0)
         rahu_card = AlertCard(
             title="ఈరోజు రాహు కాలం",
-            lines=[("సమయం", panchang.rahu_kalam), *mantra_lines],
+            lines=[("సమయం", panchang.rahu_kalam), *_mantra_lines(for_date, offset=0)],
             top_color=COLOR_RAHU_TOP, bottom_color=COLOR_RAHU_BOTTOM,
             filename_suffix="rahu_kalam", icon_paths=icon_paths,
             date_text=date_text, secondary_info=_other_inauspicious_periods(panchang),
@@ -447,7 +466,7 @@ def main() -> int:
         )
         shubha_card = AlertCard(
             title="ఈరోజు శుభ ఘడియలు",
-            lines=[*shubha_lines, *mantra_lines],
+            lines=[*shubha_lines, *_mantra_lines(for_date, offset=1)],
             top_color=COLOR_SHUBHA_TOP, bottom_color=COLOR_SHUBHA_BOTTOM,
             filename_suffix="shubha_ghadiyalu", icon_paths=icon_paths,
             date_text=date_text,
@@ -471,7 +490,7 @@ def main() -> int:
         )
         durmuhurtham_card = AlertCard(
             title="ఈరోజు దుర్ముహూర్తం",
-            lines=[(PANCHANG_LABELS["durmuhurtham"], panchang.durmuhurtham), *mantra_lines],
+            lines=[(PANCHANG_LABELS["durmuhurtham"], panchang.durmuhurtham), *_mantra_lines(for_date, offset=2)],
             top_color=COLOR_DURMUHURTHAM_TOP, bottom_color=COLOR_DURMUHURTHAM_BOTTOM,
             filename_suffix="durmuhurtham", icon_paths=icon_paths,
             date_text=date_text,

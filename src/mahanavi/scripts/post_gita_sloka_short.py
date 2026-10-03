@@ -70,7 +70,7 @@ from mahanavi.content.gita_sloka_quiz import MIN_SLOKAS_FOR_QUIZ, build_quiz_opt
 from mahanavi.content.gita_sloka_seo import build_gita_sloka_quiz_seo, build_gita_sloka_seo
 from mahanavi.exceptions import MahanaviError
 from mahanavi.images.gita_quiz_card_renderer import GitaQuizCard, GitaQuizCardRenderer
-from mahanavi.images.gita_sloka_card_renderer import GitaSlokaCard, GitaSlokaCardRenderer
+from mahanavi.images.gita_sloka_card_renderer import GitaSlokaCard, GitaSlokaCardRenderer, pick_invocation
 from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
 from mahanavi.video.assembler import assemble_short
 
@@ -210,6 +210,7 @@ def main() -> int:
 
             verse_card = GitaSlokaCard(
                 sloka=sloka, icon_paths=_icon_paths(settings), previous_quiz_sloka=previous_quiz_sloka,
+                invocation_text=pick_invocation(today.toordinal()),
             )
             image_path = GitaSlokaCardRenderer(settings).render(verse_card)
             print(f"Rendered card: {image_path}")
@@ -242,6 +243,7 @@ def main() -> int:
 
             quiz_card = GitaQuizCard(
                 quiz=quiz, icon_paths=_icon_paths(settings), next_verse_hint=next_verse_hint,
+                invocation_text=pick_invocation(today.toordinal()),
             )
             image_path = GitaQuizCardRenderer(settings).render(quiz_card)
             print(f"Rendered card: {image_path}")
