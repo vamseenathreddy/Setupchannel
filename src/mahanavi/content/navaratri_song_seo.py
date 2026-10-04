@@ -22,6 +22,66 @@ from dataclasses import dataclass
 # up, instead of this being a dead-end upload.
 NAVARATRI_PLAYLIST_URL = "https://www.youtube.com/playlist?list=PLR7mQSUcrHXM"
 
+# Chapter timestamps -- computed from SCENE_SEQUENCE's weights x the
+# REAL measured song duration (235.0s, confirmed via ffprobe during the
+# captions run, 2026-10-04 -- see add_navaratri_captions_and_comment.py).
+# Meets YouTube's auto-chapters requirements: starts at 0:00, at least
+# 3 entries, each gap >=10s. One canonical bilingual-label list (not
+# duplicated per language) so YouTube's chapter parser sees exactly one
+# valid timestamp sequence rather than two, which could confuse it.
+CHAPTERS_TE = (
+    "📍 పాట విభాగాలు (Song Sections):\n"
+    "0:00 పరిచయం (Intro)\n"
+    "0:18 చరణం 1 (Verse 1)\n"
+    "0:56 పల్లవి (Chorus)\n"
+    "1:34 చరణం 2 (Verse 2)\n"
+    "2:11 పల్లవి (Chorus)\n"
+    "2:49 మధ్యభాగం (Bridge)\n"
+    "3:26 ముగింపు (Outro)\n"
+)
+
+# Full lyrics, exactly as supplied from the source Suno lyrics box,
+# 2026-10-03 -- added to the description per explicit request (devotional
+# song descriptions are one of the highest-intent searches for printed
+# lyrics, and this also strengthens Telugu-script search relevance).
+LYRICS_TE = (
+    "సాహిత్యం (పూర్తి) / Full Lyrics:\n\n"
+    "[పరిచయం]\n"
+    "ఓం ఐం హ్రీం క్లీం చాముండాయై విచ్చే\n"
+    "జయ జయ దుర్గమ్మా జగదంబా\n"
+    "ఇంద్రకీలాద్రి వాసా కనకదుర్గమ్మా\n\n"
+    "[చరణం 1]\n"
+    "కృష్ణా నదీ తీరాన కొలువైన తల్లీ\n"
+    "ఇంద్రకీలాద్రి శిఖరాన వెలిగే జ్యోతి\n"
+    "త్రిశూలం ధరియించి రాక్షస సంహారీ\n"
+    "సింహవాహినివై నడయాడే శక్తి\n\n"
+    "[పల్లవి]\n"
+    "స్వర్ణకవచధారిణి కనకదుర్గమ్మా\n"
+    "శరణు శరణు అంటూ మొక్కేము తల్లీ\n"
+    "చల్లని చూపులతో కాపాడవమ్మా\n"
+    "వరములు కురిపించు కనకదుర్గమ్మా\n\n"
+    "[చరణం 2]\n"
+    "నవరాత్రి వేళలో అలంకారం నీదే\n"
+    "బంగారు కవచాన శోభిల్లే రూపం\n"
+    "భక్తుల గుండెల్లో భక్తి దీపం వెలిగించి\n"
+    "చీకటిని పారద్రోలే వెలుగై నిలుచుంటివి\n\n"
+    "[పల్లవి]\n"
+    "స్వర్ణకవచధారిణి కనకదుర్గమ్మా\n"
+    "శరణు శరణు అంటూ మొక్కేము తల్లీ\n"
+    "చల్లని చూపులతో కాపాడవమ్మా\n"
+    "వరములు కురిపించు కనకదుర్గమ్మా\n\n"
+    "[మధ్యభాగం]\n"
+    "అష్టాదశ శక్తి పీఠాలలో వెలసిన తల్లి\n"
+    "ఆది శక్తి రూపానివి నీవే అమ్మా\n"
+    "దుష్ట శిక్షణ శిష్ట రక్షణ చేసే తల్లి\n"
+    "జగన్మాత నీకిదె మా వందనం\n\n"
+    "[ముగింపు]\n"
+    "జయ జయ కనకదుర్గా జగజ్జననీ\n"
+    "స్వర్ణకవచధారిణి కనకదుర్గమ్మా\n"
+    "ఓం శ్రీ దుర్గాదేవ్యై నమః\n"
+    "ఓం శ్రీ దుర్గాదేవ్యై నమః\n"
+)
+
 # Kept under YouTube's 100-character title limit (this is 83) --
 # "Special"/"Bhakti Geetam" were dropped from an earlier 105-char draft.
 TITLE = (
@@ -44,12 +104,14 @@ _DESCRIPTION_TE = (
     "మా ఛానల్‌ని సబ్‌స్క్రైబ్ చేసి బెల్ ఐకాన్ నొక్కండి -- ఈ నవరాత్రుల్లో రాబోయే మిగతా రోజుల పాటల "
     "కోసం.\n\n"
     f"🎵 నవరాత్రి 2026 పాటలు అన్నీ ఇక్కడ: {NAVARATRI_PLAYLIST_URL}\n\n"
+    f"{CHAPTERS_TE}\n"
     "క్రెడిట్స్:\n"
     "గానం: Revathy V S L\n"
     "సాహిత్యం & స్వరకల్పన: Mahanavi Spirituals\n"
     "దృశ్యాలు: AI సాధనాలతో రూపొందించబడ్డాయి\n\n"
     "© 2026 Mahanavi Spirituals. అన్ని హక్కులు రక్షించబడ్డాయి.\n"
-    "సంప్రదించండి: mahanavispirituals@gmail.com\n"
+    "సంప్రదించండి: mahanavispirituals@gmail.com\n\n"
+    f"{LYRICS_TE}"
 )
 
 _DESCRIPTION_EN = (
