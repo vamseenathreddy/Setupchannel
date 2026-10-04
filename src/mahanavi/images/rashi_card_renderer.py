@@ -78,7 +78,16 @@ PLANET_FONT_FRAC = 0.048
 # Mantra now shares RASHI_NAME_FONT_FRAC as its start size (explicit
 # request 2026-10-04: "same size as karkatakam") -- no separate fraction.
 CHANT_COUNT_FONT_FRAC = 0.040
-STATUS_FONT_FRAC = 0.030  # Shani transit status label, shown only for affected rashis
+# Shown on EVERY card now (explicit request 2026-10-04: "we have to give
+# benefits of reading it... if it's bad time it will be stable, or if
+# it's good then get more benefits") -- a short line on why to chant
+# this mantra. Unaffected rashis show content.benefit_te (the
+# traditional benefit of their ruling-planet mantra); the 5
+# Shani-affected rashis show transit.note_te instead (the relief-focused
+# framing for their harder period) -- see the mantra_text/benefit_text
+# selection below. Wrapped to 1-2 lines via _wrap_text since note_te
+# runs noticeably longer than most benefit_te strings.
+BENEFIT_FONT_FRAC = 0.030
 SUBSCRIBE_FONT_FRAC = 0.042
 COMMENT_FONT_FRAC = 0.042
 
@@ -144,17 +153,19 @@ class RashiCardRenderer:
             # explicit request): a rashi currently under Sade Sati,
             # Ashtama Shani, or Kantaka Shani (see
             # rashi_current_transits.py) gets the classic Shani remedy
-            # mantra instead of its usual ruling-planet one, with a short
-            # status line explaining why. Unaffected rashis are unchanged.
+            # mantra instead of its usual ruling-planet one, with
+            # transit.note_te as its on-card benefit line (relief-framed
+            # for a harder period) instead of the usual benefit_te
+            # (more-good-fortune framed, for an unaffected rashi).
             transit = AFFECTED_RASHIS.get(card.content.name_en)
             if transit is not None:
                 mantra_text = SHANI_REMEDY_MANTRA_TE
                 chant_count_text = SHANI_REMEDY_CHANT_COUNT_TE
-                status_line = transit.status_label_te
+                benefit_text = transit.note_te
             else:
                 mantra_text = card.content.mantra_te
                 chant_count_text = card.content.chant_count_te
-                status_line = ""
+                benefit_text = card.content.benefit_te
 
             series_font = self._fonts.get_font(size=int(width * SERIES_LABEL_FONT_FRAC), weight="SemiBold")
             # Same shared-size reasoning as mantra_font below: fit to the
@@ -194,7 +205,7 @@ class RashiCardRenderer:
                 start_size=int(width * RASHI_NAME_FONT_FRAC), weight="Bold", min_size=36,
             )
             chant_font = self._fonts.get_font(size=int(width * CHANT_COUNT_FONT_FRAC), weight="Regular")
-            status_font = self._fonts.get_font(size=int(width * STATUS_FONT_FRAC), weight="SemiBold")
+            benefit_font = self._fonts.get_font(size=int(width * BENEFIT_FONT_FRAC), weight="SemiBold")
             subscribe_font = self._fit_font_to_width(
                 draw, card.subscribe_text, max_width=content_width,
                 start_size=int(width * SUBSCRIBE_FONT_FRAC), weight="Bold",
@@ -245,17 +256,22 @@ class RashiCardRenderer:
             icon_row_top = comment_top - mantra_block_gap - icon_size if card.icon_paths else comment_top
             content_bottom_limit = icon_row_top
 
-            # Deliberately NOT showing the benefit line on the card itself
-            # -- an earlier version with 6 stacked text blocks plus a
-            # 2-line footer needed its font shrunk so far to fit above
-            # footer_top that it became barely legible and still nearly
-            # touched the footer (confirmed via a real render). The benefit
-            # text is still used in the Short's description/SEO instead --
-            # see rashi_mantra_seo.py. Card content is now: series label,
-            # rashi name, ruling planet, mantra (ruling-planet or, for a
-            # Shani-affected rashi, the remedy mantra), chant count, and
-            # an optional Shani status line -- all finishing at or above
-            # content_bottom_limit, with the icon row and footer below it.
+            # The benefit line WAS deliberately left off the card (an
+            # earlier version with 6 stacked text blocks plus a 2-line
+            # footer needed its font shrunk so far to fit above footer_top
+            # that it became barely legible). Brought back 2026-10-04 per
+            # explicit request ("we have to give benefits of reading it")
+            # -- the recent font-size increases made the card run close to
+            # its vertical budget again, so this is wrapped to 1-2 lines
+            # at a small, fixed size rather than drawn as one unbroken
+            # line, and still finishes at or above content_bottom_limit
+            # (verified via a real render of all 12 rashis, including the
+            # 5 Shani-affected ones whose benefit line -- transit.note_te
+            # -- runs noticeably longer than the other 7's benefit_te).
+            # Card content is now: series label, rashi name, English
+            # name, ruling planet, mantra, chant count, and the benefit
+            # line -- all finishing at or above content_bottom_limit,
+            # with the icon row and footer below it.
             cursor_y = content_top
             for text, font, color in lines:
                 cursor_y = self._draw_centered_line(draw, text, font, width, cursor_y, color)
@@ -268,9 +284,10 @@ class RashiCardRenderer:
                 draw, f"({chant_count_text})", chant_font, width, cursor_y, COLOR_TEXT_LIGHT,
             )
 
-            if status_line:
+            if benefit_text:
                 cursor_y += int(gap * 0.25)
-                cursor_y = self._draw_centered_line(draw, status_line, status_font, width, cursor_y, COLOR_GOLD)
+                for benefit_line in self._wrap_text(draw, benefit_text, benefit_font, content_width):
+                    cursor_y = self._draw_centered_line(draw, benefit_line, benefit_font, width, cursor_y, COLOR_GOLD)
 
             if cursor_y > content_bottom_limit:
                 logger.warning(
