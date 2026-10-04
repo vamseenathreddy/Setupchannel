@@ -97,7 +97,7 @@ def build_gita_sloka_seo(
     yesterday_te = yesterday_en = ""
     if previous_quiz_sloka is not None:
         p = previous_quiz_sloka
-        yesterday_te = f"\n\nనిన్నటి ప్రశ్న & జవాబు: ఏ అధ్యాయం, శ్లోకం? — అధ్యాయం {p.chapter}, శ్లోకం {p.verse}"
+        yesterday_te = f"\n\nనిన్నటి ప్రశ్న & జవాబు: ఏ అధ్యాయంలోనిది? — అధ్యాయం {p.chapter}, శ్లోకం {p.verse}"
         yesterday_en = f"\n\nYesterday's quiz answer: Chapter {p.chapter}, Verse {p.verse}"
 
     description_te = (
@@ -138,8 +138,8 @@ _QUIZ_TITLE_TEMPLATES = [
 
 _QUIZ_HOOKS_TE = [
     "నిన్నటి గీతా శ్లోకం మీకు గుర్తుందా? ఒకసారి ట్రై చేయండి!",
-    "చిన్న Quiz టైమ్ — నిన్నటి శ్లోకం ఏ అధ్యాయం, శ్లోకం అని గుర్తుందా?",
-    "మీరు నిన్న చూసిన శ్లోకం ఇదే. ఏ అధ్యాయం, శ్లోకం అో చెప్పగలరా?",
+    "చిన్న Quiz టైమ్ — నిన్నటి శ్లోకం ఏ అధ్యాయంలోనిదో గుర్తుందా?",
+    "మీరు నిన్న చూసిన శ్లోకం ఇదే. ఏ అధ్యాయంలోనిదో చెప్పగలరా?",
 ]
 _QUIZ_HOOKS_EN = [
     "Do you remember yesterday's Gita verse? Give this a try!",
@@ -160,6 +160,21 @@ _QUIZ_COMMENT_PROMPTS_EN = [
     "Not sure? Check yesterday's Short on our channel to confirm!",
     "Rewatch yesterday's video on our channel if you need a hint!",
     "Our Shorts tab has yesterday's verse if you want to double-check!",
+]
+
+# Quiz-specific SEO hashtag pool (explicit request, 2026-10-04: "telugu
+# lo bhagavadgeetha quiz like that indicate bhagavadgeeta #tags add
+# rotating big seo ... people are looking this kind of content, it
+# should reach them") -- targets the actual search phrases people use
+# ("telugu bhagavad gita quiz", "gita quiz telugu") rather than only the
+# generic devotional tags in _ROTATING_POOL above. Two picks per video
+# (different offsets below, spread across this 6-entry pool) widen reach
+# without bloating the tag list -- still well under YouTube's 500-char
+# tag limit (single words, no spaces, so none hit the tag-quoting rule
+# discovered during the Navaratri Day 2 upload).
+_QUIZ_ROTATING_POOL = [
+    "#TeluguBhagavadGita", "#GitaQuizTelugu", "#BhagavadGitaQuiz",
+    "#TeluguSpiritualQuiz", "#GitaJnanam", "#HinduQuizTelugu",
 ]
 
 
@@ -201,7 +216,7 @@ def build_gita_sloka_quiz_seo(
     description_te = (
         f"{hook_te}\n\n"
         f"{quiz.target.sanskrit_deva}\n\n"
-        f"ఈ శ్లోకం ఏ అధ్యాయం, శ్లోకం?\n{option_lines_te}\n\n"
+        f"ఈ శ్లోకం ఏ అధ్యాయంలోనిది?\n{option_lines_te}\n\n"
         f"{cta_te}\n\n{comment_te}{hint_te}"
     )
     description_en = (
@@ -219,5 +234,7 @@ def build_gita_sloka_quiz_seo(
 
     hashtags = ["#Shorts", *_GITA_HASHTAGS, "#Quiz"]
     hashtags.append(_pick_rotating(_ROTATING_POOL, pick_index))
+    hashtags.append(_pick_rotating(_QUIZ_ROTATING_POOL, pick_index + 1))
+    hashtags.append(_pick_rotating(_QUIZ_ROTATING_POOL, pick_index + 4))
 
     return ShortSeoContent(title=title, description=description, hashtags=hashtags)

@@ -56,6 +56,7 @@ from mahanavi.images.gita_sloka_card_renderer import (
     DEFAULT_INVOCATION,
     GITA_BG_OVERLAY_ALPHA,
     TEXT_LINE_SPACING,
+    strip_danda_marks,
 )
 from mahanavi.images.layout import vertical_gradient
 
@@ -85,7 +86,10 @@ DEFAULT_SUBSCRIBE_TEXT = (
     "ప్రతిరోజు ఒక గీతా శ్లోకం నేర్చుకోండి — "
     "మా భగవద్గీత క్విజ్ పోటీలో పాల్గొనడానికి సబ్‌స్క్రైబ్ చేయండి!"
 )
-DEFAULT_QUESTION = "ఈ శ్లోకం ఏ అధ్యాయం, శ్లోకం?"
+# "ee sloka ye adyaayam lonidi" (explicit correction, 2026-10-04) --
+# "this verse belongs to which chapter", not the old "ఏ అధ్యాయం,
+# శ్లోకం?" phrasing, which read like broken Telugu grammar.
+DEFAULT_QUESTION = "ఈ శ్లోకం ఏ అధ్యాయంలోనిది?"
 DEFAULT_CTA = "సమాధానం కామెంట్‌లో చెప్పండి! నిర్ధారణ కోసం నిన్నటి Short చూడండి 👆"
 
 NEXT_HINT_LABEL_TEXT = "రేపటి ఎపిసోడ్‌లో"
@@ -185,7 +189,7 @@ class GitaQuizCardRenderer:
             sanskrit_box_height = body_box_height - options_block_h - block_gap
 
             sanskrit_font, sanskrit_lines, sanskrit_block_h = self._fit_block_to_box(
-                draw, target.sanskrit_deva, max_width=content_width, max_height=sanskrit_box_height,
+                draw, strip_danda_marks(target.sanskrit_deva), max_width=content_width, max_height=sanskrit_box_height,
                 start_frac=SANSKRIT_START_FONT_FRAC, min_frac=SANSKRIT_MIN_FONT_FRAC,
             )
 

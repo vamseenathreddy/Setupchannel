@@ -37,10 +37,21 @@ _SLOKAS_POOL = [
     "భగవద్గీత శ్లోకాల సిరీస్ — రోజూ ఒకటి నేర్చుకుందాం",
     "#శ్లోకాలు రోజూ ఈ సమయంలో కొత్తది వస్తుంది",
 ]
+# Expanded (explicit request, 2026-10-04): "mention about bhagavadgeetha
+# telugu knowledge. And telugu lo bhagavadgeetha quiz like that indicate
+# bhagavadgeeta #tags add rotating big seo ... people are looking this
+# kind of content" -- every entry now explicitly names Telugu Bhagavad
+# Gita knowledge/quiz (the actual search phrase people use) and carries
+# several single-word hashtags (no spaces, so none of YouTube's
+# tag-quoting rules apply to a plain comment anyway, but kept consistent
+# with the rest of this codebase's tag style). Grown from 3 to 5 entries
+# so the rotation reads less repetitive over the ~every-other-day cadence.
 _QUIZ_POOL = [
-    "#క్విజ్ 🧠 మీ జ్ఞానాన్ని పరీక్షించుకోండి",
-    "భగవద్గీత క్విజ్ సిరీస్ — ప్రతి రెండో రోజు పాల్గొనండి",
-    "#Quiz సమాధానం కామెంట్‌లో చెప్పండి!",
+    "#క్విజ్ 🧠 తెలుగులో భగవద్గీత జ్ఞానాన్ని పరీక్షించుకోండి #TeluguBhagavadGita #GitaQuizTelugu",
+    "భగవద్గీత క్విజ్ సిరీస్ — ప్రతి రెండో రోజు పాల్గొనండి #BhagavadGitaQuiz #SanatanaDharma",
+    "#Quiz సమాధానం కామెంట్‌లో చెప్పండి! #GitaQuiz #TeluguSpiritualQuiz",
+    "తెలుగులో భగవద్గీత పరిజ్ఞానం ఎంతుందో చూద్దాం 🙏 #GitaJnanam #HinduQuizTelugu",
+    "మీ భగవద్గీత నాలెడ్జ్ టెస్ట్ చేయండి #భగవద్గీతక్విజ్ #TeluguBhagavadGitaQuiz",
 ]
 _PURANAS_POOL = [
     "#పురాణకథలు 🙏 ప్రతిరోజు కొత్త కథ",

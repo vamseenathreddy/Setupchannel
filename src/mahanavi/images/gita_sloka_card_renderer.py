@@ -54,6 +54,7 @@ cheyyandi ... also at bottom ninnati prasna and javabu"):
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -66,6 +67,20 @@ from mahanavi.images.fonts import FontManager
 from mahanavi.images.layout import vertical_gradient
 
 logger = logging.getLogger(__name__)
+
+# Sanskrit danda punctuation ("|" / "||", stored as plain ASCII pipes in
+# bhagavad_gita_slokas.py's sanskrit_deva text) read fine in body text,
+# but on-card the fit-to-box word-wrapper could push a lone "|" or "||"
+# onto its own centered line -- read as a stray typo, not punctuation
+# (explicit request, 2026-10-04: "remove that symbol"). strip_danda_marks
+# is applied ONLY at card-render call sites below, never to the stored
+# text itself -- SEO descriptions (gita_sloka_seo.py) keep the
+# traditional danda convention, which reads correctly in plain text.
+_DANDA_PATTERN = re.compile(r"[ \t]*\|+[ \t]*")
+
+
+def strip_danda_marks(text: str) -> str:
+    return "\n".join(_DANDA_PATTERN.sub(" ", line).strip() for line in text.split("\n"))
 
 CARD_WIDTH = 1080
 CARD_HEIGHT = 1920
@@ -242,7 +257,7 @@ class GitaSlokaCardRenderer:
             meaning_box_height = body_box_height - sanskrit_box_height - block_gap
 
             sanskrit_font, sanskrit_lines, sanskrit_block_h = self._fit_block_to_box(
-                draw, sloka.sanskrit_deva, max_width=content_width, max_height=sanskrit_box_height,
+                draw, strip_danda_marks(sloka.sanskrit_deva), max_width=content_width, max_height=sanskrit_box_height,
                 start_frac=SANSKRIT_START_FONT_FRAC, min_frac=SANSKRIT_MIN_FONT_FRAC,
             )
             meaning_font, meaning_lines, meaning_block_h = self._fit_block_to_box(
@@ -300,7 +315,7 @@ class GitaSlokaCardRenderer:
         module docstring."""
         label_font = self._fonts.get_font(size=int(width * YESTERDAY_LABEL_FONT_FRAC), weight="SemiBold")
         answer_text = (
-            f"ప్రశ్న: ఏ అధ్యాయం, శ్లోకం? — జవాబు: అధ్యాయం {previous.chapter}, శ్లోకం {previous.verse}"
+            f"ప్రశ్న: ఏ అధ్యాయంలోనిది? — జవాబు: అధ్యాయం {previous.chapter}, శ్లోకం {previous.verse}"
         )
         answer_font, answer_lines, answer_h = self._fit_block_to_box(
             draw, answer_text, max_width=content_width, max_height=int(width * 0.12),
