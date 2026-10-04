@@ -199,7 +199,7 @@ def main() -> int:
         print(f"Uploaded ({privacy_status}): {result.post_url}")
 
         if result.video_id:
-            comment_text = build_category_comment("puranas", today.toordinal())
+            comment_text = build_category_comment("puranas", today.toordinal(), topic_te=story.search_keyword_te)
             if uploader.post_comment(result.video_id, comment_text):
                 print(f"Posted category comment: {comment_text}")
             else:

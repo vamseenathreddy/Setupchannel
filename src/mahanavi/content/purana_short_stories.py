@@ -56,6 +56,16 @@ class PuranaShortStory:
     title_en: str           # transliterated/English title, for SEO
     invocation_te: str       # this story's deity salutation, e.g. "ఓం నమో నారాయణాయ"
     story_te: str            # the condensed story itself, one block of Telugu text
+    # This story's single most-searched payoff/keyword -- distinct from
+    # title_te, which names the EVENT ("ధ్రువుడి తపస్సు", Dhruva's
+    # penance), while this names what people actually search for/talk
+    # about afterward ("ధ్రువ నక్షత్రం", the Pole Star he became).
+    # Explicit request (2026-10-04): "Today it posted about druva
+    # Nakshatram. In comment also it should mention about
+    # druvanakshatram like that" -- the category comment
+    # (category_comments.py) now surfaces THIS per-story, not the
+    # generic rotating pool text alone.
+    search_keyword_te: str
     moral_te: str             # one-line moral/benefit, shown in gold on the card
     moral_en: str              # English gloss of the moral, for SEO
     purana_name_te: str        # exact source, e.g. "శ్రీ భాగవత పురాణం"
@@ -154,6 +164,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
         title_en="Gajendra Moksham",
         invocation_te="ఓం నమో నారాయణాయ",
         story_te=_GAJENDRA_STORY,
+        search_keyword_te="గజేంద్ర మోక్షం",
         moral_te="నిస్వార్థ భక్తికి భగవంతుడు తక్షణమే స్పందిస్తాడు",
         moral_en="God answers a devotee's sincere, selfless call instantly",
         purana_name_te="శ్రీ భాగవత పురాణం",
@@ -164,6 +175,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
         title_en="Dhruva's Penance",
         invocation_te="ఓం నమో నారాయణాయ",
         story_te=_DHRUVA_STORY,
+        search_keyword_te="ధ్రువ నక్షత్రం",
         moral_te="చిన్న వయసైనా దృఢసంకల్పం ముందు అసాధ్యం కూడా సాధ్యమే",
         moral_en="Unwavering determination makes even the impossible possible, at any age",
         purana_name_te="శ్రీ విష్ణు పురాణం",
@@ -174,6 +186,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
         title_en="Prahlada and Narasimha",
         invocation_te="ఓం నమో నారాయణాయ",
         story_te=_PRAHLADA_STORY,
+        search_keyword_te="నరసింహావతారం",
         moral_te="నిశ్చలమైన భక్తిని ఏ శక్తీ అణచలేదు",
         moral_en="No power can suppress unwavering devotion",
         purana_name_te="శ్రీ భాగవత పురాణం",
@@ -184,6 +197,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
         title_en="Markandeya's Boon",
         invocation_te="ఓం నమః శివాయ",
         story_te=_MARKANDEYA_STORY,
+        search_keyword_te="మార్కండేయ చిరంజీవి",
         moral_te="నిశ్చలభక్తి మృత్యువును కూడా జయిస్తుంది",
         moral_en="Steadfast devotion can conquer even death itself",
         purana_name_te="శ్రీ శివ పురాణం",
@@ -194,6 +208,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
         title_en="Sati's Sacrifice",
         invocation_te="శ్రీ మాత్రే నమః",
         story_te=_SATI_STORY,
+        search_keyword_te="దక్షయజ్ఞం",
         moral_te="గౌరవం లేని చోట ఉండటం కన్నా నిష్క్రమించటం ధర్మం",
         moral_en="Walking away with dignity is better than staying where none is given",
         purana_name_te="శ్రీ శివ పురాణం",
@@ -204,6 +219,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
         title_en="Ganesha's Broken Tusk",
         invocation_te="ఓం గం గణపతయే నమః",
         story_te=_GANESHA_STORY,
+        search_keyword_te="ఏకదంతుడు",
         moral_te="పెద్దల మాటకు, వారి వస్తువుకు ఇచ్చే గౌరవమే నిజమైన వినయం",
         moral_en="True humility is the respect shown to elders and what they value",
         purana_name_te="శ్రీ బ్రహ్మవైవర్త పురాణం",
@@ -214,6 +230,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
         title_en="Vamana Avatara",
         invocation_te="ఓం నమో నారాయణాయ",
         story_te=_VAMANA_STORY,
+        search_keyword_te="త్రివిక్రముడు",
         moral_te="నిజమైన దాతృత్వానికి ఎదురుగా అహంకారం నిలవదు",
         moral_en="True generosity leaves no room for pride to stand",
         purana_name_te="శ్రీ వామన పురాణం",
@@ -224,6 +241,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
         title_en="Matsya Avatara",
         invocation_te="ఓం నమో నారాయణాయ",
         story_te=_MATSYA_STORY,
+        search_keyword_te="మత్స్యావతారం",
         moral_te="చిన్న జీవి పట్ల చూపిన దయ కూడా గొప్ప రక్షణగా తిరిగొస్తుంది",
         moral_en="Compassion shown even to the smallest life can return as great protection",
         purana_name_te="శ్రీ మత్స్య పురాణం",
@@ -234,6 +252,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
         title_en="Kurma Avatara and the Churning of the Ocean",
         invocation_te="ఓం నమో నారాయణాయ",
         story_te=_KURMA_STORY,
+        search_keyword_te="క్షీరసాగర మథనం",
         moral_te="కష్టసమయంలో ఏకమైన ప్రయత్నానికి భగవంతుడి తోడు తప్పక ఉంటుంది",
         moral_en="United effort in hard times always finds divine support",
         purana_name_te="శ్రీ కూర్మ పురాణం",
@@ -244,6 +263,7 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
         title_en="Varaha Avatara",
         invocation_te="ఓం నమో నారాయణాయ",
         story_te=_VARAHA_STORY,
+        search_keyword_te="భూదేవి రక్షణ",
         moral_te="ధర్మాన్ని కాపాడటానికి భగవంతుడు ఏ రూపమైనా ధరిస్తాడు",
         moral_en="God takes any form necessary to protect righteousness",
         purana_name_te="శ్రీ వరాహ పురాణం",

@@ -73,9 +73,23 @@ _POOLS: dict[str, list[str]] = {
 }
 
 
-def build_category_comment(category: str, for_date_ordinal: int) -> str:
+def build_category_comment(category: str, for_date_ordinal: int, topic_te: str | None = None) -> str:
     """category: one of "muhurtas", "slokas", "quiz", "puranas", "rashi".
     Deterministic by-date rotation through that category's pool --
-    reproducible for a given date, varies day to day."""
+    reproducible for a given date, varies day to day.
+
+    topic_te (explicit request, 2026-10-04): "Today it posted about
+    druva Nakshatram. In comment also it should mention about
+    druvanakshatram like that" -- the generic category line alone
+    ("#పురాణకథలు ప్రతిరోజు కొత్త కథ") didn't say what TODAY'S story was
+    actually about. When given (post_purana_short.py passes the
+    story's own search_keyword_te), it's appended as a second line
+    naming today's specific topic/hashtag -- optional and unused by
+    every other category's call site, which keeps their existing
+    generic-only comment unchanged."""
     pool = _POOLS[category]
-    return pool[for_date_ordinal % len(pool)]
+    base = pool[for_date_ordinal % len(pool)]
+    if topic_te:
+        keyword_tag = "#" + topic_te.replace(" ", "")
+        return f"{base}\nనేటి కథ: {topic_te} {keyword_tag}"
+    return base
