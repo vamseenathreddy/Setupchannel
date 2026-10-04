@@ -43,7 +43,12 @@ _DESCRIPTION_TE = (
     "భక్తులు ఈ పాటను నవరాత్రి పూజా సమయంలో ప్లే చేసుకోవచ్చు. మీకు నచ్చితే షేర్ చేయండి, లైక్ చేయండి, "
     "మా ఛానల్‌ని సబ్‌స్క్రైబ్ చేసి బెల్ ఐకాన్ నొక్కండి -- ఈ నవరాత్రుల్లో రాబోయే మిగతా రోజుల పాటల "
     "కోసం.\n\n"
-    f"🎵 నవరాత్రి 2026 పాటలు అన్నీ ఇక్కడ: {NAVARATRI_PLAYLIST_URL}\n"
+    f"🎵 నవరాత్రి 2026 పాటలు అన్నీ ఇక్కడ: {NAVARATRI_PLAYLIST_URL}\n\n"
+    "క్రెడిట్స్:\n"
+    "గానం: Revathy V S L\n"
+    "సాహిత్యం & స్వరకల్పన: Mahanavi Spirituals\n"
+    "దృశ్యాలు: AI సాధనాలతో రూపొందించబడ్డాయి\n\n"
+    "© 2026 Mahanavi Spirituals. అన్ని హక్కులు రక్షించబడ్డాయి.\n"
 )
 
 _DESCRIPTION_EN = (
@@ -61,6 +66,11 @@ _DESCRIPTION_EN = (
     "Play this during your Navaratri puja. Like, share, and subscribe with the "
     "bell on for more songs through the rest of this Navaratri season.\n\n"
     f"🎵 All Navaratri 2026 songs in one place: {NAVARATRI_PLAYLIST_URL}\n\n"
+    "Credits:\n"
+    "Vocals: Revathy V S L\n"
+    "Lyrics & Composition: Mahanavi Spirituals\n"
+    "Visuals: AI-generated\n\n"
+    "© 2026 Mahanavi Spirituals. All Rights Reserved.\n\n"
     "Disclosure: this video uses AI-assisted vocal production and AI-generated "
     "visuals as part of its original creative process."
 )
