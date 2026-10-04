@@ -75,7 +75,8 @@ SERIES_LABEL_FONT_FRAC = 0.040
 RASHI_NAME_FONT_FRAC = 0.082
 ENGLISH_NAME_FONT_FRAC = 0.042  # new: English zodiac name shown under the Telugu name
 PLANET_FONT_FRAC = 0.048
-MANTRA_FONT_FRAC = 0.070
+# Mantra now shares RASHI_NAME_FONT_FRAC as its start size (explicit
+# request 2026-10-04: "same size as karkatakam") -- no separate fraction.
 CHANT_COUNT_FONT_FRAC = 0.040
 STATUS_FONT_FRAC = 0.030  # Shani transit status label, shown only for affected rashis
 SUBSCRIBE_FONT_FRAC = 0.042
@@ -183,9 +184,14 @@ class RashiCardRenderer:
             # (confirmed via a real render: Mesha's longer mantra fit fine,
             # Karkataka's shorter one visibly overlapped the footer).
             # One shared size keeps every card's content height identical.
+            # Explicit request 2026-10-04: same size as the rashi name
+            # (RASHI_NAME_FONT_FRAC), not its own smaller MANTRA_FONT_FRAC
+            # -- still fit-to-width against the longest mantra across all
+            # 12 rashis, same reasoning as before (one shared size keeps
+            # every card's content height identical).
             mantra_font = self._fit_font_to_width(
                 draw, LONGEST_MANTRA_TE, max_width=content_width,
-                start_size=int(width * MANTRA_FONT_FRAC), weight="Bold", min_size=36,
+                start_size=int(width * RASHI_NAME_FONT_FRAC), weight="Bold", min_size=36,
             )
             chant_font = self._fonts.get_font(size=int(width * CHANT_COUNT_FONT_FRAC), weight="Regular")
             status_font = self._fonts.get_font(size=int(width * STATUS_FONT_FRAC), weight="SemiBold")
@@ -256,7 +262,7 @@ class RashiCardRenderer:
                 cursor_y += gap
 
             cursor_y += mantra_block_gap
-            cursor_y = self._draw_centered_line(draw, mantra_text, mantra_font, width, cursor_y, COLOR_GOLD)
+            cursor_y = self._draw_centered_line(draw, mantra_text, mantra_font, width, cursor_y, COLOR_TEXT_LIGHT)
             cursor_y += int(gap * 0.4)
             cursor_y = self._draw_centered_line(
                 draw, f"({chant_count_text})", chant_font, width, cursor_y, COLOR_TEXT_LIGHT,
