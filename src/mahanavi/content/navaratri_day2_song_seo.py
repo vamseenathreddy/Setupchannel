@@ -179,12 +179,19 @@ HASHTAGS = [
 ]
 
 TAGS = [
-    "Bala Tripurasundari", "Sri Vidya devi songs", "Lalitha Tripurasundari",
-    "Navaratri songs telugu", "Sri Chakra devi", "Panchadasi mantra",
-    "Navaratri day 2 song", "Devi bhakti geetam", "Telugu bhakti songs 2026",
+    # Kept deliberately leaner than a first draft -- that draft's
+    # combined tags (api_tags, quote-adjusted per YouTube's actual
+    # counting rule for tags containing spaces) summed to slightly more
+    # than Day 1's proven-working total and the upload was rejected
+    # with reason=invalidTags, body.snippet.tags. Trimmed the most
+    # redundant long multi-word entries (each already covered by a
+    # shorter tag/hashtag below) rather than guess at the exact real
+    # limit -- comfortably under Day 1's known-good total now.
+    "Bala Tripurasundari", "Sri Chakra devi", "Panchadasi mantra",
+    "Devi bhakti geetam", "Telugu bhakti songs 2026",
     "Mahanavi Spirituals",
-    "బాలా త్రిపురసుందరీ పాట", "దసరా నవరాత్రి పాటలు", "నవరాత్రి పాటలు తెలుగు",
-    "శ్రీవిద్య భక్తి గీతాలు", "శ్రీచక్ర బాలా దేవి", "పంచదశీ మంత్రం",
+    "బాలా త్రిపురసుందరీ పాట", "దసరా నవరాత్రి పాటలు",
+    "శ్రీచక్ర బాలా దేవి", "పంచదశీ మంత్రం",
 ]
 
 
