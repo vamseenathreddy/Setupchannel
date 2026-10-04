@@ -14,8 +14,9 @@ name: Post Navaratri Day 2 Song (Static Images)
 # "navaratri_balatripurasundari_song_02.wav" (see
 # post_navaratri_day2_song.py's SONG_FILENAME).
 #
-# Uploads as a PRIVATE draft (never public) -- the channel owner
-# reviews and publishes manually from YouTube Studio.
+# Uploads as UNLISTED (not public, not private) -- viewable via direct
+# link for review, but not searchable/public until the channel owner
+# publishes it manually from YouTube Studio.
 on:
   workflow_dispatch: {}
 
@@ -58,7 +59,7 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
 
-      - name: Assemble (Ken Burns on committed images) and upload as private draft
+      - name: Assemble (Ken Burns on committed images) and upload as unlisted
         env:
           MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
           MAHANAVI_PLAYLIST_ID_NAVARATRI_SONGS: ${{ secrets.MAHANAVI_PLAYLIST_ID_NAVARATRI_SONGS }}

@@ -29,8 +29,9 @@ PIPELINE:
      correct for this exact export -- no manual follow-up edit needed
      (unlike Day 1, where chapters were added in a later pass).
   6. Uploaded via the existing YouTubeShortsUploader (category Music,
-     privacyStatus=private -- a draft the owner reviews and publishes
-     themselves), then added to the Navaratri Songs playlist.
+     privacyStatus=unlisted -- viewable via direct link for review, not
+     public/searchable until the owner publishes it themselves), then
+     added to the Navaratri Songs playlist.
 
 Usage (from CI, via the "Post Navaratri Day 2 Song" workflow):
     see .github/workflows/post-navaratri-day2-song.yml
@@ -349,11 +350,14 @@ def main() -> int:
 
     seo = build_navaratri_day2_song_seo(total_duration)
     uploader = YouTubeShortsUploader(settings, category_id=MUSIC_CATEGORY_ID)
-    result = uploader.upload(OUTPUT_PATH, seo, privacy_status="private")
+    # "unlisted" (not "private") per explicit request -- viewable via
+    # direct link for review, but not public/searchable until the
+    # channel owner publishes it from YouTube Studio.
+    result = uploader.upload(OUTPUT_PATH, seo, privacy_status="unlisted")
     if not result.success:
         print(f"FAILED to upload: {result.error_message}", file=sys.stderr)
         return 1
-    print(f"Uploaded (private draft): {result.post_url}")
+    print(f"Uploaded (unlisted): {result.post_url}")
 
     if settings.playlist_id_navaratri_songs and result.video_id:
         if uploader.add_to_playlist(result.video_id, settings.playlist_id_navaratri_songs):
