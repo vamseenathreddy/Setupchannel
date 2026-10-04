@@ -89,6 +89,9 @@ LABEL_FONT_FRAC = 0.048
 VALUE_FONT_FRAC = 0.062
 SUBSCRIBE_FONT_FRAC = 0.045
 SECONDARY_FONT_FRAC = 0.032  # notably smaller than LABEL_FONT_FRAC -- for de-emphasized extra info
+QUOTE_FONT_FRAC = 0.036  # devotional quote, filling the gap above the footer -- see quote_text below
+QUOTE_SOURCE_FONT_FRAC = 0.026
+COLOR_QUOTE_TEXT = (235, 215, 170)  # soft gold -- distinct from the plain white body text, matches DATE_BADGE_BG tone
 
 # DATE BADGE (replaced plain small date text, 2026-10-02): real channel
 # feedback was that every card uses the same template day to day, so a
@@ -133,6 +136,12 @@ class AlertCard:
     date_text: str = ""  # e.g. "17 సెప్టెంబర్ 2026, గురువారం" -- shown below the title
     secondary_info: str = ""  # compact extra info shown in a smaller font below the main lines
     comment_prompt_text: str = ""  # optional engagement line, drawn directly ABOVE subscribe_text
+    quote_text: str = ""  # optional short devotional quote, filling the gap between the main
+    # content and the fixed footer block (see render()'s "quote block" section) -- added
+    # 2026-10-04 per explicit request to use that dead space for something devotional rather
+    # than leaving it blank on days with short content. Skipped entirely (not shrunk/forced)
+    # if there isn't enough vertical room, so it never risks overlapping other text.
+    quote_source: str = ""  # short attribution shown smaller, directly below quote_text (e.g. "భగవద్గీత")
 
 
 class AlertCardRenderer:
@@ -264,7 +273,16 @@ class AlertCardRenderer:
             # so this quotient is always >= min_gap when that holds.
             content_fixed_height = title_h + secondary_h + total_lines_height
             ideal_gap = (available_height - content_fixed_height) // n_gaps
-            gap = max(ideal_gap, min_gap)
+            # Capped (added 2026-10-04, for the devotional quote block below):
+            # on a light-content day, leaving `gap` fully uncapped stretches it
+            # to consume ALL of available_height, so cursor_y always lands
+            # exactly at footer_top with nothing left over -- confirmed via a
+            # real render showing oddly large blank spacing between elements
+            # instead of a usable gap. Capping it keeps spacing visually
+            # reasonable and leaves the rest of available_height as genuine
+            # leftover room, which the quote block (if any) gets to use.
+            max_gap = int(height * 0.045)
+            gap = max(min(ideal_gap, max_gap), min_gap)
 
             cursor_y = content_top
             title_w = title_bbox[2] - title_bbox[0]
@@ -283,6 +301,52 @@ class AlertCardRenderer:
             if card.secondary_info:
                 cursor_y = self._draw_centered_block(draw, secondary_wrapped, secondary_font, width, cursor_y)
                 cursor_y += gap
+
+            # Devotional quote block: fills whatever room is left between
+            # the main content and the fixed footer. Purely space-permitting
+            # -- on a dense day (long mantra + secondary_info), cursor_y may
+            # already be close to footer_top, so this shrinks the quote font
+            # first and, if it still won't fit even at the minimum size,
+            # skips it entirely rather than ever overlapping the footer.
+            if card.quote_text:
+                quote_top_margin = int(height * 0.025)
+                quote_block_top = cursor_y + quote_top_margin
+                quote_available = footer_top - quote_top_margin - quote_block_top
+                if quote_available > int(height * 0.04):  # not worth drawing in a sliver
+                    quote_scale = 1.0
+                    while quote_scale >= 0.6:
+                        quote_font = self._fonts.get_font(
+                            size=max(int(width * QUOTE_FONT_FRAC * quote_scale), 16), weight="Medium",
+                        )
+                        quote_wrapped = self._wrap_text(draw, card.quote_text, quote_font, int(content_width * 0.9))
+                        quote_h = self._block_height(draw, quote_wrapped, quote_font)
+
+                        source_h = 0
+                        source_font = None
+                        if card.quote_source:
+                            source_font = self._fonts.get_font(
+                                size=max(int(width * QUOTE_SOURCE_FONT_FRAC * quote_scale), 14), weight="Regular",
+                            )
+                            source_bbox = draw.textbbox((0, 0), card.quote_source, font=source_font)
+                            source_h = int(source_bbox[3] - source_bbox[1])
+
+                        total_quote_h = quote_h + (int(height * 0.012) + source_h if card.quote_source else 0)
+                        if total_quote_h <= quote_available:
+                            break
+                        quote_scale -= 0.1
+
+                    if total_quote_h <= quote_available:
+                        quote_y = self._draw_centered_block(draw, quote_wrapped, quote_font, width, quote_block_top, fill=COLOR_QUOTE_TEXT)
+                        if card.quote_source and source_font is not None:
+                            quote_y += int(height * 0.012)
+                            source_text = f"— {card.quote_source}"
+                            source_bbox = draw.textbbox((0, 0), source_text, font=source_font)
+                            source_w = source_bbox[2] - source_bbox[0]
+                            draw.text(
+                                ((width - source_w) // 2, quote_y - source_bbox[1]),
+                                source_text, font=source_font, fill=COLOR_QUOTE_TEXT,
+                            )
+                    # else: genuinely no room even at the smallest size -- skip silently.
 
             subscribe_top = footer_bottom - subscribe_h
             subscribe_w = subscribe_bbox[2] - subscribe_bbox[0]
@@ -416,7 +480,7 @@ class AlertCardRenderer:
 
     def _draw_centered_block(
         self, draw: ImageDraw.ImageDraw, wrapped: list[str], font: "ImageFont.FreeTypeFont",
-        width: int, top: int,
+        width: int, top: int, fill: tuple[int, int, int] = COLOR_TEXT_LIGHT,
     ) -> int:
         """Draw each wrapped line centered horizontally, stacked from
         `top`. Returns the y-coordinate just below the block."""
@@ -425,7 +489,7 @@ class AlertCardRenderer:
         for line in wrapped:
             bbox = draw.textbbox((0, 0), line, font=font)
             line_w = bbox[2] - bbox[0]
-            draw.text(((width - line_w) // 2, y - bbox[1]), line, font=font, fill=COLOR_TEXT_LIGHT)
+            draw.text(((width - line_w) // 2, y - bbox[1]), line, font=font, fill=fill)
             y += line_height
         return y
 

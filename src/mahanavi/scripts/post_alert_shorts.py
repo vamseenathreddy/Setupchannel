@@ -251,6 +251,50 @@ _COMMENT_PROMPT_LINES = [
 ]
 
 
+# Devotional quote filling the empty space below the main content on
+# days with shorter mantra/secondary blocks (explicit request,
+# 2026-10-04: use that dead gap for something devotional rather than
+# leave it blank). Deliberately curated by hand, not sourced live --
+# short, decent, god-referencing lines only. ONE quote was explicitly
+# considered and left out: "ఆత్మహత్య మహాపాపం" (suicide is a great sin) --
+# that sin/shame framing is the wrong message for anyone actually in
+# crisis who might see it, and isn't worth the risk on a public channel
+# regardless of how traditional the saying is. Source attributions are
+# kept generic ("సనాతన ధర్మం", "పురాణం", etc.) rather than claiming a
+# precise chapter/verse this project hasn't verified, except the two
+# genuinely famous, unambiguous ones (Gita 2.47, and the Mundaka
+# Upanishad line that's independently India's national motto).
+_DEVOTIONAL_QUOTES: list[tuple[str, str]] = [
+    ("భగవంతుడు అన్ని చూస్తున్నాడు, ఆయన సమయం కోసం నమ్మకంతో వేచి ఉండండి", "సనాతన ధర్మం"),
+    ("ఏం జరిగినా మంచికే జరుగుతుంది", "భగవద్గీత బోధ"),
+    ("కర్మణ్యేవాధికారస్తే మా ఫలేషు కదాచన", "భగవద్గీత 2.47"),
+    ("ధర్మో రక్షతి రక్షితః - ధర్మాన్ని కాపాడితే అదే మనల్ని కాపాడుతుంది", "ధర్మశాస్త్రం"),
+    ("సత్యమేవ జయతే - సత్యమే గెలుస్తుంది", "ముండకోపనిషత్తు"),
+    ("శ్రద్ధావాన్ లభతే జ్ఞానం - నమ్మకం ఉన్నవారికే జ్ఞానం లభిస్తుంది", "భగవద్గీత బోధ"),
+    ("పరోపకారం ఇదం శరీరం - ఇతరులకు సహాయం చేయడమే ఈ శరీర ధర్మం", "సుభాషితం"),
+    ("ఆపదలో ఉన్నవారికి సహాయం చేయడమే నిజమైన పూజ", "పురాణం"),
+    ("మనసు ప్రశాంతంగా ఉంటే దేవుడు నీతోనే ఉంటాడు", "సనాతన ధర్మం"),
+    ("నమ్మకంతో అడిగిన వారిని భగవంతుడు ఎప్పుడూ నిరాశ పరచడు", "భాగవతం"),
+    ("ఓర్పు కలవారికే అమ్మవారి అనుగ్రహం లభిస్తుంది", "దేవీ పురాణం"),
+    ("మంచి ఆలోచనలు, మంచి మాటలు, మంచి పనులు - ఇదే నిజమైన భక్తి", "సనాతన ధర్మం"),
+    ("ప్రతి కష్టం వెనుక ఒక పాఠం దాగి ఉంటుంది - భగవంతుని సంకల్పం", "సనాతన ధర్మం"),
+    ("దేవుడిని నమ్మినవారు ఎప్పుడూ ఒంటరి కాదు", "భక్తి సాహిత్యం"),
+    ("కృతజ్ఞత తెలుపుకోవడమే నిజమైన భక్తికి తొలి మెట్టు", "సనాతన ధర్మం"),
+    ("యథా దృష్టిః తథా సృష్టిః - మన దృక్పథమే మన ప్రపంచాన్ని తీర్చిదిద్దుతుంది", "వేదాంతం"),
+    ("అహింసా పరమో ధర్మః", "మహాభారతం"),
+    ("వసుధైక కుటుంబం - ప్రపంచమంతా ఒకే కుటుంబం", "ఉపనిషత్తు"),
+    ("గురుర్బ్రహ్మ గురుర్విష్ణుః గురుర్దేవో మహేశ్వరః", "గురు స్తోత్రం"),
+    ("లోకాః సమస్తాః సుఖినో భవంతు - అందరూ సుఖంగా ఉండాలి", "శాంతి మంత్రం"),
+]
+
+
+def _pick_devotional_quote(for_date: date, offset: int) -> tuple[str, str]:
+    """Same deterministic-by-date rotation as _pick_comment_prompt, with
+    the same three-way offset split across Rahu Kalam / Shubha Ghadiyalu
+    / Durmuhurtham so the three same-day cards don't repeat each other."""
+    return _DEVOTIONAL_QUOTES[(for_date.toordinal() + offset) % len(_DEVOTIONAL_QUOTES)]
+
+
 def _wait_until_wall_clock_slot(
     tz: ZoneInfo, window_start: dt_time, window_end: dt_time, label: str,
 ) -> None:
@@ -460,6 +504,7 @@ def main() -> int:
     rahu_ok = True
     if want_rahu:
         rahu_comment_prompt = _pick_comment_prompt(_COMMENT_PROMPT_LINES, for_date, offset=0)
+        rahu_quote, rahu_quote_source = _pick_devotional_quote(for_date, offset=0)
         rahu_card = AlertCard(
             title="ఈరోజు రాహు కాలం",
             lines=[("సమయం", panchang.rahu_kalam), *_mantra_lines(for_date, offset=0)],
@@ -468,6 +513,7 @@ def main() -> int:
             date_text=date_text, secondary_info=_other_inauspicious_periods(panchang),
             subscribe_text=_pick_subscribe_text(_RAHU_KALAM_SUBSCRIBE_LINES, for_date),
             comment_prompt_text=rahu_comment_prompt,
+            quote_text=rahu_quote, quote_source=rahu_quote_source,
         )
         # Same comment_prompt text/rotation as the on-screen card above --
         # the description echoes it instead of posing a second, different
@@ -488,6 +534,9 @@ def main() -> int:
         shubha_comment_prompt = _pick_comment_prompt(
             _COMMENT_PROMPT_LINES, for_date, offset=len(_COMMENT_PROMPT_LINES) // 3,
         )
+        shubha_quote, shubha_quote_source = _pick_devotional_quote(
+            for_date, offset=len(_DEVOTIONAL_QUOTES) // 3,
+        )
         shubha_card = AlertCard(
             title="ఈరోజు శుభ ఘడియలు",
             lines=[*shubha_lines, *_mantra_lines(for_date, offset=1)],
@@ -496,6 +545,7 @@ def main() -> int:
             date_text=date_text,
             subscribe_text=_pick_subscribe_text(_SHUBHA_GHADIYALU_SUBSCRIBE_LINES, for_date),
             comment_prompt_text=shubha_comment_prompt,
+            quote_text=shubha_quote, quote_source=shubha_quote_source,
         )
         shubha_seo = build_shubha_ghadiyalu_seo(
             shubha_lines, for_date_ordinal=for_date.toordinal(), comment_prompt_te=shubha_comment_prompt,
@@ -512,6 +562,9 @@ def main() -> int:
         durmuhurtham_comment_prompt = _pick_comment_prompt(
             _COMMENT_PROMPT_LINES, for_date, offset=(2 * len(_COMMENT_PROMPT_LINES)) // 3,
         )
+        durmuhurtham_quote, durmuhurtham_quote_source = _pick_devotional_quote(
+            for_date, offset=(2 * len(_DEVOTIONAL_QUOTES)) // 3,
+        )
         durmuhurtham_card = AlertCard(
             title="ఈరోజు దుర్ముహూర్తం",
             lines=[(PANCHANG_LABELS["durmuhurtham"], panchang.durmuhurtham), *_mantra_lines(for_date, offset=2)],
@@ -520,6 +573,7 @@ def main() -> int:
             date_text=date_text,
             subscribe_text=_pick_subscribe_text(_DURMUHURTHAM_SUBSCRIBE_LINES, for_date),
             comment_prompt_text=durmuhurtham_comment_prompt,
+            quote_text=durmuhurtham_quote, quote_source=durmuhurtham_quote_source,
         )
         durmuhurtham_seo = build_durmuhurtham_seo(
             panchang.durmuhurtham, for_date_ordinal=for_date.toordinal(), comment_prompt_te=durmuhurtham_comment_prompt,
