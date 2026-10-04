@@ -61,14 +61,25 @@ COLOR_GOLD = (230, 190, 90)
 # earlier pass (name 0.115->0.090, mantra 0.072->0.065) to make room for
 # the deity icon row added below the mantra per explicit request -- the
 # card was already near its vertical budget before that addition.
-SERIES_LABEL_FONT_FRAC = 0.038
-RASHI_NAME_FONT_FRAC = 0.078
-PLANET_FONT_FRAC = 0.044
-MANTRA_FONT_FRAC = 0.056
-CHANT_COUNT_FONT_FRAC = 0.036
-STATUS_FONT_FRAC = 0.033  # Shani transit status label, shown only for affected rashis
-SUBSCRIBE_FONT_FRAC = 0.038
-COMMENT_FONT_FRAC = 0.038
+#
+# RAISED AGAIN 2026-10-04 (explicit request: "mostly our devotional
+# channel visitors are big [elderly] people, they may have eye issues" --
+# bigger text across the board, mantra especially, "it will help
+# readers"). This only has room because ENGLISH_NAME_FONT_FRAC below
+# (one new line) made the content block taller too, and the capped-gap
+# fix further down turns the previously-wasted leftover space into
+# legitimate room for both. Verified via real renders (both the
+# longest-name/longest-mantra worst case and a Shani-affected rashi
+# with the extra status line) that nothing overflows into the icon row.
+SERIES_LABEL_FONT_FRAC = 0.040
+RASHI_NAME_FONT_FRAC = 0.082
+ENGLISH_NAME_FONT_FRAC = 0.042  # new: English zodiac name shown under the Telugu name
+PLANET_FONT_FRAC = 0.048
+MANTRA_FONT_FRAC = 0.070
+CHANT_COUNT_FONT_FRAC = 0.040
+STATUS_FONT_FRAC = 0.030  # Shani transit status label, shown only for affected rashis
+SUBSCRIBE_FONT_FRAC = 0.042
+COMMENT_FONT_FRAC = 0.042
 
 # "ప్రతి నెల మీ రాశి మంత్రం కోసం సబ్‌స్క్రైబ్ చేయండి" -- exact phrasing
 # requested ("prathi nela me raasi mantram kosam subscribe cheyyandi"),
@@ -85,6 +96,7 @@ ICON_GAP_FRAC = 0.045
 # RASHI_MANTRAS as of 2026-10 -- Karkataka/Vrishchika tie for name,
 # Mesha/Vrishchika/Dhanussu/Meena tie for mantra.
 LONGEST_RASHI_NAME_TE = "కర్కాటకం"
+LONGEST_NAME_EN = "Dhanussu (Sagittarius)"
 # Now the longer of the two mantra pools this card can show: a
 # ruling-planet mantra, or (for a Shani-affected rashi) the Shani remedy
 # mantra from rashi_current_transits.py, which is the longest of all.
@@ -152,6 +164,15 @@ class RashiCardRenderer:
                 draw, LONGEST_RASHI_NAME_TE, max_width=content_width,
                 start_size=int(width * RASHI_NAME_FONT_FRAC), weight="Bold",
             )
+            # English zodiac name under the Telugu one (added 2026-10-04,
+            # explicit request -- the card previously showed no English
+            # anywhere, which a non-Telugu-script-fluent viewer or search
+            # thumbnail glance couldn't anchor on). content.name_en already
+            # existed (used for file-naming/matching) but was never drawn.
+            english_name_font = self._fit_font_to_width(
+                draw, LONGEST_NAME_EN, max_width=content_width,
+                start_size=int(width * ENGLISH_NAME_FONT_FRAC), weight="Medium", min_size=28,
+            )
             planet_font = self._fonts.get_font(size=int(width * PLANET_FONT_FRAC), weight="Regular")
             # Fit to the LONGEST mantra across all 12 rashis, not this
             # card's own mantra text, and use that same size for every
@@ -178,6 +199,7 @@ class RashiCardRenderer:
             lines: list[tuple[str, ImageFont.FreeTypeFont, tuple[int, int, int]]] = [
                 (series_label, series_font, COLOR_GOLD),
                 (card.content.name_te, name_font, COLOR_TEXT_LIGHT),
+                (card.content.name_en, english_name_font, COLOR_GOLD),
                 (f"అధిపతి: {card.content.ruling_planet_te}", planet_font, COLOR_TEXT_LIGHT),
             ]
 
@@ -196,8 +218,8 @@ class RashiCardRenderer:
             comment_h = int(comment_font.size * 1.15) if (card.comment_prompt_text and comment_font is not None) else 0
             icon_size = int(width * ICON_FRAC)
 
-            gap = int(height * 0.017)
-            mantra_block_gap = int(height * 0.025)
+            gap = int(height * 0.014)
+            mantra_block_gap = int(height * 0.020)
 
             # EVERYTHING below content_top is now anchored bottom-up from
             # the fixed, validated footer_bottom boundary -- subscribe,
@@ -235,13 +257,13 @@ class RashiCardRenderer:
 
             cursor_y += mantra_block_gap
             cursor_y = self._draw_centered_line(draw, mantra_text, mantra_font, width, cursor_y, COLOR_GOLD)
-            cursor_y += int(gap * 0.6)
+            cursor_y += int(gap * 0.4)
             cursor_y = self._draw_centered_line(
                 draw, f"({chant_count_text})", chant_font, width, cursor_y, COLOR_TEXT_LIGHT,
             )
 
             if status_line:
-                cursor_y += int(gap * 0.5)
+                cursor_y += int(gap * 0.25)
                 cursor_y = self._draw_centered_line(draw, status_line, status_font, width, cursor_y, COLOR_GOLD)
 
             if cursor_y > content_bottom_limit:
