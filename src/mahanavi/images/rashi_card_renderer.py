@@ -80,14 +80,17 @@ PLANET_FONT_FRAC = 0.048
 CHANT_COUNT_FONT_FRAC = 0.040
 # Shown on EVERY card now (explicit request 2026-10-04: "we have to give
 # benefits of reading it... if it's bad time it will be stable, or if
-# it's good then get more benefits") -- a short line on why to chant
-# this mantra. Unaffected rashis show content.benefit_te (the
-# traditional benefit of their ruling-planet mantra); the 5
-# Shani-affected rashis show transit.note_te instead (the relief-focused
-# framing for their harder period) -- see the mantra_text/benefit_text
-# selection below. Wrapped to 1-2 lines via _wrap_text since note_te
-# runs noticeably longer than most benefit_te strings.
-BENEFIT_FONT_FRAC = 0.030
+# it's good then get more benefits") -- the benefit and the chant count
+# are drawn as ONE combined sentence at this same CHANT_COUNT_FONT_FRAC
+# size (explicit follow-up request: "in same 108 sarlu size"), e.g.
+# "మనశ్శాంతి, కుటుంబ సౌఖ్యం కోసం 108 సార్లు చదువుకోండి" -- not two
+# separate lines at two different sizes. Unaffected rashis use
+# content.benefit_te (the traditional benefit of their ruling-planet
+# mantra); the 5 Shani-affected rashis use transit.note_te instead (the
+# relief-focused framing for their harder period) -- see the
+# mantra_text/benefit_text selection below. Wrapped to 1-2 lines via
+# _wrap_text since the combined sentence runs long, especially for the
+# Shani-affected rashis.
 SUBSCRIBE_FONT_FRAC = 0.042
 COMMENT_FONT_FRAC = 0.042
 
@@ -97,7 +100,9 @@ COMMENT_FONT_FRAC = 0.042
 # a recurring monthly series rather than a one-off post.
 DEFAULT_SUBSCRIBE_TEXT = "ప్రతి నెల మీ రాశి మంత్రం కోసం సబ్‌స్క్రైబ్ చేయండి"
 
-ICON_FRAC = 0.078  # deity icon size, fraction of width
+ICON_FRAC = 0.068  # deity icon size, fraction of width -- trimmed from
+# 0.078 to free vertical room for the merged benefit+chant-count line
+# (see gap/mantra_block_gap below, same reason)
 ICON_GAP_FRAC = 0.045
 
 # Reference strings used to pick ONE shared font size across all 12
@@ -205,7 +210,6 @@ class RashiCardRenderer:
                 start_size=int(width * RASHI_NAME_FONT_FRAC), weight="Bold", min_size=36,
             )
             chant_font = self._fonts.get_font(size=int(width * CHANT_COUNT_FONT_FRAC), weight="Regular")
-            benefit_font = self._fonts.get_font(size=int(width * BENEFIT_FONT_FRAC), weight="SemiBold")
             subscribe_font = self._fit_font_to_width(
                 draw, card.subscribe_text, max_width=content_width,
                 start_size=int(width * SUBSCRIBE_FONT_FRAC), weight="Bold",
@@ -235,8 +239,15 @@ class RashiCardRenderer:
             comment_h = int(comment_font.size * 1.15) if (card.comment_prompt_text and comment_font is not None) else 0
             icon_size = int(width * ICON_FRAC)
 
-            gap = int(height * 0.014)
-            mantra_block_gap = int(height * 0.020)
+            # Both trimmed (0.014->0.009, 0.020->0.013) to free vertical
+            # room for the merged benefit+chant-count line -- it now runs
+            # noticeably taller than the old two-line (small benefit +
+            # chant count) layout, especially for the 3 Shani-affected
+            # rashis whose combined sentence wraps to 2 lines at this
+            # bigger font size (confirmed via a real render that showed
+            # up to 54px of overflow before this trim).
+            gap = int(height * 0.009)
+            mantra_block_gap = int(height * 0.013)
 
             # EVERYTHING below content_top is now anchored bottom-up from
             # the fixed, validated footer_bottom boundary -- subscribe,
@@ -280,14 +291,21 @@ class RashiCardRenderer:
             cursor_y += mantra_block_gap
             cursor_y = self._draw_centered_line(draw, mantra_text, mantra_font, width, cursor_y, COLOR_TEXT_LIGHT)
             cursor_y += int(gap * 0.4)
-            cursor_y = self._draw_centered_line(
-                draw, f"({chant_count_text})", chant_font, width, cursor_y, COLOR_TEXT_LIGHT,
-            )
 
-            if benefit_text:
-                cursor_y += int(gap * 0.25)
-                for benefit_line in self._wrap_text(draw, benefit_text, benefit_font, content_width):
-                    cursor_y = self._draw_centered_line(draw, benefit_line, benefit_font, width, cursor_y, COLOR_GOLD)
+            # Benefit + chant-count merged into one sentence (explicit
+            # request 2026-10-04), e.g. "మనశ్శాంతి, కుటుంబ సౌఖ్యం కోసం 108
+            # సార్లు చదువుకోండి" -- "చదువుకోండి" (recite/read) is inserted
+            # right after "సార్లు" so a chant_count_text with a trailing
+            # clause (the Shani remedy's "..., శనివారం ఉత్తమం") still
+            # reads naturally: "...108 సార్లు చదువుకోండి, శనివారం ఉత్తమం".
+            if "సార్లు" in chant_count_text:
+                chant_with_prompt = chant_count_text.replace("సార్లు", "సార్లు చదువుకోండి", 1)
+            else:
+                chant_with_prompt = f"{chant_count_text} చదువుకోండి"
+            combined_text = f"{benefit_text} {chant_with_prompt}" if benefit_text else chant_with_prompt
+
+            for combined_line in self._wrap_text(draw, combined_text, chant_font, content_width):
+                cursor_y = self._draw_centered_line(draw, combined_line, chant_font, width, cursor_y, COLOR_GOLD)
 
             if cursor_y > content_bottom_limit:
                 logger.warning(
