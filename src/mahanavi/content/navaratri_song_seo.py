@@ -49,6 +49,7 @@ _DESCRIPTION_TE = (
     "సాహిత్యం & స్వరకల్పన: Mahanavi Spirituals\n"
     "దృశ్యాలు: AI సాధనాలతో రూపొందించబడ్డాయి\n\n"
     "© 2026 Mahanavi Spirituals. అన్ని హక్కులు రక్షించబడ్డాయి.\n"
+    "సంప్రదించండి: mahanavispirituals@gmail.com\n"
 )
 
 _DESCRIPTION_EN = (
@@ -70,7 +71,8 @@ _DESCRIPTION_EN = (
     "Vocals: Revathy V S L\n"
     "Lyrics & Composition: Mahanavi Spirituals\n"
     "Visuals: AI-generated\n\n"
-    "© 2026 Mahanavi Spirituals. All Rights Reserved.\n\n"
+    "© 2026 Mahanavi Spirituals. All Rights Reserved.\n"
+    "Contact: mahanavispirituals@gmail.com\n\n"
     "Disclosure: this video uses AI-assisted vocal production and AI-generated "
     "visuals as part of its original creative process."
 )
