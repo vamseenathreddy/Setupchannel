@@ -56,7 +56,21 @@ jobs:
         env:
           GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
-        run: python scripts/ci/drive_state_sync.py pull
+        run: |
+          set -o pipefail
+          mkdir -p data
+          python scripts/ci/drive_state_sync.py pull 2>&1 | tee data/gita_sloka_restore_log.txt
+
+      # Diagnostic hand-off (same pattern as the other workflows' own
+      # pipeline-failure logs) -- added 2026-10-05 after a real restore
+      # failure (run 37295392583) with no visible cause, since this
+      # environment can't fetch GitHub Actions job logs directly.
+      - name: Push restore-step log to Drive (on failure)
+        if: failure()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/push_drive_asset.py data/gita_sloka_restore_log.txt gita_sloka_restore_log.txt
 
       - name: Decide whether this call should post today
         id: gate
