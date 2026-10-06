@@ -182,7 +182,7 @@ def main() -> int:
             "wdays": [-1],
         }
         try:
-            _api_request("PUT", f"/jobs/{job_id}", api_key, {"job": {"schedule": schedule}})
+            _api_request("PATCH", f"/jobs/{job_id}", api_key, {"job": {"schedule": schedule}})
             print(f"[cronjob-reschedule] {series_key}: rescheduled OK", file=sys.stderr)
         except RuntimeError as exc:
             print(f"[cronjob-reschedule] {series_key}: reschedule FAILED: {exc}", file=sys.stderr)
