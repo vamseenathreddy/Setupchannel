@@ -185,6 +185,20 @@ class Settings(BaseSettings):
     youtube_client_secrets_file: Path | None = Field(default=PROJECT_ROOT / "client_secrets.json")
     youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token.json")
 
+    # --- Blogger (migrated off a broken IFTTT applet, 2026-10-06 -- the
+    # applet's thumbnail-URL formula was literal unresolved template
+    # syntax, `{{Url?split('v=')[1]}}`, landing in every post instead of
+    # a real video ID, so no image ever rendered -- see
+    # publishers/blogger_publisher.py's module docstring). The numeric
+    # blog ID (NOT the blog's URL) -- find it in Blogger's dashboard
+    # under Settings, or in the address bar of the post-editor page.
+    # Reuses youtube_token_file above (same Google account), so needs no
+    # separate credentials file -- just the
+    # https://www.googleapis.com/auth/blogger scope added to that token
+    # (see youtube_shorts_auth_setup.py's SCOPES). Unset = blog posting
+    # is silently skipped everywhere, never a hard failure.
+    blogger_blog_id: str | None = Field(default=None)
+
     # --- Telegram alerts (pipeline health review, 2026-10-03) ---
     # See notifications/telegram_alert.py's module docstring for the
     # one-time @BotFather setup. Both unset = alerts are silently

@@ -40,9 +40,17 @@ from mahanavi.config import get_settings
 # weekly_performance_report.py (pipeline health review suggestion #3).
 # A token saved before this change doesn't have it either; same
 # one-time re-run-this-script-then-push-to-Drive fix applies.
+#
+# blogger -- added 2026-10-06 to let publishers/blogger_publisher.py
+# post to Blogger with this SAME token (same Google account owns both
+# the YouTube channel and the blog), replacing a broken IFTTT applet
+# that posted images as literal unresolved template text instead of a
+# real thumbnail URL. Same one-time re-run-this-script-then-push-to-
+# Drive fix applies to tokens saved before this change.
 SCOPES = [
     "https://www.googleapis.com/auth/youtube.force-ssl",
     "https://www.googleapis.com/auth/yt-analytics.readonly",
+    "https://www.googleapis.com/auth/blogger",
 ]
 
 
