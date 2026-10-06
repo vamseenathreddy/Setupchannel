@@ -47,7 +47,9 @@ by actual protagonist rather than defaulted to one for everything.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,6 +72,9 @@ class PuranaShortStory:
     moral_en: str              # English gloss of the moral, for SEO
     purana_name_te: str        # exact source, e.g. "శ్రీ భాగవత పురాణం"
     purana_name_en: str        # e.g. "Srimad Bhagavatam (Bhagavata Purana)"
+    # Story-bank fields (core stories leave these at their defaults).
+    topic: str = ""            # unique slug, used for no-repeat checks
+    date: str | None = None    # YYYY-MM-DD (IST): post ONLY on this date; skipped in normal rotation
 
 
 _GAJENDRA_STORY = (
@@ -270,3 +275,17 @@ PURANA_SHORT_STORIES: list[PuranaShortStory] = [
         purana_name_en="Sri Varaha Puranam",
     ),
 ]
+
+
+def _load_story_bank() -> list[PuranaShortStory]:
+    """Stories saved in purana_story_bank.json (converted from the retired
+    devotional-content library). Appended after the core stories above;
+    never re-posted because the rotation index never wraps."""
+    path = Path(__file__).with_name("purana_story_bank.json")
+    if not path.exists():
+        return []
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return [PuranaShortStory(**entry) for entry in data["stories"]]
+
+
+PURANA_SHORT_STORIES = PURANA_SHORT_STORIES + _load_story_bank()

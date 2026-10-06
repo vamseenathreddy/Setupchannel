@@ -87,9 +87,20 @@ SKIP_TITLES_EN = {"Markandeya's Boon", "Kurma Avatara and the Churning of the Oc
 
 
 def _next_postable_index(index: int) -> int:
-    while index < len(PURANA_SHORT_STORIES) and PURANA_SHORT_STORIES[index].title_en in SKIP_TITLES_EN:
+    # Skip already-posted titles AND date-pinned stories (those post only on their date).
+    while index < len(PURANA_SHORT_STORIES) and (
+        PURANA_SHORT_STORIES[index].title_en in SKIP_TITLES_EN or PURANA_SHORT_STORIES[index].date
+    ):
         index += 1
     return index
+
+
+def _story_pinned_to(day: str) -> int | None:
+    """Index of the story pinned to this IST date (festival/tithi story), if any."""
+    for i, s in enumerate(PURANA_SHORT_STORIES):
+        if s.date == day:
+            return i
+    return None
 
 
 def _read_rotation_index() -> int:
@@ -162,8 +173,15 @@ def main() -> int:
         print("Uploading as UNLISTED (default). Pass --public once you're happy with the result.")
 
     forced = args.story is not None
+    pinned_index = None if forced else _story_pinned_to(datetime.now(ZoneInfo(settings.timezone)).date().isoformat())
     try:
-        story_index = _resolve_forced_story(args.story) if forced else _next_postable_index(_read_rotation_index())
+        if forced:
+            story_index = _resolve_forced_story(args.story)
+        elif pinned_index is not None:
+            story_index = pinned_index
+            print(f"Date-pinned festival story for today: {PURANA_SHORT_STORIES[pinned_index].title_en}")
+        else:
+            story_index = _next_postable_index(_read_rotation_index())
     except MahanaviError as exc:
         print(f"FAILED: {exc}", file=sys.stderr)
         return 1
@@ -236,7 +254,7 @@ def main() -> int:
         _write_episode_count(episode_number)
         print(f"Episode count advanced: next run will show 'పురాణ కథ - {episode_number + 1}'")
 
-        if not forced:
+        if not forced and pinned_index is None:
             next_index = _next_postable_index(story_index + 1)
             _write_rotation_index(next_index)
             if next_index < len(PURANA_SHORT_STORIES):
@@ -244,7 +262,7 @@ def main() -> int:
             else:
                 print("Rotation advanced: that was the last story -- add more before the next run.")
         else:
-            print("Forced run -- rotation state left unchanged.")
+            print("Forced or date-pinned run -- rotation state left unchanged.")
 
         return 0
 
