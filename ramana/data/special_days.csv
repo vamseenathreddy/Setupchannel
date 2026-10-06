@@ -1,0 +1,8 @@
+# date is MM-DD (every year) or YYYY-MM-DD (one specific day). tone: calm = no trending hooks, minimal hashtags.
+# Moving dates (Jayanti by star, Aradhana by tithi) must be added by hand each year as YYYY-MM-DD after checking the official ashram calendar.
+date,label_en,label_te,tone
+08-29,Left Home for Arunachala,గృహత్యాగ దినం,calm
+09-01,Arrival at Arunachala,అరుణాచల ఆగమన దినం,calm
+12-30,Birth Anniversary,జన్మదినం,calm
+05-19,Mother's Mahanirvana,మాతృ మహానిర్వాణ దినం,calm
+04-14,Mahasamadhi Day,మహాసమాధి దినం,calm

@@ -5,6 +5,15 @@ __pycache__/
 .coverage
 htmlcov/
 data/
+# The unanchored "data/" rule above matches a folder named "data" at ANY
+# depth, not just the repo-root data/ (synced state) -- it silently
+# swallowed ramana/data/ (the Ramana Maharshi TV CONTENT BANK, real
+# committed content, not runtime state) the first time that folder was
+# added, causing every real run to fail with FileNotFoundError until
+# force-added back in. Un-ignore it explicitly so this can't happen
+# again, here or for any future channel's own committed content bank.
+!ramana/data/
+!ramana/data/**
 *.db
 .venv/
 venv/
