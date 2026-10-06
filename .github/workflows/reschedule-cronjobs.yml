@@ -1,0 +1,70 @@
+name: Reschedule cron-job.org gated-series pings
+
+# Runs once a day, early (00:05 IST = 18:35 UTC), before any of the 4
+# cron-job.org-driven gated series' windows open (earliest is 8 AM
+# IST). Computes TODAY's randomly-chosen target time for each series
+# (same formula as that series' scripts/ci/*_gate.py) and re-points
+# that series' cron-job.org job to fire only at [target, safety-net]
+# today instead of ticking every 15 minutes through the whole window --
+# see scripts/ci/cronjob_reschedule.py's module docstring for the full
+# rationale and the fallback behavior if this workflow itself misses a
+# day.
+#
+# *** SETUP REQUIRED BEFORE FIRST REAL (non-dry-run) USE ***
+# Add a repository secret named CRONJOB_ORG_API_KEY (Settings ->
+# Secrets and variables -> Actions -> New repository secret) with a
+# cron-job.org API key (Account -> Settings -> API Keys on
+# console.cron-job.org). Never commit the raw key to this repo.
+#
+# Run this once manually from the Actions tab (workflow_dispatch) with
+# dry_run left ON first, to confirm the 4 jobs are found and the
+# computed times look right in the logs, before trusting the daily
+# schedule to actually reschedule things.
+on:
+  schedule:
+    - cron: "35 18 * * *" # 00:05 IST daily
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: >-
+          Log the planned schedule for each series without actually
+          calling the cron-job.org API. Leave ON for the first test
+          run.
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: reschedule-cronjobs
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  reschedule:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Reschedule cron-job.org jobs for today
+        env:
+          CRONJOB_ORG_API_KEY: ${{ secrets.CRONJOB_ORG_API_KEY }}
+        run: |
+          ARGS=""
+          if [ "${{ inputs.dry_run }}" != "false" ]; then
+            ARGS="--dry-run"
+          fi
+          python3 scripts/ci/cronjob_reschedule.py $ARGS
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/ci/notify_failure.py "Reschedule cron-job.org jobs"
