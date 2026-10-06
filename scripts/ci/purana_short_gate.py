@@ -22,7 +22,7 @@ to a time-of-day instead of a content choice.
 
 HOW IT'S DRIVEN: the external cron-job.org trigger (same pattern as the
 night alert Shorts' watchdog) calls this workflow's workflow_dispatch
-endpoint repeatedly through the window (e.g. every 5 minutes, 17:00-
+endpoint repeatedly through the window (e.g. every 15 minutes, 17:00-
 17:55 IST) rather than once at a fixed minute -- this gate decides, on
 each call, whether TODAY's randomly chosen target minute has been
 reached yet, and whether today's post has already gone out (the
@@ -54,7 +54,12 @@ from zoneinfo import ZoneInfo
 IST = ZoneInfo("Asia/Kolkata")
 DATA_DIR = Path("data")
 WINDOW_START_HOUR = 17  # 5:00 PM IST
-WINDOW_SPAN_MINUTES = 59  # target lands somewhere in 5:00-5:59 PM, posting completes before 6 PM
+# The cron-job.org watchdog now ticks every 15 minutes through the window (5:00, 5:15, 5:30,
+# 5:45, 5:55 PM IST) instead of every 5 minutes, to cut billed GitHub Actions minutes on this
+# private repo. The random target must land no later than the second-to-last tick (5:50 leaves
+# the 5:55 tick as a guaranteed catch before the 6:00 PM cutoff) -- same fix already applied to
+# gita_sloka_gate.py after its 2026-10-06 missed post.
+WINDOW_SPAN_MINUTES = 50  # target lands somewhere in 5:00-5:50 PM, posting completes before 6 PM
 
 
 def _already_posted_today(today: str) -> bool:

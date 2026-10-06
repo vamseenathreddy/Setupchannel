@@ -20,7 +20,7 @@ seed changes daily.
 
 HOW IT'S DRIVEN: an external cron-job.org watchdog (same pattern as the
 other series) calls this workflow's workflow_dispatch endpoint
-repeatedly through the window (e.g. every 5 minutes, 08:00-08:55 IST)
+repeatedly through the window (e.g. every 15 minutes, 08:00-08:55 IST)
 -- this gate decides, on each call, whether today's randomly chosen
 target minute has been reached yet, and whether today's post has
 already gone out (the "last_run_date_rashi_mantra.txt" marker, synced
@@ -53,7 +53,12 @@ from zoneinfo import ZoneInfo
 IST = ZoneInfo("Asia/Kolkata")
 DATA_DIR = Path("data")
 WINDOW_START_HOUR = 8  # 8:00 AM IST
-WINDOW_SPAN_MINUTES = 59  # target lands somewhere in 8:00-8:59 AM, posting completes before 9 AM
+# The cron-job.org watchdog now ticks every 15 minutes through the window (8:00, 8:15, 8:30,
+# 8:45, 8:55 IST) instead of every 5 minutes, to cut billed GitHub Actions minutes on this
+# private repo. The random target must land no later than the second-to-last tick (8:50 leaves
+# the 8:55 tick as a guaranteed catch before the 9:00 AM cutoff) -- same fix already applied to
+# gita_sloka_gate.py after its 2026-10-06 missed post.
+WINDOW_SPAN_MINUTES = 50  # target lands somewhere in 8:00-8:50 AM, posting completes before 9 AM
 
 
 def _already_posted_today(today: str) -> bool:

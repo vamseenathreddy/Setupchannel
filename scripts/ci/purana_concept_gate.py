@@ -11,10 +11,10 @@ above 6 concepts daily from all 18 puranas in another short between 11
 am to 1 pm").
 
 HOW IT'S DRIVEN: an external cron-job.org watchdog calls this workflow's
-workflow_dispatch endpoint repeatedly through the window (e.g. every 5
+workflow_dispatch endpoint repeatedly through the window (e.g. every 15
 minutes, 11:00 AM-12:55 PM IST) -- this gate decides, on each call,
 whether today's randomly-chosen target minute (somewhere in the full
-11:00 AM-12:59 PM range) has been reached yet, and whether today's post
+11:00 AM-12:50 PM range) has been reached yet, and whether today's post
 has already gone out (the "last_run_date_purana_concept.txt" marker,
 synced from Drive).
 
@@ -40,7 +40,12 @@ from zoneinfo import ZoneInfo
 IST = ZoneInfo("Asia/Kolkata")
 DATA_DIR = Path("data")
 WINDOW_START_HOUR = 11  # 11:00 AM IST
-WINDOW_SPAN_MINUTES = 119  # target lands somewhere in 11:00 AM-12:59 PM, posting completes before 1 PM
+# The cron-job.org watchdog now ticks every 15 minutes through the window (11:00, 11:15, ...,
+# 12:45, 12:55 IST) instead of every 5 minutes, to cut billed GitHub Actions minutes on this
+# private repo. The random target must land no later than the second-to-last tick (12:50 leaves
+# the 12:55 tick as a guaranteed catch before the 1:00 PM cutoff) -- same fix already applied to
+# gita_sloka_gate.py after its 2026-10-06 missed post.
+WINDOW_SPAN_MINUTES = 110  # target lands somewhere in 11:00 AM-12:50 PM, posting completes before 1 PM
 
 
 def _already_posted_today(today: str) -> bool:
