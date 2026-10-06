@@ -49,6 +49,7 @@ from mahanavi.database.db import DatabaseManager
 from mahanavi.database.repositories import UploadLogRepository
 from mahanavi.exceptions import MahanaviError
 from mahanavi.images.purana_concept_card_renderer import PuranaConceptCard, PuranaConceptCardRenderer
+from mahanavi.publishers.blogger_publisher import post_to_blogger
 from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
 from mahanavi.video.assembler import assemble_purana_short_with_rotating_chakra
 
@@ -200,6 +201,11 @@ def main() -> int:
                     print("Added to playlist.")
                 else:
                     print("Note: could not add to playlist (non-fatal).")
+
+            if post_to_blogger(settings, result.video_id, seo.title, seo.full_caption()):
+                print("Posted to Blogger.")
+            else:
+                print("Note: could not post to Blogger (non-fatal).")
 
         if not forced:
             next_index = (concept_index + 1) % len(PURANA_CONCEPT_SHORTS)

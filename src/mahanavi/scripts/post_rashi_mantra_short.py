@@ -48,6 +48,7 @@ from mahanavi.content.rashi_mantra_seo import build_rashi_mantra_seo
 from mahanavi.exceptions import MahanaviError
 from mahanavi.images.rashi_card_renderer import RashiCard, RashiCardRenderer
 from mahanavi.images.telugu_text import TELUGU_MONTHS
+from mahanavi.publishers.blogger_publisher import post_to_blogger
 from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
 from mahanavi.video.assembler import (
     LOOP_FRIENDLY_FADE_IN_SECONDS,
@@ -60,7 +61,7 @@ STATE_FILE = Path("data") / "last_rashi_index.txt"
 # Short, generic comment prompt shown on the card itself -- distinct from
 # (but consistent with) the longer engagement text in the description
 # built by rashi_mantra_seo.py.
-COMMENT_PROMPT_TEXT = "మీ రాశి కామెంట్‌లో చెప్పండి!"
+COMMENT_PROMPT_TEXT = "మీము రాశి కామెంట్‌లో చెప్పండి!"
 
 
 def _icon_paths(settings: Settings) -> list[Path]:
@@ -199,6 +200,11 @@ def main() -> int:
                     print("Added to playlist.")
                 else:
                     print("Note: could not add to playlist (non-fatal).")
+
+            if post_to_blogger(settings, result.video_id, seo.title, seo.full_caption()):
+                print("Posted to Blogger.")
+            else:
+                print("Note: could not post to Blogger (non-fatal).")
 
         if not forced:
             next_index = (rashi_index + 1) % len(RASHI_MANTRAS)
