@@ -36,7 +36,10 @@ from zoneinfo import ZoneInfo
 IST = ZoneInfo("Asia/Kolkata")
 DATA_DIR = Path("data")
 WINDOW_START_HOUR = 15  # 3:00 PM IST
-WINDOW_SPAN_MINUTES = 59  # target lands somewhere in 3:00-3:59 PM, posting completes before 4 PM
+# The cron-job.org watchdog ticks every 5 minutes from 3:00 to 3:55 PM, so the random target must land
+# no later than the last tick (3:50 leaves one spare tick). It was 59 until 2026-10-06, when that day's
+# target came out as 3:58 PM, after the final tick, and NO Gita Short was posted.
+WINDOW_SPAN_MINUTES = 50  # target lands somewhere in 3:00-3:50 PM
 
 
 def _already_posted_today(today: str) -> bool:
