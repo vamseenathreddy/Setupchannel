@@ -100,6 +100,7 @@ jobs:
           MAHANAVI_TIMEZONE: Asia/Kolkata
           MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
           MAHANAVI_PLAYLIST_ID_GITA_SLOKA: ${{ secrets.MAHANAVI_PLAYLIST_ID_GITA_SLOKA }}
+          MAHANAVI_BLOGGER_BLOG_ID: ${{ secrets.MAHANAVI_BLOGGER_BLOG_ID }}
         run: |
           ARGS=""
           if [ "${{ inputs.public }}" = "true" ]; then
