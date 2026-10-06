@@ -42,6 +42,7 @@ until that's set up, not an error.
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from mahanavi.config import Settings
 from mahanavi.exceptions import YouTubeUploadError
@@ -51,7 +52,7 @@ logger = logging.getLogger(__name__)
 SCOPES = ["https://www.googleapis.com/auth/blogger"]
 
 
-def _build_service(settings: Settings) -> "object":  # googleapiclient's Resource type isn't meaningfully annotable
+def _build_service(settings: Settings, token_file: Path | None = None) -> "object":  # googleapiclient's Resource type isn't meaningfully annotable
     try:
         from google.auth.transport.requests import Request
         from google.oauth2.credentials import Credentials
@@ -61,7 +62,7 @@ def _build_service(settings: Settings) -> "object":  # googleapiclient's Resourc
             "Missing packages. Run: pip install google-api-python-client google-auth-oauthlib google-auth"
         ) from exc
 
-    token_file = settings.youtube_token_file
+    token_file = token_file if token_file is not None else settings.youtube_token_file
     if not token_file.exists():
         raise YouTubeUploadError(
             f"No saved YouTube/Blogger API token at {token_file}. "
@@ -80,18 +81,37 @@ def _build_service(settings: Settings) -> "object":  # googleapiclient's Resourc
     return build("blogger", "v3", credentials=credentials)
 
 
-def post_to_blogger(settings: Settings, video_id: str, title: str, description: str) -> bool:
+def post_to_blogger(
+    settings: Settings,
+    video_id: str,
+    title: str,
+    description: str,
+    blog_id: str | None = None,
+    token_file: Path | None = None,
+) -> bool:
     """Creates a new Blogger post with a real thumbnail image, a short
     description, and an embedded player for `video_id`. Returns False
     (and logs a warning, or just an info line if blogging isn't
     configured) rather than raising on any failure -- see module
-    docstring."""
-    if not settings.blogger_blog_id:
-        logger.info("MAHANAVI_BLOGGER_BLOG_ID not set -- skipping Blogger post.")
+    docstring.
+
+    blog_id: overrides settings.blogger_blog_id -- lets other channels in
+    this repo (e.g. Ramana Maharshi TV, settings.ramana_blogger_blog_id)
+    reuse this same function to post to THEIR OWN separate Blogger blog,
+    added 2026-10 when this repo grew beyond one channel/one blog.
+
+    token_file: overrides settings.youtube_token_file -- only needed if a
+    new channel's Google account differs from the main one (if it's the
+    same Google account under a different brand-account channel, the
+    default main token already has Blogger access to every blog that
+    account owns, so this can usually be left unset)."""
+    blog_id = blog_id if blog_id is not None else settings.blogger_blog_id
+    if not blog_id:
+        logger.info("No Blogger blog id configured for this video -- skipping Blogger post.")
         return False
 
     try:
-        service = _build_service(settings)
+        service = _build_service(settings, token_file)
     except YouTubeUploadError as exc:
         logger.warning("Could not post to Blogger for video %s (service build failed): %s", video_id, exc)
         return False
@@ -118,7 +138,7 @@ def post_to_blogger(settings: Settings, video_id: str, title: str, description: 
 
     try:
         service.posts().insert(  # type: ignore[attr-defined]
-            blogId=settings.blogger_blog_id,
+            blogId=blog_id,
             body={"title": title, "content": content},
         ).execute()
         logger.info("Posted to Blogger for video %s", video_id)

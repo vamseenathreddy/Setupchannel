@@ -1,0 +1,165 @@
+name: Post Ramana Short
+
+# Second YouTube channel in this repo (Ramana Maharshi TV), added 2026-10.
+# Same pattern as post-rashi-mantra.yml / post-purana-short.yml / etc: a
+# cron-job.org watchdog calls this workflow's workflow_dispatch endpoint
+# repeatedly through a window, scripts/ci/ramana_gate.py (actually
+# ramana/scripts/ci/ramana_gate.py) decides on each call whether THIS is
+# the day's randomly-chosen post time (05:00-05:40 IST, see that file),
+# and scripts/ci/cronjob_reschedule.py re-points cron-job.org to fire
+# only at [target, 07:55 safety-net] each day instead of ticking every
+# few minutes through the whole window -- see that script's "ramana"
+# SERIES entry.
+#
+# Posts UNLISTED by default (--public is NOT passed) until reviewed --
+# same convention as every other series in this repo. Check `public` in
+# the Actions UI, or set it true on the cron-job.org dispatch body, once
+# you're happy with real posts.
+#
+# *** DRIVE SETUP REQUIRED BEFORE THE FIRST GATED RUN *** -- see
+# scripts/ci/drive_state_sync.py's module docstring (the
+# storageQuotaExceeded section): create two files by hand in the same
+# Drive folder as every other marker file -- an empty one named exactly
+# "youtube_token_ramana.json", and one named exactly "ramana_state.json"
+# containing just `{}`.
+#
+# *** ONE-TIME LOCAL STEPS BEFORE THE FIRST REAL RUN ***
+# 1. python -m mahanavi.scripts.youtube_shorts_auth_setup --token-file data/youtube_token_ramana.json
+#    (choose the Ramana Maharshi TV channel at the Google consent screen)
+# 2. python scripts/ci/drive_state_sync.py push
+# 3. Create a cron-job.org job whose URL is
+#    https://api.github.com/repos/OWNER/REPO/actions/workflows/post-ramana-short.yml/dispatches
+#    (method POST, body {"ref":"main"}, same auth headers as this repo's
+#    other cron-job.org jobs) -- any starting schedule is fine, the daily
+#    reschedule-cronjobs.yml workflow takes it over from the first run.
+on:
+  workflow_dispatch:
+    inputs:
+      public:
+        description: "Upload as public. Uncheck for an unlisted test/review run."
+        required: false
+        type: boolean
+        default: false
+      bypass_gate:
+        description: >-
+          Post immediately, ignoring the 05:00-05:40 IST window and
+          today's already-posted marker. For manual testing/review
+          runs only -- never set this on the recurring cron-job.org
+          calls, or it will post on every single call instead of once
+          a day.
+        required: false
+        type: boolean
+        default: false
+      force_row:
+        description: >-
+          Force a specific content row id instead of the normal
+          rotation (e.g. q001). Leave blank for normal behavior. A
+          forced run does NOT advance the stored rotation state.
+        required: false
+        default: ''
+  schedule:
+    # Best-effort backup only, same role as every other series' backup
+    # schedule tick in this repo -- the real trigger is the external
+    # cron-job.org pinger, re-pointed daily by reschedule-cronjobs.yml.
+    - cron: "35 23 * * *" # 05:05 IST
+    - cron: "25 2 * * *"  # 07:55 IST, late safety net
+
+concurrency:
+  group: post-ramana-short
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  post-ramana-short:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync + gate
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Decide whether this call should post today
+        id: gate
+        env:
+          STATE_FILE: data/ramana_state.json
+          FORCE_POST: ${{ inputs.bypass_gate && 'true' || 'false' }}
+        run: python ramana/scripts/ci/ramana_gate.py
+
+      - name: Install ffmpeg + Telugu text shaping libs
+        if: steps.gate.outputs.post == 'true'
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends ffmpeg libraqm0 libfribidi0 libharfbuzz0b
+
+      - name: Install full Python dependencies
+        if: steps.gate.outputs.post == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r ramana/requirements.txt
+          pip install -e .
+
+      - name: Run Ramana Short pipeline
+        id: pipeline
+        if: steps.gate.outputs.post == 'true'
+        env:
+          STATE_FILE: data/ramana_state.json
+          MAHANAVI_IMAGES_ROOT: ./Images
+          MAHANAVI_ASSETS_DIR: ./assets
+          MAHANAVI_OUTPUT_DIR: ./data/generated
+          MAHANAVI_DATABASE_PATH: ./data/mahanavi.db
+          MAHANAVI_LOG_DIR: ./data/logs
+          MAHANAVI_TIMEZONE: Asia/Kolkata
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+          MAHANAVI_RAMANA_YOUTUBE_TOKEN_FILE: ./data/youtube_token_ramana.json
+          MAHANAVI_RAMANA_PLAYLIST_ID: ${{ secrets.MAHANAVI_RAMANA_PLAYLIST_ID }}
+          MAHANAVI_RAMANA_BLOGGER_BLOG_ID: ${{ secrets.MAHANAVI_RAMANA_BLOGGER_BLOG_ID }}
+        run: |
+          ARGS=""
+          if [ "${{ inputs.public }}" = "true" ]; then
+            ARGS="$ARGS --public"
+          fi
+          if [ -n "${{ inputs.force_row }}" ]; then
+            ARGS="$ARGS --row ${{ inputs.force_row }}"
+          fi
+          python3 ramana/scripts/post_ramana.py $ARGS
+
+      - name: Push state to Drive (includes advanced rotation + any refreshed token)
+        if: always() && steps.gate.outputs.post == 'true'
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py push
+
+      - name: Upload run output as artifact (debugging)
+        if: steps.gate.outputs.post == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ramana-run-${{ github.run_id }}
+          path: |
+            out/short.mp4
+            out/meta.json
+            out/captions_*.srt
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/ci/notify_failure.py "Post Ramana Short"

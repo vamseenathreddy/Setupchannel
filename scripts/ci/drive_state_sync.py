@@ -136,6 +136,21 @@ relying on the daily gate -- otherwise every gate-passing call in the
 window would see "not posted today" and the series could post more
 than once in the same 8-9 AM window.
 
+*** AND TO youtube_token_ramana.json / ramana_state.json, ADDED 2026-10
+for the Ramana Maharshi TV channel (ramana/ at the repo root, a
+second, separate YouTube channel/pipeline folded into this SAME Drive
+folder and service account rather than standing up a second one) ***
+-- same fix, same reason, one more time: before that pipeline's first
+real run, create two files by hand in this same Drive folder: an empty
+one named exactly "youtube_token_ramana.json" (overwritten for real
+the first time `python scripts/ci/drive_state_sync.py push` runs after
+a local `youtube_shorts_auth_setup.py --token-file
+data/youtube_token_ramana.json`), and one named exactly
+"ramana_state.json" containing just `{}` (ramana/src/state.py fills in
+the real "posted"/"used_ids" structure itself on first save). Skipping
+either means the first real push() hits the same storageQuotaExceeded
+failure documented above.
+
 Usage:
     python scripts/ci/drive_state_sync.py pull                    # Drive -> ./data
     python scripts/ci/drive_state_sync.py push                     # ./data -> Drive
@@ -173,6 +188,8 @@ STATE_FILES = [
     "last_gita_sloka_index.txt",
     "last_run_date_gita_sloka.txt",
     "last_run_date_rashi_mantra.txt",
+    "youtube_token_ramana.json",  # Ramana Maharshi TV channel's own OAuth token (separate channel, see config.py)
+    "ramana_state.json",          # Ramana Maharshi TV's "posted"/"used_ids" state (ramana/src/state.py)
 ]
 
 

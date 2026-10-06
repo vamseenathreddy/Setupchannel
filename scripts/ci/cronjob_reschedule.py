@@ -1,16 +1,28 @@
 #!/usr/bin/env python3
 """
-Daily orchestrator that re-schedules cron-job.org's 4 gated-series jobs
+Daily orchestrator that re-schedules cron-job.org's gated-series jobs
 to fire at TODAY's precise, randomly-chosen target time instead of
 ticking repeatedly through a wide window.
 
 WHY THIS EXISTS: rashi_mantra_gate.py / purana_concept_gate.py /
-gita_sloka_gate.py / purana_short_gate.py each compute a
-date-seeded "today's target minute" and rely on cron-job.org pinging
-the workflow repeatedly (every 15 min as of 2026-10-06) through the
-whole window so SOME tick lands at-or-after that target before the
-window's hard cutoff. Most of those ticks are wasted no-ops (each
-still costs 1 billed GitHub Actions minute on this private repo).
+gita_sloka_gate.py / purana_short_gate.py / ramana_gate.py each compute
+a date-seeded "today's target minute" and rely on cron-job.org pinging
+the workflow repeatedly (every 15 min as of 2026-10-06, every 5 min for
+Ramana's own suggested setup) through the whole window so SOME tick
+lands at-or-after that target before the window's hard cutoff. Most of
+those ticks are wasted no-ops (each still costs 1 billed GitHub Actions
+minute on this private repo).
+
+Ramana Maharshi TV (ramana/, added 2026-10) was folded in as a 5th
+entry here rather than standing up its own separate cron-job.org
+pinger (its own .github/workflows/post_ramana.yml -- not used verbatim
+in this repo -- suggested 12 pings/day on its own, ~6 Actions minutes/
+day, the exact same "repeated ping" cost this orchestrator exists to
+eliminate for the other 4 series). Its target-time formula is NOT the
+same shape as the other 4 (sha256-hash-based, not
+random.Random(seed).uniform(...) -- see ramana/scripts/ci/ramana_gate.py's
+target_time()), so it uses the "custom" override below instead of
+start_hour/span/seed_fn.
 
 This script runs once a day, very early (before any window opens),
 computes the SAME target time each gate script would compute for
@@ -41,6 +53,7 @@ Usage: python3 scripts/ci/cronjob_reschedule.py [--dry-run]
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import random
@@ -91,11 +104,32 @@ SERIES = {
         "safety_hour": 17,
         "safety_minute": 55,
     },
+    # Copied verbatim from ramana/scripts/ci/ramana_gate.py's target_time():
+    # sha256(f"ramana-gate-{date.isoformat()}") % 41 minutes inside a
+    # 05:00-05:40 IST window. "custom" bypasses the generic
+    # seed_fn/random.Random formula below since this one is hash-based,
+    # not a uniform draw. safety ping placed at 07:55, a few minutes
+    # before ramana_gate.py's LATEST=08:00 hard cutoff.
+    "ramana": {
+        "url_fragment": "post-ramana-short.yml",
+        "custom": lambda today: _ramana_target_minutes(today),
+        "safety_hour": 7,
+        "safety_minute": 55,
+    },
 }
 
 
-def _todays_target(series_key: str, today_ordinal: int) -> tuple[int, int]:
+def _ramana_target_minutes(today) -> tuple[int, int]:
+    offset = int(hashlib.sha256(f"ramana-gate-{today.isoformat()}".encode()).hexdigest(), 16) % 41
+    total_minutes = 5 * 60 + offset
+    return total_minutes // 60, total_minutes % 60
+
+
+def _todays_target(series_key: str, today, today_ordinal: int) -> tuple[int, int]:
     cfg = SERIES[series_key]
+    if "custom" in cfg:
+        hour, minute = cfg["custom"](today)
+        return int(hour), int(minute)
     offset_minutes = random.Random(cfg["seed_fn"](today_ordinal)).uniform(0, cfg["span"])
     total_minutes = cfg["start_hour"] * 60 + offset_minutes
     return int(total_minutes // 60), int(total_minutes % 60)
@@ -149,7 +183,7 @@ def main() -> int:
 
     exit_code = 0
     for series_key, cfg in SERIES.items():
-        target_hour, target_minute = _todays_target(series_key, today_ordinal)
+        target_hour, target_minute = _todays_target(series_key, today, today_ordinal)
         hours = sorted({target_hour, cfg["safety_hour"]})
         minutes = sorted({target_minute, cfg["safety_minute"]})
 

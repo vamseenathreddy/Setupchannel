@@ -1,0 +1,12 @@
+out/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+client_secret*.json
+refresh_summary.md
+.env
+service-account*.json
+*-key*.json
+*gserviceaccount*.json
+refresh_token*.txt

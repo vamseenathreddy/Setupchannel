@@ -1,8 +1,8 @@
 name: Reschedule cron-job.org gated-series pings
 
-# Runs once a day, early (00:05 IST = 18:35 UTC), before any of the 4
-# cron-job.org-driven gated series' windows open (earliest is 8 AM
-# IST). Computes TODAY's randomly-chosen target time for each series
+# Runs once a day, early (00:05 IST = 18:35 UTC), before any
+# cron-job.org-driven gated series' window opens (earliest is 5 AM IST,
+# Ramana Maharshi TV). Computes TODAY's randomly-chosen target time for each series
 # (same formula as that series' scripts/ci/*_gate.py) and re-points
 # that series' cron-job.org job to fire only at [target, safety-net]
 # today instead of ticking every 15 minutes through the whole window --

@@ -11,16 +11,29 @@ no browser needed again unless the token is revoked or deleted.
 
 Usage:
     python -m mahanavi.scripts.youtube_shorts_auth_setup
+    python -m mahanavi.scripts.youtube_shorts_auth_setup --token-file data/youtube_token_ramana.json
 
 Prerequisite: client_secrets.json downloaded from Google Cloud Console
 (APIs & Services -> Credentials -> OAuth client ID -> Desktop app),
 placed at the path in MAHANAVI_YOUTUBE_CLIENT_SECRETS_FILE (defaults to
 the project root).
+
+--token-file: added 2026-10 for second (and later) YouTube channels in
+this repo (e.g. Ramana Maharshi TV) that reuse this SAME Google Cloud
+OAuth project/client_secrets.json but need their OWN saved token,
+since each channel is authorized separately. Omit it for the original
+channel (mahanavi spirituals) -- defaults to
+settings.youtube_token_file exactly as before this change. At the
+Google consent screen, choose the YouTube channel this new token
+should act as (the "choose an account" / channel picker Google shows
+when a Google account manages more than one channel).
 """
 
 from __future__ import annotations
 
+import argparse
 import sys
+from pathlib import Path
 
 from mahanavi.config import get_settings
 
@@ -55,7 +68,16 @@ SCOPES = [
 
 
 def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "--token-file",
+        default=None,
+        help="Where to save the token (default: settings.youtube_token_file, i.e. the main channel).",
+    )
+    args = ap.parse_args()
+
     settings = get_settings()
+    token_file = Path(args.token_file) if args.token_file else settings.youtube_token_file
 
     if not settings.youtube_client_secrets_file or not settings.youtube_client_secrets_file.exists():
         print(
@@ -80,10 +102,10 @@ def main() -> int:
     flow = InstalledAppFlow.from_client_secrets_file(str(settings.youtube_client_secrets_file), SCOPES)
     credentials = flow.run_local_server(port=0)
 
-    settings.youtube_token_file.parent.mkdir(parents=True, exist_ok=True)
-    settings.youtube_token_file.write_text(credentials.to_json(), encoding="utf-8")
+    token_file.parent.mkdir(parents=True, exist_ok=True)
+    token_file.write_text(credentials.to_json(), encoding="utf-8")
 
-    print(f"Success. Token saved to {settings.youtube_token_file}")
+    print(f"Success. Token saved to {token_file}")
     print("Future uploads will reuse this token silently -- no browser needed again.")
     return 0
 

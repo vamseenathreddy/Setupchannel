@@ -199,6 +199,23 @@ class Settings(BaseSettings):
     # is silently skipped everywhere, never a hard failure.
     blogger_blog_id: str | None = Field(default=None)
 
+    # --- Ramana Maharshi TV (second YouTube channel, same repo, added
+    # 2026-10) -- a fully separate channel/pipeline under ramana/ at the
+    # repo root (its own content bank, renderer, gate), but it reuses
+    # this repo's YouTube client_secrets.json (same Google Cloud OAuth
+    # project, a SEPARATE token file since it's a different channel) and
+    # the SAME Drive service account/folder for its tiny state file
+    # (see scripts/ci/drive_state_sync.py's STATE_FILES). Create this
+    # token once locally with `python -m
+    # mahanavi.scripts.youtube_shorts_auth_setup --token-file
+    # data/youtube_token_ramana.json`, choosing the Ramana Maharshi TV
+    # channel at the Google consent screen. Blog id/playlist id follow
+    # the same "unset = silently skipped" convention as the fields
+    # above.
+    ramana_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_ramana.json")
+    ramana_blogger_blog_id: str | None = Field(default=None)
+    ramana_playlist_id: str | None = Field(default=None)
+
     # --- Telegram alerts (pipeline health review, 2026-10-03) ---
     # See notifications/telegram_alert.py's module docstring for the
     # one-time @BotFather setup. Both unset = alerts are silently

@@ -1,0 +1,71 @@
+name: Ramana Maharshi TV monthly content refresh
+
+# Carried over from the originally-provided ramana/ pipeline, path-adjusted
+# for this repo (ramana/ is a subfolder here, not the repo root). On the
+# 25th of each month, asks the model (with web search) for ~31 new content
+# rows, drops duplicates against the existing bank, and opens a pull
+# request for human review -- nothing is ever auto-merged.
+#
+# *** REQUIRES A NEW SECRET NOT YET USED ELSEWHERE IN THIS REPO ***
+# ANTHROPIC_API_KEY (Settings -> Secrets and variables -> Actions). Until
+# that secret is added, this workflow will fail (harmlessly -- it only
+# ever touches ramana/data/content.csv via a reviewed PR, never posts
+# anything) when it runs.
+on:
+  schedule:
+    # 25th of each month, 09:00 IST (03:30 UTC). Gives days to review before the 1st.
+    - cron: "30 3 25 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ramana-content-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: ramana
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: ramana/requirements.txt
+
+      - run: pip install -r requirements.txt anthropic
+
+      - name: Fetch and de-duplicate new rows
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python -m src.refresh_content
+
+      - name: Open pull request for review
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: ramana-content-refresh
+          delete-branch: true
+          add-paths: ramana/data/content.csv
+          commit-message: "ramana: add new rows for next month"
+          title: "Ramana Maharshi TV: review new Telugu and English rows"
+          body-path: ramana/refresh_summary.md
+          labels: content
+
+      - name: Alert on failure (Telegram, optional)
+        if: failure()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT" ]; then
+            curl -s "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+              -d chat_id="$TG_CHAT" -d text="Ramana Maharshi TV: content refresh FAILED."
+          fi
