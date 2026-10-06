@@ -58,9 +58,14 @@ def main() -> int:
             print("No videos found.")
             return 0
 
-        videos_resp = youtube.videos().list(
-            part="snippet,status", id=",".join(video_ids)
-        ).execute()
+        # videos().list accepts at most 50 ids per call -- batch it.
+        items_all: list[dict] = []
+        for i in range(0, len(video_ids), 50):
+            chunk = youtube.videos().list(
+                part="snippet,status", id=",".join(video_ids[i:i + 50])
+            ).execute()
+            items_all.extend(chunk.get("items", []))
+        videos_resp = {"items": items_all}
 
         print(f"{'VIDEO ID':<13} {'PRIVACY':<10} {'PUBLISHED':<21} TITLE")
         print("-" * 100)
