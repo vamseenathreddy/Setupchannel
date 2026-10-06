@@ -56,8 +56,12 @@ jobs:
         env:
           CRONJOB_ORG_API_KEY: ${{ secrets.CRONJOB_ORG_API_KEY }}
         run: |
+          # Daily schedule-triggered runs always do the real thing (no `inputs`
+          # context on a schedule event). Only a manual workflow_dispatch run
+          # defaults to --dry-run, and only until dry_run is explicitly set
+          # to false.
           ARGS=""
-          if [ "${{ inputs.dry_run }}" != "false" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" != "false" ]; then
             ARGS="--dry-run"
           fi
           python3 scripts/ci/cronjob_reschedule.py $ARGS
