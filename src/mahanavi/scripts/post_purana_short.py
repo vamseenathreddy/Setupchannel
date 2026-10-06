@@ -17,7 +17,7 @@ docstring for why a sway instead of a continuous spin) and NO fade-in/
 fade-out at a duration shorter than a comfortable full read (settings.
 purana_short_duration_seconds, 5s) so viewers loop 2-3x to finish
 reading -> build SEO (purana_short_seo.py) -> upload -> advance the
-rotation index (wraps back to 0 after the last story), UNLESS --story
+rotation index (never wraps -- see SKIP_TITLES_EN), UNLESS --story
 was used to force a specific one (a forced run is a deliberate one-off
 re-post/test, so it does NOT disturb where the natural rotation is).
 
@@ -77,11 +77,26 @@ def _icon_paths(settings: Settings) -> list[Path]:
     return paths
 
 
+# NO REPEATS (explicit request, 2026-10-06: "don't repeat uploaded stories"). The rotation no longer
+# wraps back to story 0 -- once every story has been posted the run fails loudly until more stories are
+# added to content/purana_short_stories.py. These titles are also skipped because the SAME story is
+# already on the channel from another series (the Puranam Shorts / long videos): Markandeya was posted
+# 2026-09-27 as a Puranam Short, and Kurma / the churning of the ocean is covered by the Mahalakshmi
+# Avirbhavam video (2026-09-26).
+SKIP_TITLES_EN = {"Markandeya's Boon", "Kurma Avatara and the Churning of the Ocean"}
+
+
+def _next_postable_index(index: int) -> int:
+    while index < len(PURANA_SHORT_STORIES) and PURANA_SHORT_STORIES[index].title_en in SKIP_TITLES_EN:
+        index += 1
+    return index
+
+
 def _read_rotation_index() -> int:
     if not STATE_FILE.exists():
         return 0
     try:
-        return int(STATE_FILE.read_text().strip()) % len(PURANA_SHORT_STORIES)
+        return int(STATE_FILE.read_text().strip())
     except ValueError:
         print(f"Note: {STATE_FILE} had unreadable content, starting rotation at story 0.")
         return 0
@@ -89,7 +104,7 @@ def _read_rotation_index() -> int:
 
 def _write_rotation_index(next_index: int) -> None:
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    STATE_FILE.write_text(str(next_index % len(PURANA_SHORT_STORIES)))
+    STATE_FILE.write_text(str(next_index))
 
 
 def _read_episode_count() -> int:
@@ -148,9 +163,13 @@ def main() -> int:
 
     forced = args.story is not None
     try:
-        story_index = _resolve_forced_story(args.story) if forced else _read_rotation_index()
+        story_index = _resolve_forced_story(args.story) if forced else _next_postable_index(_read_rotation_index())
     except MahanaviError as exc:
         print(f"FAILED: {exc}", file=sys.stderr)
+        return 1
+    if story_index >= len(PURANA_SHORT_STORIES):
+        print("FAILED: every Purana Story has been posted already -- add new stories to "
+              "content/purana_short_stories.py (nothing is re-posted automatically).", file=sys.stderr)
         return 1
 
     story: PuranaShortStory = PURANA_SHORT_STORIES[story_index]
@@ -218,9 +237,12 @@ def main() -> int:
         print(f"Episode count advanced: next run will show 'పురాణ కథ - {episode_number + 1}'")
 
         if not forced:
-            next_index = (story_index + 1) % len(PURANA_SHORT_STORIES)
+            next_index = _next_postable_index(story_index + 1)
             _write_rotation_index(next_index)
-            print(f"Rotation advanced: next run will post story {next_index} ({PURANA_SHORT_STORIES[next_index].title_en})")
+            if next_index < len(PURANA_SHORT_STORIES):
+                print(f"Rotation advanced: next run will post story {next_index} ({PURANA_SHORT_STORIES[next_index].title_en})")
+            else:
+                print("Rotation advanced: that was the last story -- add more before the next run.")
         else:
             print("Forced run -- rotation state left unchanged.")
 
