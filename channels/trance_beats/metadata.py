@@ -48,15 +48,20 @@ TITLE_PREFIX = {"gita": "गीता श्लोक: ", "bhagavatam": "भा�
 
 
 def title(row, special):
+    """Always carries the English series keyword (e.g. "Bhagavad Gita 2.47"); only the Hindi text
+    is ever shortened to make it fit."""
     hi = plain(row)
     word = CAT_WORD[row["category"]]
+    ref = verse_ref(row)
+    if ref:
+        word = f"{word} {ref[0]}.{ref[1]}"
     if special:
         hi = f"{special['label_primary']}: {hi}"
     pre = TITLE_PREFIX.get(row["category"], "")
-    for cand in (f"{pre}{hi} | {word} | {CHANNEL}", f"{pre}{hi} | {word}", f"{hi} | {word} | {CHANNEL}", f"{hi} | {word}"):
+    for cand in (f"{pre}{hi} | {word} | {CHANNEL}", f"{pre}{hi} | {word}", f"{hi} | {word}"):
         if len(cand) <= 100:
             return cand
-    tail = f" | {CHANNEL}"
+    tail = f" | {word}"
     cut = hi[: 100 - len(tail) - 1].rsplit(" ", 1)[0].rstrip(",.:;")
     return f"{cut}…{tail}"
 

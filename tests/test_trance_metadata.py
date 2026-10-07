@@ -1,4 +1,5 @@
 import csv
+import re
 import glob
 from pathlib import Path
 
@@ -15,6 +16,7 @@ def test_every_row_metadata_within_youtube_limits():
             ids.add(r["id"])
             b = m.bundle(r, None)
             assert len(b["title"]) <= 100
+            assert re.search(r"Bhagavad Gita|Bhagavatam|Krishna Mantra|Bhajan|Kirtan|Teaching", b["title"]), b["title"]
             assert sum(m.tag_cost(t) + 1 for t in b["tags"]) <= 500
             assert len(b["description"]) < 4900
             assert len(m.hashtags(r, None)) <= 15
