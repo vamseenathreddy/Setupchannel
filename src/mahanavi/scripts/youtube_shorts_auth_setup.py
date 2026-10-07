@@ -1,4 +1,4 @@
-﻿"""
+"""
 One-time OAuth2 setup for uploading Shorts via the official YouTube Data
 API v3 -- separate from scripts/youtube_login_setup.py (which sets up
 the Playwright browser session used for Community Posts; Community
@@ -55,15 +55,29 @@ from mahanavi.config import get_settings
 # one-time re-run-this-script-then-push-to-Drive fix applies.
 #
 # blogger -- added 2026-10-06 to let publishers/blogger_publisher.py
-# post to Blogger with this SAME token (same Google account owns both
-# the YouTube channel and the blog), replacing a broken IFTTT applet
-# that posted images as literal unresolved template text instead of a
-# real thumbnail URL. Same one-time re-run-this-script-then-push-to-
-# Drive fix applies to tokens saved before this change.
+# post to Blogger with this SAME token, REMOVED again 2026-10-07 after
+# it broke Brand Account channel selection: every re-auth done while
+# this scope was present (including a re-auth of the original
+# data/youtube_token.json meant to FIX a wrong-channel upload) landed
+# on the signed-in Gmail's own default/personal channel instead of the
+# mahanavi spirituals Brand Account, confirmed via YouTube Studio
+# showing "Revathy Vsl" as the uploading channel. Mixing a
+# non-YouTube, account-level scope (blogger has no Brand Account
+# concept) into the same consent grant as the YouTube scopes appears
+# to suppress Google's Brand Account channel picker for the whole
+# grant. blogger_publisher.post_to_blogger() already treats a missing
+# scope as a soft failure (HttpError caught, logged, returns False --
+# see that module's docstring), so removing this scope here just
+# turns automatic Blogger cross-posting back off; it does not need any
+# other code change and does not affect YouTube uploads/comments/
+# playlists/analytics, which only ever needed the two scopes below.
+# If Blogger cross-posting is wanted again later, it needs its own,
+# separate OAuth token/consent run (never mixed into this one), so a
+# non-YouTube scope can never again interfere with picking the right
+# YouTube channel.
 SCOPES = [
     "https://www.googleapis.com/auth/youtube.force-ssl",
     "https://www.googleapis.com/auth/yt-analytics.readonly",
-    "https://www.googleapis.com/auth/blogger",
 ]
 
 
@@ -99,8 +113,16 @@ def main() -> int:
         return 1
 
     print("Opening a browser window for Google sign-in and permission grant...")
+    print(
+        "IMPORTANT: when Google shows the account/channel picker, pick the correct "
+        "Brand Account channel for THIS token -- not your personal Gmail channel."
+    )
     flow = InstalledAppFlow.from_client_secrets_file(str(settings.youtube_client_secrets_file), SCOPES)
-    credentials = flow.run_local_server(port=0)
+    # prompt="consent select_account" -- force Google to always re-show the
+    # account chooser (never silently reuse a cached browser session), so the
+    # Brand Account picker above is never skipped. Added 2026-10-07 alongside
+    # the blogger-scope removal above, as part of the same wrong-channel fix.
+    credentials = flow.run_local_server(port=0, prompt="consent select_account")
 
     token_file.parent.mkdir(parents=True, exist_ok=True)
     token_file.write_text(credentials.to_json(), encoding="utf-8")
