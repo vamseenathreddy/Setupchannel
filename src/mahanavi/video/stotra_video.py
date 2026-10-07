@@ -104,7 +104,14 @@ def _background(path: Path | None, w: int, h: int, brightness: float) -> Image.I
 def _wrap_plain(draw: ImageDraw.ImageDraw, text: str, font, max_w: int) -> list[str]:
     lines: list[str] = []
     cur = ""
-    for word in text.split():
+    words: list[str] = []
+    for tok in text.split():
+        # a lone danda mark stays glued to the word before it (never alone on a line)
+        if tok in ("।", "॥") and words:
+            words[-1] = f"{words[-1]} {tok}"
+        else:
+            words.append(tok)
+    for word in words:
         test = f"{cur} {word}".strip()
         if draw.textlength(test, font=font) <= max_w or not cur:
             cur = test
@@ -119,7 +126,13 @@ def _wrap_plain(draw: ImageDraw.ImageDraw, text: str, font, max_w: int) -> list[
 def _fit_block(draw, fonts: FontManager, lines: list[str], max_w: int, max_h: int,
                start: int, floor: int, spacing: float = 1.5) -> tuple[list[str], object, int]:
     """Largest font size at which every (wrapped) line fits max_w and the
-    block fits max_h. Returns (lines, font, line_height)."""
+    block fits max_h. Returns (lines, font, line_height). Sizes at which
+    every given line fits on ONE row are preferred (verse lines stay
+    intact); wrapping is only used when no size down to 60 achieves it."""
+    for size in range(start, max(floor, 60) - 1, -2):
+        font = fonts.get_font(size)
+        if all(draw.textlength(ln, font=font) <= max_w for ln in lines) and int(size * spacing) * len(lines) <= max_h:
+            return list(lines), font, int(size * spacing)
     for size in range(start, floor - 1, -2):
         font = fonts.get_font(size)
         wrapped: list[str] = []
