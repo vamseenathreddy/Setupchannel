@@ -46,7 +46,7 @@ def main(argv=None):
         metadata_captions=metadata.captions,
         youtube_token_file=settings.jesus_youtube_token_file,
         blogger_blog_id=settings.jesus_blogger_blog_id,
-        playlist_id=settings.jesus_playlist_id,
+        playlist_id=bank.playlist_id("quotes", settings.jesus_playlist_id),
         duration=channel_config.SHORT_SECONDS,
     )
     return run(pipeline, argv)

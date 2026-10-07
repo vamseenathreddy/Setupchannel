@@ -1,0 +1,52 @@
+name: Set Up Jesus Worship Waves Playlists (One-Time)
+
+# Creates (or finds) the two playlists for the Jesus Worship Waves channel -- Bible Quotes and
+# Bible Quiz -- and writes their IDs to the Drive file jesus_playlist_ids.txt (must be
+# pre-created in the shared Drive folder). Safe to re-run: idempotent by playlist title.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Create/find the two playlists
+        env:
+          MAHANAVI_JESUS_YOUTUBE_TOKEN_FILE: ./data/youtube_token_jesus.json
+        run: python scripts/ci/setup_jesus_playlists.py
+
+      - name: Push state to Drive
+        if: always()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py push
+
+      - name: Push playlist IDs to Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/push_drive_asset.py data/jesus_playlist_ids.txt jesus_playlist_ids.txt

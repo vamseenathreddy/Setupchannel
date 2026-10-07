@@ -62,3 +62,16 @@ def quiz_row(v: dict) -> dict:
     row["opts_cd"] = f"{row['opt_c']}     {row['opt_d']}"
     row["correct_letter"] = letters[options.index(v["ref_en"])]
     return row
+
+
+PLAYLISTS = Path(__file__).resolve().parent / "data" / "playlists.json"
+
+
+def playlist_id(kind: str, configured: str | None) -> str | None:
+    """Configured (env/secret) playlist id wins; else the committed channels/jesus/data/playlists.json
+    ({"quotes": "PL...", "quiz": "PL..."}); else None (video simply isn't added to a playlist)."""
+    if configured:
+        return configured
+    if PLAYLISTS.exists():
+        return json.loads(PLAYLISTS.read_text(encoding="utf-8")).get(kind) or None
+    return None
