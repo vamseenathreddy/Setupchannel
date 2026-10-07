@@ -40,7 +40,8 @@ RENDER_CFG = ChannelConfig(
         TextBlock(field="text_secondary", font=FONT_LABEL, size=70, color_key="secondary", bold=False),
     ],
     font_channel_label=FONT_LABEL,
-    music_glob="music/*.mp3",
+    music_glob="music/approved/*.mp3",
+    music_rotate=True,
     layouts=LAYOUTS,
     palettes=PALETTES,
 )
