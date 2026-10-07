@@ -231,7 +231,7 @@ class PuranaShortCardRenderer:
         two, and chakra_center_x/y is where its center should land on
         the full canvas."""
         width, height = CARD_WIDTH, CARD_HEIGHT
-        margin_x = int(width * 0.08)
+        margin_x = int(width * 0.14)  # keeps text clear of Shorts side buttons
         content_width = width - 2 * margin_x
 
         try:

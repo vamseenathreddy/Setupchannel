@@ -23,12 +23,12 @@ from typing import Callable
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 W, H = 1080, 1920
-SAFE_TOP, SAFE_BOTTOM = 400, 1480
+SAFE_TOP, SAFE_BOTTOM = 400, 1385
 PHOTO_BOX_H = 1500
 SHOW_SOURCE_ON_VIDEO = False
 PHOTO_TEXT_BOTTOM = 1600
 PHOTO_TEXT_H = 640
-MAX_TEXT_W = 940
+MAX_TEXT_W = 780
 SCALES = [1.0, 0.94, 0.88, 0.82, 0.76, 0.70, 0.64, 0.58, 0.52]
 
 CREAM, GOLD, WHITE, SOFT = (255, 236, 196), (244, 190, 90), (245, 245, 245), (210, 205, 195)

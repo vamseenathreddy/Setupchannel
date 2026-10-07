@@ -124,7 +124,7 @@ class GitaQuizCardRenderer:
 
     def render(self, card: GitaQuizCard) -> Path:
         width, height = CARD_WIDTH, CARD_HEIGHT
-        margin_x = int(width * 0.08)
+        margin_x = int(width * 0.14)  # keeps text clear of Shorts side buttons
         content_width = width - 2 * margin_x
 
         try:
