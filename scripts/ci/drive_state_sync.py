@@ -206,6 +206,8 @@ STATE_FILES = [
     "mantra_sangam_state.json",
     "youtube_token_trance_beats.json",
     "trance_beats_state.json",
+    "trance_bhagavatam_state.json",
+    "trance_mantra_state.json",
     "youtube_token_pulse_boosting.json",
     "pulse_boosting_state.json",
     "youtube_token_tollywood_news.json",

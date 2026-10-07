@@ -40,6 +40,9 @@ RENDER_CFG = ChannelConfig(
         TextBlock(field="text_secondary", font=FONT_LABEL, size=70, color_key="secondary", bold=False),
     ],
     font_channel_label=FONT_LABEL,
+    logo_path=str(CHANNEL_DIR / "assets" / "logo.png"),
+    logo_width=220,
+    logo_y=420,
     music_glob="music/approved/*.mp3",
     music_rotate=True,
     layouts=LAYOUTS,
@@ -48,3 +51,9 @@ RENDER_CFG = ChannelConfig(
 
 # Mon=0..Sun=6. bhajan/kirtan/quote rotate; Janmashtami-season Wednesdays lean kirtan.
 ROTATION = {0: "bhajan", 1: "kirtan", 2: "quote", 3: "bhajan", 4: "kirtan", 5: "bhajan", 6: "kirtan"}
+
+# One row bank per daily series (see scripts/_series.py). Gita and Bhagavatam are single-category;
+# the Mantra/Bhajan of the day series mixes categories through the week.
+ROTATION_GITA = {d: "gita" for d in range(7)}
+ROTATION_BHAGAVATAM = {d: "bhagavatam" for d in range(7)}
+ROTATION_MANTRA = {0: "mantra", 1: "bhajan", 2: "mantra", 3: "kirtan", 4: "mantra", 5: "bhajan", 6: "quote"}

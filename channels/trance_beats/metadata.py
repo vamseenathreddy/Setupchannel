@@ -3,11 +3,15 @@ content, Krishna/Radha bhajan-kirtan focus (vs Divine Mantra Sangam's mantra-cha
 import os
 
 CHANNEL = "Devotional Trance Beats"
-CAT_WORD = {"bhajan": "Bhajan", "kirtan": "Kirtan", "quote": "Teaching"}
+CAT_WORD = {"bhajan": "Bhajan", "kirtan": "Kirtan", "quote": "Teaching", "gita": "Bhagavad Gita",
+            "bhagavatam": "Shrimad Bhagavatam", "mantra": "Krishna Mantra"}
 CAT_TAGS = {
     "bhajan": ["#Bhajan", "#KrishnaBhajan", "#RadheRadhe"],
     "kirtan": ["#Kirtan", "#HareKrishna", "#Sankirtan"],
     "quote": ["#SpiritualQuotes", "#BhagavadGita", "#KrishnaTeachings"],
+    "gita": ["#BhagavadGita", "#GitaShloka", "#GeetaSaar"],
+    "bhagavatam": ["#ShrimadBhagavatam", "#Bhagavatam", "#KrishnaKatha"],
+    "mantra": ["#KrishnaMantra", "#HareKrishna", "#Mantra"],
 }
 COMMON_TAGS = ["#HindiDevotional", "#भक्ति", "#कृष्णभक्ति", "#राधाकृष्ण", "#सनातनधर्म", "#Spirituality"]
 CORE_TAGS = ["#DevotionalTranceBeats", "#Shorts", "#Krishna"]
@@ -18,11 +22,17 @@ EXTRA_KEYWORDS = {
     "bhajan": ["popular Krishna bhajan", "bhajan lyrics Hindi"],
     "kirtan": ["Hare Krishna kirtan", "sankirtan chanting"],
     "quote": ["Bhagavad Gita Krishna quotes", "Krishna teachings Hindi"],
+    "gita": ["Bhagavad Gita shloka", "Gita shlok Hindi arth", "Geeta saar"],
+    "bhagavatam": ["Shrimad Bhagavatam shloka", "Bhagavat Katha shorts", "Bhagavatam Hindi"],
+    "mantra": ["Krishna mantra", "Hare Krishna maha mantra", "daily mantra Hindi"],
 }
 COMMENTS = {
     "bhajan": "राधे राधे! \U0001F33A कमेंट में जय श्री कृष्णा लिखें।",
     "kirtan": "हरे कृष्ण! \U0001F64F साथ में कीर्तन गाओ।",
     "quote": "यह बात दिल को छू गई? नीचे बताएं। \U0001F64F",
+    "gita": "जय श्री कृष्ण! \U0001F64F आज का श्लोक आपको कैसा लगा? कमेंट में बताएं।",
+    "bhagavatam": "जय श्री कृष्ण! \U0001F33A आज की भागवत कथा पर अपने विचार कमेंट में लिखें।",
+    "mantra": "हरे कृष्ण! \U0001F64F आज का मंत्र जपें और कमेंट में हरे कृष्ण लिखें।",
 }
 DISCLOSURE = "Visuals are digitally created devotional artwork. Background music is an original/royalty-free composition."
 TAG_LIMIT = 500
@@ -63,7 +73,7 @@ def description(row, special, contact=None):
     if special:
         out += [special.get("label_primary", ""), ""]
     out += [hi, ""]
-    out += [f"{CHANNEL} -- every day a Krishna bhajan, kirtan, or teaching moment, in Hindi.", ""]
+    out += [f"{CHANNEL} -- daily Krishna shorts in Hindi: Bhagavad Gita, Shrimad Bhagavatam, and a mantra or bhajan of the day.", ""]
     out += [DISCLOSURE, "", f"Source: {row['source']}", ""]
     out += [f"Like, share and subscribe to {CHANNEL} for a daily moment of bhakti.", ""]
     out += [f"© {CHANNEL}. Traditional bhajans/kirtans are shared with attribution for devotional purposes."]
