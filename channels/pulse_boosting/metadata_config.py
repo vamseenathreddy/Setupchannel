@@ -17,7 +17,7 @@ HL, GL, CEID = "en-IN", "IN", "IN:en"
 TOPICS = [
     ("Tech Update", "technology updates OR new technology OR AI", 12),            # Mon
     ("Gadget Review", "gadget review OR smartphone launch OR new gadget", 24),    # Tue
-    ("Movies", "new movie OR movie trailer OR box office", 12),                   # Wed
+    ("Science Breakthrough", "science breakthrough OR new discovery OR space mission", 24),  # Wed
     ("Inspiring Story", "inspiring story OR success story OR against all odds", 48),  # Thu
     ("Creativity", "creativity OR innovation OR invention OR design", 48),        # Fri
     ("Latest Gadgets", "latest gadgets OR tech launch OR new launch", 24),        # Sat
@@ -27,11 +27,11 @@ TOPICS = [
 META_CFG = TrendingMetaConfig(
     channel_name="Pulse Boosting",
     core_tags=["#PulseBoosting", "#Shorts", "#Trending"],
-    topic_tags=["#TechUpdates", "#GadgetReviews", "#Movies", "#InspiringStories"],
+    topic_tags=["#TechUpdates", "#GadgetReviews", "#InspiringStories"],
     common_tags=["#Creativity", "#Inspiring", "#Latest", "#Viral"],
-    keywords=["technology updates", "movies", "inspiring stories", "gadget reviews", "creativity",
+    keywords=["technology updates", "inspiring stories", "gadget reviews", "creativity",
               "inspiring", "latest", "trending"],
-    intro="Pulse Boosting -- tech updates, gadgets, movies, inspiring stories and what's trending, one a day.",
+    intro="Pulse Boosting -- tech updates, gadgets, science, inspiring stories and what's trending, one a day.",
     comment_text="What do you think about this? Share your views below. 👇",
 )
 

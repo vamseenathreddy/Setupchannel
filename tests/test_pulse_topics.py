@@ -16,7 +16,7 @@ def test_weekday_topic_and_fallback(monkeypatch):
         return None if len(calls) < 3 else _S("https://x/1")
 
     monkeypatch.setattr(m.trending, "fetch_top_story", fake)
-    row = m.fetch_row(set(), dt.date(2026, 10, 5))  # Monday: tech, then gadget, then movies
+    row = m.fetch_row(set(), dt.date(2026, 10, 5))  # Monday: tech, then gadget, then science
     assert calls[0] == m.TOPICS[0][1] and row["category"] == m.TOPICS[2][0]
 
 
