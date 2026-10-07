@@ -1,5 +1,5 @@
 """One-off: create (or find, by exact title) the two Jesus Worship Waves playlists with the
-channel's own saved token, and write their IDs to data/jesus_playlist_ids.txt (pushed to Drive
+channel's own saved token, and write their IDs to data/jesus_playlist_ids.json (pushed to Drive
 by the workflow, since job logs aren't readable from the dev sandbox):
 
   Bible Quotes - Jesus Worship Waves   (morning Bible Quote Shorts)
@@ -43,7 +43,7 @@ def main() -> int:
             body = {"snippet": {"title": title, "description": desc}, "status": {"privacyStatus": "public"}}
             ids[key] = yt.playlists().insert(part="snippet,status", body=body).execute()["id"]
             print(f"created {key}: {ids[key]}")
-    out = Path("data/jesus_playlist_ids.txt")
+    out = Path("data/jesus_playlist_ids.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(ids), encoding="utf-8")
     return 0
