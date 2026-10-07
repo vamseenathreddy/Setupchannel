@@ -16,7 +16,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-MUSIC = Path(__file__).resolve().parents[2] / "channels/jesus/assets/music"
+import os
+
+# Channel whose clips we are cutting (default jesus); e.g. CHANNEL=pulse_boosting python scripts/dev/slice_bgm.py slice song.wav
+MUSIC = Path(__file__).resolve().parents[2] / f"channels/{os.environ.get('CHANNEL', 'jesus')}/assets/music"
 CANDIDATES, APPROVED = MUSIC / "candidates", MUSIC / "approved"
 CLIP_SECONDS = 5
 FADE = 0.3

@@ -37,7 +37,8 @@ RENDER_CFG = ChannelConfig(
         TextBlock(field="text_secondary", font=FONT_MAIN, size=48, color_key="secondary", bold=False),
     ],
     font_channel_label=FONT_MAIN,
-    music_glob="music/*.mp3",
+    music_glob="music/approved/*.mp3",
+    music_rotate=True,  # cycle the approved clips in order by date
     logo_path=str(CHANNEL_DIR / "assets/logo.png"),
     watermark_handle="@PulseBoosting",
     safe_bottom=1385,   # above the Shorts title/channel row

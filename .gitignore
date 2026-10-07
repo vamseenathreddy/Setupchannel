@@ -41,3 +41,5 @@ run_daily_shorts_stdout.log
 source_material/
 channels/jesus/assets/music/candidates/*.mp3
 channels/jesus/assets/music/candidates/index.txt
+channels/pulse_boosting/assets/music/candidates/*.mp3
+channels/pulse_boosting/assets/music/candidates/index.txt
