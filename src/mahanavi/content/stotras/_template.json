@@ -1,0 +1,16 @@
+{
+  "slug": "kamakhya",
+  "deity_te": "శ్రీ కామాఖ్యా దేవి",
+  "deity_en": "Sri Kamakhya Devi",
+  "title_te": "శ్రీ కామాఖ్యా స్తోత్రం",
+  "title_en": "Sri Kamakhya Stotram",
+  "audio": "stotra_kamakhya.mp3",
+  "background": "stotra_kamakhya.jpg",
+  "repeat": 1,
+  "intro_te": "",
+  "intro_en": "Sri Kamakhya Stotram with Telugu lyrics.",
+  "tags": ["Kamakhya", "KamakhyaDevi", "KamakhyaStotram", "TeluguLyrics"],
+  "pages": [
+    {"te": ["(Telugu lyric line 1)", "(Telugu lyric line 2)"], "en": "(optional English meaning)"}
+  ]
+}
