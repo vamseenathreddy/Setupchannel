@@ -82,6 +82,9 @@ class ChannelConfig:
     logo_y: int = 250                # top edge; below the Shorts search/menu icons, above the text
     text_max_w: int = 0              # 0 = default MAX_TEXT_W; narrower keeps text clear of Shorts' right-hand buttons
     safe_bottom: int = 0             # 0 = default SAFE_BOTTOM; lower keeps text above the Shorts title/channel row
+    text_anchor: float = 0.0         # >0: keep the text block centred here even over a photo (default: photo pushes it low)
+    cta_text: str = ""               # optional call-to-action (e.g. subscribe line) drawn under the text block
+    cta_size: int = 46
     photo_shade_from: int = 900      # y where the dark scrim under the text starts fading in
 
 
@@ -204,10 +207,22 @@ def _blocks(row, layout, cfg: ChannelConfig):
     return out
 
 
+def _cta_lines(draw, cfg: ChannelConfig):
+    if not cfg.cta_text:
+        return [], None
+    font = _font(cfg.font_channel_label, cfg.cta_size)
+    return _wrap(draw, cfg.cta_text, font, 0, cfg.text_max_w), font
+
+
+def _cta_height(draw, cfg: ChannelConfig):
+    lines, _ = _cta_lines(draw, cfg)
+    return len(lines) * int(cfg.cta_size * 1.45) + 50 if lines else 0
+
+
 def fit_text(row, layout, cfg: ChannelConfig, max_h=None):
     """Largest scale at which the text block fits. Returns (laid, total_height, fits, scale)."""
     probe = ImageDraw.Draw(Image.new("L", (W, H)))
-    limit = max_h or (cfg.safe_bottom or SAFE_BOTTOM) - SAFE_TOP
+    limit = (max_h or (cfg.safe_bottom or SAFE_BOTTOM) - SAFE_TOP) - _cta_height(probe, cfg)
     blocks = _blocks(row, layout, cfg)
     for scale in SCALES:
         laid, total = [], 0
@@ -233,8 +248,9 @@ def make_text_layer(row, layout, cfg: ChannelConfig, label_primary="", label_sec
     text_l = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     shadow = Image.new("L", (W, H), 0)
     d, sd = ImageDraw.Draw(text_l), ImageDraw.Draw(shadow)
-    y = int(layout["anchor"] * H - total / 2)
-    y = max(SAFE_TOP + 40, min(y, (bottom or cfg.safe_bottom or SAFE_BOTTOM) - total))
+    cta_h = _cta_height(d, cfg)
+    y = int(layout["anchor"] * H - (total + cta_h) / 2)
+    y = max(SAFE_TOP + 40, min(y, (bottom or cfg.safe_bottom or SAFE_BOTTOM) - total - cta_h))
 
     if layout.get("ornament"):
         d.line((W // 2 - 70, y, W // 2 + 70, y), fill=layout["accent"], width=3)
@@ -247,6 +263,15 @@ def make_text_layer(row, layout, cfg: ChannelConfig, label_primary="", label_sec
             d.text(xy, ln, font=font, fill=color, stroke_width=stroke, stroke_fill=color)
             y += lh
         y += 34
+
+    cta_lines, cta_font = _cta_lines(d, cfg)
+    if cta_lines:
+        y += 20
+        for ln in cta_lines:
+            xy = ((W - d.textlength(ln, font=cta_font)) / 2, y)
+            sd.text(xy, ln, font=cta_font, fill=255, stroke_width=3)
+            d.text(xy, ln, font=cta_font, fill=layout["accent"])
+            y += int(cfg.cta_size * 1.45)
 
     if label_primary or label_secondary:  # special day header
         label_font = cfg.blocks[0].font
@@ -309,7 +334,9 @@ def render(row, out_mp4, date_key, cfg: ChannelConfig, special=None, workdir="ou
     bg_path, tx_path = work / "bg.png", work / "text.png"
     make_background(rng, date_key, cfg).save(bg_path)
     max_h, bottom, channel = None, None, True
-    if photo_for(date_key, cfg):  # keep faces clear: text sits at the bottom, below the photo
+    if cfg.text_anchor:
+        layout = dict(layout, anchor=cfg.text_anchor)
+    elif photo_for(date_key, cfg):  # keep faces clear: text sits at the bottom, below the photo
         layout = dict(layout, anchor=0.78)
         max_h, bottom, channel = cfg.photo_text_h, cfg.photo_text_bottom, False
     _watermark(

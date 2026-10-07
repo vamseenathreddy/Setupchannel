@@ -42,7 +42,9 @@ RENDER_CFG = ChannelConfig(
     font_channel_label=FONT_LABEL,
     logo_path=str(CHANNEL_DIR / "assets" / "logo.png"),
     logo_width=220,
-    logo_y=420,
+    logo_y=250,
+    text_anchor=0.5,
+    cta_size=42,
     music_glob="music/approved/*.mp3",
     music_rotate=True,
     layouts=LAYOUTS,
@@ -57,3 +59,10 @@ ROTATION = {0: "bhajan", 1: "kirtan", 2: "quote", 3: "bhajan", 4: "kirtan", 5: "
 ROTATION_GITA = {d: "gita" for d in range(7)}
 ROTATION_BHAGAVATAM = {d: "bhagavatam" for d in range(7)}
 ROTATION_MANTRA = {0: "mantra", 1: "bhajan", 2: "mantra", 3: "kirtan", 4: "mantra", 5: "bhajan", 6: "quote"}
+
+# Careful Hindi subscribe line per series (shown under the text block).
+CTA = {
+    "gita": "रोज़ एक गीता श्लोक के लिए सब्सक्राइब करें",
+    "bhagavatam": "रोज़ भागवत कथा के लिए सब्सक्राइब करें",
+    "mantra": "रोज़ एक मंत्र के लिए सब्सक्राइब करें",
+}

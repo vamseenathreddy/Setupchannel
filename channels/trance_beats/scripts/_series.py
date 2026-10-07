@@ -4,6 +4,7 @@ gita        -> key trance_beats        (data/gita.csv)        evening
 bhagavatam  -> key trance_bhagavatam   (data/bhagavatam.csv)  morning
 mantra      -> key trance_mantra       (data/mantra.csv)      midday
 """
+import dataclasses
 import os
 from pathlib import Path
 
@@ -31,7 +32,7 @@ def main(series: str):
         expected_channel="Trance",
         content_csv=DATA / csv_name,
         special_csv=None,
-        render_cfg=channel_config.RENDER_CFG,
+        render_cfg=dataclasses.replace(channel_config.RENDER_CFG, cta_text=channel_config.CTA[series]),
         rotation=rotation,
         metadata_bundle=metadata.bundle,
         metadata_captions=metadata.captions,
