@@ -11,10 +11,14 @@ name: Post Ramana Short
 # few minutes through the whole window -- see that script's "ramana"
 # SERIES entry.
 #
-# Posts UNLISTED by default (--public is NOT passed) until reviewed --
-# same convention as every other series in this repo. Check `public` in
-# the Actions UI, or set it true on the cron-job.org dispatch body, once
-# you're happy with real posts.
+# Posts PRIVATE (a draft -- visible only to the channel manager in
+# YouTube Studio, not reachable by anyone else even with the link) by
+# default until reviewed -- changed 2026-10-07 from this repo's usual
+# Unlisted-by-default convention, per the owner's explicit request to
+# review every Ramana short before it's reachable at all, not just
+# before it's public. Check `public` true in the Actions UI, or set it
+# true on the cron-job.org dispatch body, once you're happy with real
+# posts.
 #
 # *** DRIVE SETUP REQUIRED BEFORE THE FIRST GATED RUN *** -- see
 # scripts/ci/drive_state_sync.py's module docstring (the
@@ -36,7 +40,7 @@ on:
   workflow_dispatch:
     inputs:
       public:
-        description: "Upload as public. Uncheck for an unlisted test/review run."
+        description: "Upload as public. Uncheck for a private/draft test/review run (default)."
         required: false
         type: boolean
         default: false
