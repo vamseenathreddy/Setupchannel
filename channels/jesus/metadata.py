@@ -108,7 +108,7 @@ def localizations(row, special=None):
     return {"te": {"title": te_title[:100], "description": te_desc}}
 
 
-def srt(text, seconds=15):
+def srt(text, seconds=5):
     lines = "\n".join(s.strip() for s in text.split("|"))
     return f"1\n00:00:00,000 --> 00:00:{seconds:02d},000\n{lines}\n"
 

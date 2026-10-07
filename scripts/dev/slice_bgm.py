@@ -5,7 +5,7 @@ ones the owner likes.
   python scripts/dev/slice_bgm.py approve clip_name [clip_name ...] # candidates/ -> approved/
   python scripts/dev/slice_bgm.py list
 
-Clips are CLIP_SECONDS long (one Short), cut back to back, with a short fade in/out and
+Clips are CLIP_SECONDS (5 s) long (one Short), cut back to back, with a short fade in/out and
 loudness-normalised. Only files in assets/music/approved/ are ever used by the pipeline
 (one clip per Short, rotating -- same idea as Ramana Maharshi TV's rotating Om clips), so the
 owner listens to the candidates first and approves only the good ones.
@@ -18,8 +18,8 @@ from pathlib import Path
 
 MUSIC = Path(__file__).resolve().parents[2] / "channels/jesus/assets/music"
 CANDIDATES, APPROVED = MUSIC / "candidates", MUSIC / "approved"
-CLIP_SECONDS = 15
-FADE = 0.4
+CLIP_SECONDS = 5
+FADE = 0.3
 
 
 def duration(path: Path) -> float:
