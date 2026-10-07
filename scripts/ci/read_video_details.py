@@ -17,7 +17,7 @@ from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
 
 def main() -> int:
     needle = sys.argv[1].lower()
-    max_scan = int(sys.argv[2]) if len(sys.argv) > 2 else 200
+    max_scan = int(sys.argv[2]) if len(sys.argv) > 2 else 800
     try:
         yt = YouTubeShortsUploader(get_settings())._build_service()  # noqa: SLF001
     except YouTubeUploadError as exc:
