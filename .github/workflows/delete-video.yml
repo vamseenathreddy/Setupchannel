@@ -9,6 +9,10 @@ on:
         description: "Title must contain this text (safety check)"
         required: false
         default: ""
+      token_file:
+        description: "Saved token of the channel that owns the video (default youtube_token.json)"
+        required: false
+        default: "youtube_token.json"
 permissions:
   contents: read
 jobs:
@@ -34,5 +38,5 @@ jobs:
           pip install -e .
       - name: Delete
         env:
-          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/${{ inputs.token_file || 'youtube_token.json' }}
         run: python3 scripts/ci/delete_video.py "${{ inputs.video_id }}" "${{ inputs.expected_title }}"
