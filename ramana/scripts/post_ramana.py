@@ -47,6 +47,8 @@ def main():
             "result yourself in YouTube Studio and manually set it to Public (or Unlisted)."
         ),
     )
+    ap.add_argument("--slot", choices=("quote", "qa", "life"), default=os.environ.get("RAMANA_SLOT", "quote"),
+                    help="which of the day's three Shorts this is (content category); default quote")
     ap.add_argument("--out", default="out")
     args = ap.parse_args()
 
@@ -58,11 +60,11 @@ def main():
         return 0
 
     rows = common.load_rows()
-    special = common.special_for(date)
+    special = common.special_for(date) if args.slot == "quote" else None
     if args.row:
         row, reason = next((r for r in rows if r["id"] == args.row), None), "forced"
     else:
-        row, reason = pick.choose_row(rows, date, st["used_ids"])
+        row, reason = pick.choose_row(rows, date, st["used_ids"], args.slot)
     if row is None:
         print("::error::Content bank is empty or the row id is unknown. Run the monthly refresh workflow.")
         return 1

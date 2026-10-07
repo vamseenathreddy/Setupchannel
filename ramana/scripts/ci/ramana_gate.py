@@ -22,29 +22,39 @@ WINDOW_START = dt.time(5, 0)     # earliest possible post time
 WINDOW_MINUTES = 40              # target minute is inside 05:00 to 05:40 IST
 LATEST = dt.time(8, 0)           # a late backup run may still post until this time, after that the day is skipped
 
+# Three Shorts a day (2026-10-08): one per content category, each with its own window and state file.
+# The "quote" slot keeps the original window and hash salt, so cronjob_reschedule.py's formula still matches.
+SLOTS = {
+    "quote": (dt.time(5, 0), 40, dt.time(8, 0), "ramana-gate-"),
+    "qa": (dt.time(12, 0), 40, dt.time(15, 0), "ramana-qa-gate-"),
+    "life": (dt.time(18, 0), 40, dt.time(21, 0), "ramana-life-gate-"),
+}
 
-def target_time(date: dt.date) -> dt.datetime:
+
+def target_time(date: dt.date, slot: str = "quote") -> dt.datetime:
     """Day-seeded minute inside the window: the same date always gives the same minute, so every ping agrees."""
-    offset = int(hashlib.sha256(f"ramana-gate-{date.isoformat()}".encode()).hexdigest(), 16) % (WINDOW_MINUTES + 1)
-    return dt.datetime.combine(date, WINDOW_START, tzinfo=IST) + dt.timedelta(minutes=offset)
+    start, minutes, _latest, salt = SLOTS[slot]
+    offset = int(hashlib.sha256(f"{salt}{date.isoformat()}".encode()).hexdigest(), 16) % (minutes + 1)
+    return dt.datetime.combine(date, start, tzinfo=IST) + dt.timedelta(minutes=offset)
 
 
-def decide(now: dt.datetime, state: dict, force: bool = False):
+def decide(now: dt.datetime, state: dict, force: bool = False, slot: str = "quote"):
     """Return (post: bool, message: str, date_iso: str)."""
     now = now.astimezone(IST)
     date = now.date()
     iso = date.isoformat()
-    tgt = target_time(date)
+    tgt = target_time(date, slot)
+    LATEST = SLOTS[slot][2]
     if iso in state.get("posted", {}):
         return False, f"DECISION: skip, already done ({state['posted'][iso]['row']} -> {state['posted'][iso]['video_id']})", iso
     if force:
-        return True, "DECISION: post ramana (forced)", iso
+        return True, f"DECISION: post ramana {slot} (forced)", iso
     if now < tgt:
         return False, f"DECISION: skip, before target {tgt:%H:%M} IST (now {now:%H:%M})", iso
     if now.time() > LATEST:
         return False, f"DECISION: skip, missed window (now {now:%H:%M}, latest {LATEST:%H:%M})", iso
     late = int((now - tgt).total_seconds() // 60)
-    return True, f"DECISION: post ramana (target {tgt:%H:%M}, now {now:%H:%M}, {late} min after target)", iso
+    return True, f"DECISION: post ramana {slot} (target {tgt:%H:%M}, now {now:%H:%M}, {late} min after target)", iso
 
 
 def main():
@@ -53,7 +63,8 @@ def main():
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
     now = dt.datetime.fromisoformat(args.now).replace(tzinfo=IST) if args.now else dt.datetime.now(IST)
-    post, message, iso = decide(now, state_mod.load(), force=args.force or os.environ.get("FORCE_POST") == "true")
+    slot = os.environ.get("RAMANA_SLOT", "quote")
+    post, message, iso = decide(now, state_mod.load(), force=args.force or os.environ.get("FORCE_POST") == "true", slot=slot)
     print(message)
     out = os.environ.get("GITHUB_OUTPUT")
     if out:

@@ -62,11 +62,14 @@ on:
         required: false
         default: ''
   schedule:
-    # Best-effort backup only, same role as every other series' backup
-    # schedule tick in this repo -- the real trigger is the external
-    # cron-job.org pinger, re-pointed daily by reschedule-cronjobs.yml.
-    - cron: "35 23 * * *" # 05:05 IST
-    - cron: "25 2 * * *"  # 07:55 IST, late safety net
+    - cron: "35 23 * * *"
+    - cron: "0 0 * * *"
+    - cron: "30 0 * * *"
+    - cron: "0 1 * * *"
+    - cron: "30 1 * * *"
+    - cron: "25 2 * * *"
+    # several pings inside the window: the gate posts on the first one past the day's target minute,
+    # so a delayed or dropped GitHub cron cannot make a day miss.
 
 concurrency:
   group: post-ramana-short
@@ -100,6 +103,7 @@ jobs:
         id: gate
         env:
           STATE_FILE: data/ramana_state.json
+          RAMANA_SLOT: quote
           FORCE_POST: ${{ inputs.bypass_gate && 'true' || 'false' }}
         run: python ramana/scripts/ci/ramana_gate.py
 
@@ -122,6 +126,7 @@ jobs:
         if: steps.gate.outputs.post == 'true'
         env:
           STATE_FILE: data/ramana_state.json
+          RAMANA_SLOT: quote
           MAHANAVI_IMAGES_ROOT: ./Images
           MAHANAVI_ASSETS_DIR: ./assets
           MAHANAVI_OUTPUT_DIR: ./data/generated

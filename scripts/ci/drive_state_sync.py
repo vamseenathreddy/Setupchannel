@@ -190,6 +190,8 @@ STATE_FILES = [
     "last_run_date_rashi_mantra.txt",
     "youtube_token_ramana.json",  # Ramana Maharshi TV channel's own OAuth token (separate channel, see config.py)
     "ramana_state.json",          # Ramana Maharshi TV's "posted"/"used_ids" state (ramana/src/state.py)
+    "ramana_qa_state.json",       # Ramana 2nd daily Short (Q&A slot)
+    "ramana_life_state.json",     # Ramana 3rd daily Short (life slot)
     # --- The 7-channel expansion (channels/ at the repo root, added 2026-10) --- same pattern
     # as the Ramana pair above, one token + one state file per channel. *** EACH OF THESE 14
     # FILES MUST BE PRE-CREATED BY HAND IN THE SAME DRIVE FOLDER BEFORE THAT CHANNEL'S FIRST
