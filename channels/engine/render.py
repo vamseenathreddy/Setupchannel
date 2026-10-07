@@ -76,6 +76,8 @@ class ChannelConfig:
     # Text-heavy channels (Jesus quote/quiz) can claim more of the photo's height for text:
     photo_text_h: int = PHOTO_TEXT_H
     photo_text_bottom: int = PHOTO_TEXT_BOTTOM
+    text_max_w: int = 0              # 0 = default MAX_TEXT_W; narrower keeps text clear of Shorts' right-hand buttons
+    safe_bottom: int = 0             # 0 = default SAFE_BOTTOM; lower keeps text above the Shorts title/channel row
     photo_shade_from: int = 900      # y where the dark scrim under the text starts fading in
 
 
@@ -83,11 +85,12 @@ def _font(path, size):
     return ImageFont.truetype(str(path), size, layout_engine=ImageFont.Layout.RAQM)
 
 
-def _wrap(draw, text, font, stroke):
+def _wrap(draw, text, font, stroke, max_w=None):
+    max_w = max_w or MAX_TEXT_W
     lines, cur = [], ""
     for word in text.split():
         test = f"{cur} {word}".strip()
-        if draw.textlength(test, font=font, features=None) + 2 * stroke <= MAX_TEXT_W or not cur:
+        if draw.textlength(test, font=font, features=None) + 2 * stroke <= max_w or not cur:
             cur = test
         else:
             lines.append(cur)
@@ -179,7 +182,7 @@ def _blocks(row, layout, cfg: ChannelConfig):
 def fit_text(row, layout, cfg: ChannelConfig, max_h=None):
     """Largest scale at which the text block fits. Returns (laid, total_height, fits, scale)."""
     probe = ImageDraw.Draw(Image.new("L", (W, H)))
-    limit = max_h or SAFE_BOTTOM - SAFE_TOP
+    limit = max_h or (cfg.safe_bottom or SAFE_BOTTOM) - SAFE_TOP
     blocks = _blocks(row, layout, cfg)
     for scale in SCALES:
         laid, total = [], 0
@@ -187,7 +190,7 @@ def fit_text(row, layout, cfg: ChannelConfig, max_h=None):
             px = int(size * scale)
             stroke = max(1, px // 55) if bold else 0
             font = _font(path, px)
-            lines = _wrap(probe, text, font, stroke)
+            lines = _wrap(probe, text, font, stroke, cfg.text_max_w)
             lh = int(px * 1.45)
             laid.append((lines, font, color, stroke, lh))
             total += len(lines) * lh + 34
@@ -205,7 +208,7 @@ def make_text_layer(row, layout, cfg: ChannelConfig, label_primary="", label_sec
     shadow = Image.new("L", (W, H), 0)
     d, sd = ImageDraw.Draw(text_l), ImageDraw.Draw(shadow)
     y = int(layout["anchor"] * H - total / 2)
-    y = max(SAFE_TOP + 40, min(y, (bottom or SAFE_BOTTOM) - total))
+    y = max(SAFE_TOP + 40, min(y, (bottom or cfg.safe_bottom or SAFE_BOTTOM) - total))
 
     if layout.get("ornament"):
         d.line((W // 2 - 70, y, W // 2 + 70, y), fill=layout["accent"], width=3)

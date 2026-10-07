@@ -26,6 +26,10 @@ def by_id(verse_id: str) -> dict | None:
     return next((v for v in load_verses() if v["id"] == verse_id), None)
 
 
+SUBSCRIBE_EN = "Subscribe for daily Bible quotes and quiz"
+SUBSCRIBE_TE = "రోజూ బైబిల్ వచనం, క్విజ్ కోసం సబ్‌స్క్రైబ్ చేయండి"
+
+
 def quote_row(v: dict) -> dict:
     return {
         "id": v["id"], "category": "quote", "special": "", "source": v["ref_en"],
@@ -34,6 +38,7 @@ def quote_row(v: dict) -> dict:
         "apply_en": v["apply_en"], "apply_te": v["apply_te"],
         "ref_en": v["ref_en"], "ref_te": v["ref_te"], "verse_en": v["text_en"], "verse_te": v["text_te"],
         "theme": v.get("theme", ""),
+        "sub_en": SUBSCRIBE_EN, "sub_te": SUBSCRIBE_TE,
     }
 
 
@@ -53,6 +58,7 @@ def quiz_row(v: dict) -> dict:
         "question_te": "ఈ వచనం ఏ పుస్తకం, ఏ అధ్యాయంలోనిది?",
         "cta_en": "Comment your answer! See this morning's Short.",
         "cta_te": "మీ సమాధానం కామెంట్ చేయండి!",
+        "sub_en": "Comment your answer!\n" + SUBSCRIBE_EN, "sub_te": "మీ సమాధానం కామెంట్ చేయండి!\n" + SUBSCRIBE_TE,
         "answer": v["ref_en"], "answer_te": v["ref_te"], "ref_en": v["ref_en"], "ref_te": v["ref_te"],
         "theme": v.get("theme", ""),
     }

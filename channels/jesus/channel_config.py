@@ -52,8 +52,10 @@ _COMMON = dict(
     layouts=LAYOUTS,
     palettes=PALETTES,
     watermark_handle="@Jesusworshipwaves",
-    photo_text_h=900,       # text-heavy cards: give the text most of the lower photo
-    photo_text_bottom=1560,
+    photo_text_h=860,       # text-heavy cards: give the text most of the lower photo
+    photo_text_bottom=1385, # stay above the Shorts title/channel/Subscribe row (starts ~y1430)
+    safe_bottom=1385,
+    text_max_w=780,         # x 150..930: clear of the Like/Comment/Save/Share buttons (x>940)
     photo_shade_from=560,
 )
 
@@ -66,6 +68,8 @@ QUOTE_CFG = ChannelConfig(
         TextBlock(field="apply_en", font=FONT_EN_LIGHT, size=APPLY_SIZE, color_key="accent", bold=False),
         TextBlock(field="apply_te", font=FONT_TE, size=APPLY_SIZE, color_key="accent", bold=True,
                   strip_chars=QUOTES),
+        TextBlock(field="sub_en", font=FONT_EN_LIGHT, size=38, color_key="secondary", bold=False),
+        TextBlock(field="sub_te", font=FONT_TE, size=40, color_key="secondary", bold=True),
     ],
     music_offset=0,
     **_COMMON,
@@ -82,8 +86,8 @@ QUIZ_CFG = ChannelConfig(
         TextBlock(field="question_te", font=FONT_TE, size=46, color_key="accent", bold=True),
         TextBlock(field="opts_ab", font=FONT_EN_BOLD, size=50, color_key="primary", bold=True),
         TextBlock(field="opts_cd", font=FONT_EN_BOLD, size=50, color_key="primary", bold=True),
-        TextBlock(field="cta_en", font=FONT_EN_LIGHT, size=40, color_key="secondary", bold=False),
-        TextBlock(field="cta_te", font=FONT_TE, size=40, color_key="secondary", bold=True),
+        TextBlock(field="sub_en", font=FONT_EN_LIGHT, size=38, color_key="accent", bold=False),
+        TextBlock(field="sub_te", font=FONT_TE, size=40, color_key="accent", bold=True),
     ],
     music_offset=1,
     **_COMMON,
