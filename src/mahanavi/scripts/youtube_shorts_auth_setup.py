@@ -4,10 +4,11 @@ API v3 -- separate from scripts/youtube_login_setup.py (which sets up
 the Playwright browser session used for Community Posts; Community
 Posts have no official API at all, which is why that one exists).
 
-Run this ONCE. It opens a real browser window for you to log into your
-Google account and grant upload permission, then saves a reusable
-refresh token to disk -- every future run reuses that token silently,
-no browser needed again unless the token is revoked or deleted.
+Run this ONCE. It prints a Google sign-in/permission-grant URL for you
+to paste into a browser yourself (see open_browser=False note below),
+then saves a reusable refresh token to disk -- every future run reuses
+that token silently, no browser needed again unless the token is
+revoked or deleted.
 
 Usage:
     python -m mahanavi.scripts.youtube_shorts_auth_setup
@@ -112,7 +113,11 @@ def main() -> int:
         )
         return 1
 
-    print("Opening a browser window for Google sign-in and permission grant...")
+    print(
+        "This will NOT open a browser automatically -- it will print a URL below. "
+        "Copy it and paste it yourself into the exact browser window/tab you want "
+        "to sign in with (e.g. a fresh Incognito window)."
+    )
     print(
         "IMPORTANT: when Google shows the account/channel picker, pick the correct "
         "Brand Account channel for THIS token -- not your personal Gmail channel."
@@ -122,7 +127,15 @@ def main() -> int:
     # account chooser (never silently reuse a cached browser session), so the
     # Brand Account picker above is never skipped. Added 2026-10-07 alongside
     # the blogger-scope removal above, as part of the same wrong-channel fix.
-    credentials = flow.run_local_server(port=0, prompt="consent select_account")
+    #
+    # open_browser=False -- added 2026-10-07 after google_auth_oauthlib's
+    # automatic browser launch kept opening a NEW regular (non-Incognito)
+    # browser window/tab for the auth URL, overriding whatever
+    # Incognito/already-signed-in-as-the-right-account browser window the
+    # user had deliberately prepared. With this off, the script only PRINTS
+    # the URL and never launches anything itself -- the user pastes it into
+    # the exact browser window/session they want.
+    credentials = flow.run_local_server(port=0, prompt="consent select_account", open_browser=False)
 
     token_file.parent.mkdir(parents=True, exist_ok=True)
     token_file.write_text(credentials.to_json(), encoding="utf-8")
