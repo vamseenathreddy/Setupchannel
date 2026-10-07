@@ -28,6 +28,7 @@ class ChannelPipeline:
     metadata_bundle: Callable       # (row, special) -> {"title","description","tags","localizations","comment"}
     metadata_captions: Callable     # (row) -> {"lang": srt_text}
     youtube_token_file: Path
+    expected_channel: str = ""  # if set, refuse to upload unless the token's channel title contains this (case-insensitive)
     # Pattern A (static content bank): set content_csv + rotation.
     content_csv: Path | None = None
     rotation: dict | None = None
@@ -102,6 +103,11 @@ def run(ch: ChannelPipeline, argv=None) -> int:
 
     settings = get_settings()
     yt = upload.service(ch.youtube_token_file)
+    if ch.expected_channel:
+        got = yt.channels().list(part="snippet", mine=True).execute()["items"][0]["snippet"]["title"]
+        if ch.expected_channel.lower() not in got.lower():
+            raise SystemExit(f"::error::NOT posting: the saved token acts as channel '{got}', not '{ch.expected_channel}'. "
+                             "Re-run the one-time auth and pick the right channel at the Google consent screen.")
     privacy_status = "public" if args.public else "unlisted"
     if not args.public:
         print("Uploading as UNLISTED (default). Pass --public once you're happy with the result.")

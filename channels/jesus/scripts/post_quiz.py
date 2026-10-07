@@ -44,6 +44,7 @@ def main(argv=None):
         metadata_bundle=metadata.bundle,
         metadata_captions=metadata.captions,
         youtube_token_file=settings.jesus_youtube_token_file,
+        expected_channel="Jesus",
         blogger_blog_id=settings.jesus_blogger_blog_id,
         playlist_id=bank.playlist_id("quiz", settings.jesus_quiz_playlist_id),
         duration=channel_config.SHORT_SECONDS,
