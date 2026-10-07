@@ -154,7 +154,7 @@ class AlertCardRenderer:
     def render(self, card: AlertCard, for_date: date) -> Path:
         width = ALERT_CARD_WIDTH
         height = ALERT_CARD_HEIGHT
-        margin_x = int(width * 0.08)
+        margin_x = int(width * 0.14)  # 2026-10-07: keeps text clear of the Shorts side buttons (x>~940 of 1080)
         content_width = width - 2 * margin_x
 
         try:
