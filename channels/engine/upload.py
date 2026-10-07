@@ -90,6 +90,23 @@ def add_caption(yt, video_id, language, name, srt_text):
     return _retry(lambda: yt.captions().insert(part="snippet", body=body, media_body=media).execute())["id"]
 
 
+def find_or_create_playlist(yt, title, description="", language="en"):
+    """Return the id of this channel's playlist named `title`, creating it (public) if missing, so a
+    new series needs no manual setup or secret."""
+    token = None
+    while True:
+        r = _retry(lambda: yt.playlists().list(part="snippet", mine=True, maxResults=50, pageToken=token).execute())
+        for it in r.get("items", []):
+            if it["snippet"]["title"].strip() == title.strip():
+                return it["id"]
+        token = r.get("nextPageToken")
+        if not token:
+            break
+    body = {"snippet": {"title": title, "description": description, "defaultLanguage": language},
+            "status": {"privacyStatus": "public"}}
+    return _retry(lambda: yt.playlists().insert(part="snippet,status", body=body).execute())["id"]
+
+
 def add_to_playlist(yt, video_id, playlist_id):
     body = {"snippet": {"playlistId": playlist_id, "resourceId": {"kind": "youtube#video", "videoId": video_id}}}
     return _retry(lambda: yt.playlistItems().insert(part="snippet", body=body).execute())["id"]

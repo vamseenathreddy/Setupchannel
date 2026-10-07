@@ -41,6 +41,8 @@ class ChannelPipeline:
     fetch_row: Callable | None = None
     blogger_blog_id: str | None = None
     playlist_id: str | None = None
+    playlist_title: str = ""         # used (find or create) when playlist_id is empty
+    playlist_description: str = ""
     duration: float = 5.0
 
 
@@ -125,9 +127,11 @@ def run(ch: ChannelPipeline, argv=None) -> int:
             print(f"caption {lang} added")
         except Exception as e:  # noqa: BLE001
             print(f"::warning::caption {lang} failed: {e}")
-    if ch.playlist_id:
+    if ch.playlist_id or ch.playlist_title:
         try:
-            upload.add_to_playlist(yt, video_id, ch.playlist_id)
+            pl_id = ch.playlist_id or upload.find_or_create_playlist(
+                yt, ch.playlist_title, ch.playlist_description, meta.get("language") or "en")
+            upload.add_to_playlist(yt, video_id, pl_id)
             print("added to playlist")
         except Exception as e:  # noqa: BLE001
             print(f"::warning::playlist failed: {e}")
