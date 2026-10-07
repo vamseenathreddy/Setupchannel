@@ -33,6 +33,7 @@ RENDER_CFG = ChannelConfig(
     channel_name="Pulse Boosting",
     assets_dir=CHANNEL_DIR / "assets",
     blocks=[
+        TextBlock(field="label", font=FONT_MAIN, size=44, color_key="accent", bold=True),
         TextBlock(field="text_primary", font=FONT_MAIN, size=92, color_key="primary", bold=True),
         TextBlock(field="text_secondary", font=FONT_MAIN, size=48, color_key="secondary", bold=False),
     ],

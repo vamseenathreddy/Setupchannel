@@ -23,3 +23,10 @@ def test_weekday_topic_and_fallback(monkeypatch):
 def test_none_when_nothing_fresh(monkeypatch):
     monkeypatch.setattr(m.trending, "fetch_top_story", lambda *a, **k: None)
     assert m.fetch_row(set(), dt.date(2026, 10, 7)) is None
+
+
+def test_bare_title_rejected():
+    from channels.engine.trending import Story, is_informative
+    assert not is_informative(Story("NASA", "NASA (.gov)", "l", ""))
+    assert not is_informative(Story("Apple", "Apple", "l", ""))
+    assert is_informative(Story("NASA confirms water ice found near the Moon's south pole", "Reuters", "l", ""))

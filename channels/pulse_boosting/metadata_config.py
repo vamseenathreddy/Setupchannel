@@ -50,6 +50,7 @@ def fetch_row(used_ids, today=None):
             return {
                 "id": story.link,
                 "category": label,
+                "label": label.upper(),
                 "text_primary": story.headline,
                 "text_secondary": story.publisher,
                 "source": story.link,

@@ -64,6 +64,15 @@ def parse_rss(xml_text: str) -> list[Story]:
     return out
 
 
+def is_informative(story: "Story", min_words: int = 5, min_chars: int = 25) -> bool:
+    """A usable on-screen headline: long enough to carry information (not a bare brand/page title like
+    just "NASA") and not merely the publisher's name repeated."""
+    h = story.headline.strip()
+    if len(h) < min_chars or len(h.split()) < min_words:
+        return False
+    return h.lower().rstrip(". ") != story.publisher.lower().rstrip(". ")
+
+
 def fetch_top_story(query: str, hl: str = "en-IN", gl: str = "IN", ceid: str = "IN:en",
                      hours: int = 6, exclude_links: frozenset[str] = frozenset(), timeout: int = 20) -> Story | None:
     """Fetch the top (most relevant) story for `query` published in the last `hours` hours,
@@ -76,6 +85,6 @@ def fetch_top_story(query: str, hl: str = "en-IN", gl: str = "IN", ceid: str = "
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         xml_text = resp.read().decode("utf-8", errors="replace")
     for story in parse_rss(xml_text):
-        if story.link not in exclude_links:
+        if story.link not in exclude_links and is_informative(story):
             return story
     return None
