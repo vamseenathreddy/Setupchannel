@@ -19,6 +19,7 @@ def main():
     settings = get_settings()
     pipeline = ChannelPipeline(
         channel_key="trance_beats",
+        expected_channel="Trance",
         content_csv=CHANNEL_DIR / "data" / "content.csv",
         special_csv=None,
         render_cfg=channel_config.RENDER_CFG,

@@ -33,6 +33,7 @@ PALETTES = [  # fallback gradients -- magenta/violet "trance" tones, distinct fr
 
 RENDER_CFG = ChannelConfig(
     channel_name="Devotional Trance Beats",
+    watermark_handle="@DevotionalTranceBeats",
     assets_dir=CHANNEL_DIR / "assets",
     blocks=[
         TextBlock(field="text_primary", font=FONT_HI, size=120, color_key="primary", bold=True),
