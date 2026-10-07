@@ -38,6 +38,8 @@ RENDER_CFG = ChannelConfig(
     ],
     font_channel_label=FONT_MAIN,
     music_glob="music/*.mp3",
+    safe_bottom=1385,   # above the Shorts title/channel row
+    text_max_w=780,     # clear of the Like/Comment/Save/Share buttons
     layouts=LAYOUTS,
     palettes=PALETTES,
 )

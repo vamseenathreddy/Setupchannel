@@ -25,6 +25,7 @@ def main():
         metadata_captions=metadata_config.captions,
         youtube_token_file=settings.pulse_boosting_youtube_token_file,
         blogger_blog_id=settings.pulse_boosting_blogger_blog_id,
+        expected_channel="Pulse",
     )
     return run(pipeline)
 
