@@ -1,6 +1,7 @@
 """Everything YouTube sees besides the pixels for Devotional Trance Beats. Hindi-only
 content, Krishna/Radha bhajan-kirtan focus (vs Divine Mantra Sangam's mantra-chanting focus)."""
 import os
+import re
 
 CHANNEL = "Devotional Trance Beats"
 CAT_WORD = {"bhajan": "Bhajan", "kirtan": "Kirtan", "quote": "Teaching", "gita": "Bhagavad Gita",
@@ -43,12 +44,16 @@ def plain(row):
     return row["text_primary"].translate(strip).strip()
 
 
+TITLE_PREFIX = {"gita": "गीता श्लोक: ", "bhagavatam": "भागवत कथा: ", "mantra": "", "bhajan": "", "kirtan": "", "quote": ""}
+
+
 def title(row, special):
     hi = plain(row)
     word = CAT_WORD[row["category"]]
     if special:
         hi = f"{special['label_primary']}: {hi}"
-    for cand in (f"{hi} | {word} | {CHANNEL}", f"{hi} | {word}"):
+    pre = TITLE_PREFIX.get(row["category"], "")
+    for cand in (f"{pre}{hi} | {word} | {CHANNEL}", f"{pre}{hi} | {word}", f"{hi} | {word} | {CHANNEL}", f"{hi} | {word}"):
         if len(cand) <= 100:
             return cand
     tail = f" | {CHANNEL}"
@@ -57,7 +62,7 @@ def title(row, special):
 
 
 def hashtags(row, special):
-    tags = CORE_TAGS + CAT_TAGS[row["category"]] + COMMON_TAGS
+    tags = CAT_TAGS[row["category"]][:2] + ["#Krishna", "#Shorts", "#DevotionalTranceBeats"] + CAT_TAGS[row["category"]][2:] + COMMON_TAGS
     seen, out = set(), []
     for h in tags:
         if h.lower() not in seen:
@@ -66,17 +71,41 @@ def hashtags(row, special):
     return out[:15]
 
 
+INTRO_HI = {
+    "gita": "श्रीमद्भगवद्गीता का आज का श्लोक, सरल हिंदी अर्थ के साथ।",
+    "bhagavatam": "श्रीमद्भागवत महापुराण की आज की कथा, सरल हिंदी में।",
+    "mantra": "आज का कृष्ण मंत्र और भक्ति, शांत मन से सुनें और जपें।",
+    "bhajan": "आज का कृष्ण भजन, भक्ति और शांति के लिए।",
+    "kirtan": "आज का हरे कृष्ण कीर्तन, साथ मिलकर गाएँ।",
+    "quote": "आज का कृष्ण वचन, जीवन के लिए एक सीख।",
+}
+INTRO_EN = {
+    "gita": "Today's Bhagavad Gita shloka with a simple Hindi meaning.",
+    "bhagavatam": "Today's Shrimad Bhagavatam story, told simply in Hindi.",
+    "mantra": "Today's Krishna mantra for calm and devotion. Listen and chant along.",
+    "bhajan": "Today's Krishna bhajan for devotion and peace.",
+    "kirtan": "Today's Hare Krishna kirtan. Sing along.",
+    "quote": "Today's teaching of Krishna, a lesson for life.",
+}
+SUBSCRIBE_HI = "रोज़ नया श्लोक, कथा और मंत्र पाने के लिए चैनल को सब्सक्राइब करें और घंटी का बटन दबाएँ।"
+SERIES_HI = ("हर दिन तीन शॉर्ट्स: सुबह श्रीमद्भागवत कथा, दोपहर कृष्ण मंत्र या भजन, शाम को भगवद्गीता श्लोक।")
+
+
 def description(row, special, contact=None):
     contact = contact if contact is not None else os.environ.get("CONTACT_EMAIL", "")
-    hi = plain(row)
+    cat = row["category"]
+    hi, verse = plain(row), (row.get("text_secondary") or "").strip()
     out = []
     if special:
         out += [special.get("label_primary", ""), ""]
-    out += [hi, ""]
-    out += [f"{CHANNEL} -- daily Krishna shorts in Hindi: Bhagavad Gita, Shrimad Bhagavatam, and a mantra or bhajan of the day.", ""]
-    out += [DISCLOSURE, "", f"Source: {row['source']}", ""]
-    out += [f"Like, share and subscribe to {CHANNEL} for a daily moment of bhakti.", ""]
-    out += [f"© {CHANNEL}. Traditional bhajans/kirtans are shared with attribution for devotional purposes."]
+    out += [f"{hi}", f"{INTRO_HI[cat]}", ""]
+    if verse:
+        out += [verse, ""]
+    out += [SUBSCRIBE_HI, SERIES_HI, ""]
+    out += [f"{CHANNEL}: {INTRO_EN[cat]}", f"Source: {row['source']}", ""]
+    out += [f"Subscribe to {CHANNEL} for a daily Krishna short in Hindi: Shrimad Bhagavatam, a mantra or bhajan, and the Bhagavad Gita.", ""]
+    out += [DISCLOSURE, ""]
+    out += [f"© {CHANNEL}. Traditional shlokas, bhajans and kirtans are shared with attribution for devotional purposes."]
     if contact:
         out += [f"Contact: {contact}"]
     out += ["", " ".join(hashtags(row, special))]
@@ -102,8 +131,28 @@ def fit_tags(tags, limit=TAG_LIMIT):
     return out
 
 
+HI_KEYWORDS = {
+    "gita": ["भगवद गीता श्लोक", "गीता सार", "श्रीमद्भगवद्गीता", "गीता के श्लोक अर्थ सहित"],
+    "bhagavatam": ["श्रीमद्भागवत कथा", "भागवत पुराण", "भागवत कथा हिंदी", "कृष्ण लीला"],
+    "mantra": ["कृष्ण मंत्र", "हरे कृष्ण महामंत्र", "मंत्र जाप", "आज का मंत्र"],
+    "bhajan": ["कृष्ण भजन हिंदी", "राधा कृष्ण भजन"],
+    "kirtan": ["हरे कृष्ण कीर्तन", "संकीर्तन"],
+    "quote": ["कृष्ण वचन", "गीता ज्ञान"],
+}
+
+
+def verse_ref(row):
+    m = re.search(r"गीता\s*(\d+)\.(\d+)", row.get("text_secondary", ""))
+    return (m.group(1), m.group(2)) if m else None
+
+
 def tags(row, special):
-    return fit_tags(KEYWORDS + EXTRA_KEYWORDS[row["category"]])
+    extra = list(EXTRA_KEYWORDS[row["category"]])
+    ref = verse_ref(row)
+    if ref:
+        extra = [f"Bhagavad Gita {ref[0]}.{ref[1]}", f"Gita chapter {ref[0]} verse {ref[1]}",
+                 f"गीता {ref[0]}.{ref[1]}"] + extra
+    return fit_tags(extra + HI_KEYWORDS.get(row["category"], []) + KEYWORDS)
 
 
 def srt(text, seconds=5):
@@ -121,4 +170,4 @@ def seed_comment(row):
 
 def bundle(row, special):
     return {"title": title(row, special), "description": description(row, special), "tags": tags(row, special),
-            "comment": seed_comment(row)}
+            "comment": seed_comment(row), "language": "hi"}

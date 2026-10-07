@@ -54,7 +54,7 @@ def _retry(fn, attempts=5):
             raise
 
 
-def upload_video(yt, path, title, description, tags, localizations=None, publish_at=None, privacy_status="public"):
+def upload_video(yt, path, title, description, tags, localizations=None, publish_at=None, privacy_status="public", language=None):
     """publish_at: aware UTC datetime for a scheduled release, or None to publish immediately.
     privacy_status: "public" or "unlisted" (added 2026-10 to match this repo's --public-by-default-off
     testing convention -- see post_rashi_mantra_short.py's --public flag). Ignored when publish_at is set
@@ -67,9 +67,11 @@ def upload_video(yt, path, title, description, tags, localizations=None, publish
         status["privacyStatus"] = privacy_status
     body = {
         "snippet": {"title": title[:100], "description": description[:4900], "tags": tags,
-                    "categoryId": "22", "defaultLanguage": "en"},
+                    "categoryId": "22", "defaultLanguage": language or "en"},
         "status": status,
     }
+    if language:
+        body["snippet"]["defaultAudioLanguage"] = language
     part = "snippet,status"
     if localizations:
         body["localizations"] = localizations

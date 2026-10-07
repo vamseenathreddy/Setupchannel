@@ -112,7 +112,8 @@ def run(ch: ChannelPipeline, argv=None) -> int:
     if not args.public:
         print("Uploading as UNLISTED (default). Pass --public once you're happy with the result.")
     video_id = upload.upload_video(yt, str(out / "short.mp4"), meta["title"], meta["description"], meta["tags"],
-                                    meta.get("localizations"), privacy_status=privacy_status)
+                                    meta.get("localizations"), privacy_status=privacy_status,
+                                    language=meta.get("language"))
     print(f"UPLOADED ({privacy_status}) {video_id}")
     print(f"Watch: https://www.youtube.com/watch?v={video_id}")
     state_mod.mark_posted(st, date.isoformat(), row["id"], video_id, bool(row["special"]), now.isoformat(timespec="seconds"))
