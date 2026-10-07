@@ -70,6 +70,7 @@ class ChannelConfig:
     palettes: list = dataclasses.field(default_factory=lambda: DEFAULT_PALETTES)
     photo_box_override: dict = dataclasses.field(default_factory=dict)  # {"photo_04.jpg": 1020}
     zoom: float = 0.0                # 0 = completely still picture
+    watermark_handle: str = ""       # e.g. "@MyChannel"; empty -> falls back to channel_name
 
 
 def _font(path, size):
@@ -231,6 +232,19 @@ def make_text_layer(row, layout, cfg: ChannelConfig, label_primary="", label_sec
     return Image.alpha_composite(shade, text_l)
 
 
+def _watermark(text_layer, handle, font_path, size=76, alpha=38):
+    """Large, dim channel-handle watermark at the vertical middle of the frame
+    (2026-10-07 request: overlaps the text on purpose, ~15% opacity)."""
+    wm = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(wm)
+    f = ImageFont.truetype(str(font_path), size, layout_engine=ImageFont.Layout.RAQM)
+    while d.textlength(handle, font=f) > W - 160 and size > 20:
+        size -= 2
+        f = ImageFont.truetype(str(font_path), size, layout_engine=ImageFont.Layout.RAQM)
+    d.text(((W - d.textlength(handle, font=f)) / 2, H / 2), handle, font=f, fill=(255, 255, 255, alpha), anchor="lm")
+    return Image.alpha_composite(text_layer, wm)
+
+
 def pick_music(rng, cfg: ChannelConfig):
     clips = sorted(glob.glob(str(cfg.assets_dir / cfg.music_glob)))
     if not clips:
@@ -250,10 +264,13 @@ def render(row, out_mp4, date_key, cfg: ChannelConfig, special=None, workdir="ou
     if photo_for(date_key, cfg):  # keep faces clear: text sits at the bottom, below the photo
         layout = dict(layout, anchor=0.78)
         max_h, bottom, channel = PHOTO_TEXT_H, PHOTO_TEXT_BOTTOM, False
-    make_text_layer(
-        row, layout, cfg,
-        (special or {}).get("label_primary", ""), (special or {}).get("label_secondary", ""),
-        max_h, bottom, channel,
+    _watermark(
+        make_text_layer(
+            row, layout, cfg,
+            (special or {}).get("label_primary", ""), (special or {}).get("label_secondary", ""),
+            max_h, bottom, channel,
+        ),
+        cfg.watermark_handle or cfg.channel_name, cfg.font_channel_label,
     ).save(tx_path)
     music = pick_music(rng, cfg)
     if cfg.zoom > 0:

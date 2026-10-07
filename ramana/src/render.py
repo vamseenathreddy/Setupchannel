@@ -22,6 +22,7 @@ FONT_TE = ROOT / "assets/fonts/Ponnala-Regular.ttf"  # only one weight exists, b
 FONT_EN = ROOT / "assets/fonts/Poppins-Bold.ttf"      # bold, to match the weight of the Telugu text
 FONT_EN_LIGHT = ROOT / "assets/fonts/Poppins-Regular.ttf"
 CHANNEL = "Ramana Maharshi TV"
+HANDLE = "@ramanamaharshitv"
 
 CREAM, GOLD, WHITE, SOFT = (255, 236, 196), (244, 190, 90), (245, 245, 245), (210, 205, 195)
 
@@ -208,6 +209,19 @@ def make_text_layer(row, layout, label_en="", label_te="", max_h=None, bottom=No
     return Image.alpha_composite(shade, text_l)
 
 
+def _watermark(text_layer, handle, font_path, size=76, alpha=38):
+    """Large, dim channel-handle watermark at the vertical middle of the frame
+    (2026-10-07 request: overlaps the text on purpose, ~15% opacity)."""
+    wm = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(wm)
+    f = ImageFont.truetype(str(font_path), size, layout_engine=ImageFont.Layout.RAQM)
+    while d.textlength(handle, font=f) > W - 160 and size > 20:
+        size -= 2
+        f = ImageFont.truetype(str(font_path), size, layout_engine=ImageFont.Layout.RAQM)
+    d.text(((W - d.textlength(handle, font=f)) / 2, H / 2), handle, font=f, fill=(255, 255, 255, alpha), anchor="lm")
+    return Image.alpha_composite(text_layer, wm)
+
+
 def pick_music(rng):
     clips = sorted(glob.glob(str(ROOT / "assets/om_0*.mp3")))
     if not clips:
@@ -227,8 +241,11 @@ def render(row, out_mp4, date_key, special=None, workdir="out"):
     if photo_for(date_key):  # keep faces clear: text sits at the bottom, below the photo's face
         layout = dict(layout, anchor=0.78)
         max_h, bottom, channel = PHOTO_TEXT_H, PHOTO_TEXT_BOTTOM, False
-    make_text_layer(row, layout, (special or {}).get("label_en", ""), (special or {}).get("label_te", ""),
-                    max_h, bottom, channel).save(tx_path)
+    _watermark(
+        make_text_layer(row, layout, (special or {}).get("label_en", ""), (special or {}).get("label_te", ""),
+                        max_h, bottom, channel),
+        HANDLE, FONT_EN,
+    ).save(tx_path)
     music = pick_music(rng)
     if ZOOM > 0:
         bg_f = (f"[0:v]scale=2160:3840,zoompan=z='1+{ZOOM}*sin(PI*on/150)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"

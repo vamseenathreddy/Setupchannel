@@ -4,12 +4,13 @@ Channel-handle watermark for the card Shorts.
 Per explicit request (2026-10-07): "add a watermark of that channel's
 short. Users should not copy but readers should not feel inconvenient."
 
-Design: a small, low-opacity "@MahanaviSpirituals" in the EMPTY margins of
-the card (never over the story text, never in the zones YouTube's own UI
-covers -- right-hand button rail and the bottom caption area). It
-alternates between a top and a lower position every few seconds, so a
-single crop cannot remove it from the whole video, yet a reader's eye is
-never pulled away from the text.
+Design (revised 2026-10-07 after review of the first version): one LARGE,
+very dim (~15%) "@MahanaviSpirituals" at the exact vertical middle of the
+frame, deliberately overlapping the text. Being in the middle of the
+content it cannot be cropped out, while its low brightness keeps it from
+distracting a reader. The same look is used for every channel in this repo
+(Ramana Maharshi TV -> @ramanamaharshitv; engine channels -> their handle,
+or channel name until one is set).
 
 Two full-frame transparent PNG layers (one per position) are generated
 once and overlaid by ffmpeg with an `enable` time window each.
@@ -28,19 +29,20 @@ logger = logging.getLogger(__name__)
 
 WATERMARK_TEXT = "@MahanaviSpirituals"
 FRAME_W, FRAME_H = 1080, 1920
-FONT_SIZE = 36
+FONT_SIZE = 76
 # (center_y) of each position: top margin (inside the card border, above the
 # invocation line) and lower-middle (below the subscribe line, above YouTube's
 # bottom caption area).
-POSITIONS_Y = (88, 1400)
+POSITIONS_Y = (960,)
 SECONDS_PER_POSITION = 4
-TEXT_ALPHA = 105      # ~41% -- visible if you look, unobtrusive if you read
-SHADOW_ALPHA = 60
+TEXT_ALPHA = 38       # ~15% -- dim: overlaps the text on purpose but never competes with it
+SHADOW_ALPHA = 0
 
 
-# Gita cards carry a "yesterday's Q&A" block down to ~y=1480, so they use a
-# lower second position (still inside the card border).
-GITA_POSITIONS_Y = (88, 1590)
+# Kept for call-site compatibility: the watermark is now one dim, large mark at
+# the exact vertical middle of EVERY card (2026-10-07 request), so Gita no longer
+# needs its own position.
+GITA_POSITIONS_Y = POSITIONS_Y
 
 
 def build_watermark_layers(
@@ -49,6 +51,10 @@ def build_watermark_layers(
     """Create one transparent frame-size PNG per watermark position."""
     out_dir.mkdir(parents=True, exist_ok=True)
     font = FontManager(font_path).get_font(size=FONT_SIZE, weight="Bold")
+    _probe = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+    _pb = _probe.textbbox((0, 0), WATERMARK_TEXT, font=font)
+    if _pb[2] - _pb[0] > FRAME_W - 160:  # keep inside the card border
+        font = FontManager(font_path).get_font(size=int(FONT_SIZE * (FRAME_W - 160) / (_pb[2] - _pb[0])), weight="Bold")
     paths: list[Path] = []
     for i, cy in enumerate(positions_y):
         layer = Image.new("RGBA", (FRAME_W, FRAME_H), (0, 0, 0, 0))
