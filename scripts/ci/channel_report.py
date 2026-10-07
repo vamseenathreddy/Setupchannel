@@ -45,6 +45,30 @@ def iso_seconds(d: str) -> int:
     return h * 3600 + mi * 60 + s
 
 
+def fetch_analytics(settings, days_back: int) -> dict:
+    """Per-video retention from the YouTube Analytics API (needs the yt-analytics.readonly scope on the
+    saved token). Returns {} with a clear note if the scope is missing, so the rest of the report still prints."""
+    try:
+        from mahanavi.publishers.youtube_analytics_client import build_analytics_service
+
+        svc = build_analytics_service(settings)
+        end = dt.date.today()
+        resp = svc.reports().query(
+            ids="channel==MINE", startDate=(end - dt.timedelta(days=days_back)).isoformat(), endDate=end.isoformat(),
+            metrics="views,averageViewPercentage,averageViewDuration,subscribersGained",
+            dimensions="video", sort="-views", maxResults=200,
+        ).execute()
+    except Exception as exc:  # noqa: BLE001
+        print(f"NOTE: retention data unavailable ({type(exc).__name__}: {str(exc)[:160]}). "
+              "If this says insufficient scope, re-run youtube_shorts_auth_setup for this channel and push the token to Drive.")
+        return {}
+    out = {}
+    for vid, views, pct, sec, subs in resp.get("rows", []):
+        out[vid] = {"views": views, "avgPct": round(pct, 1), "avgSec": round(sec, 1), "subs": int(subs)}
+    print(f"RETENTION: analytics rows for {len(out)} videos (top 200 by views)")
+    return out
+
+
 def main() -> int:
     days_back = int(sys.argv[1]) if len(sys.argv) > 1 else 120
     max_scan = int(sys.argv[2]) if len(sys.argv) > 2 else 800
@@ -80,6 +104,10 @@ def main() -> int:
                 "age_days": round(age, 1), "hour_ist": pub.astimezone(IST).hour,
                 "views": int(s.get("viewCount", 0)), "likes": int(s.get("likeCount", 0)), "comments": int(s.get("commentCount", 0)),
             })
+    analytics = fetch_analytics(get_settings(), days_back)
+    for r in rows:
+        a = analytics.get(r["id"], {})
+        r["avg_pct"], r["avg_sec"], r["subs"] = a.get("avgPct"), a.get("avgSec"), a.get("subs", 0)
     public = [r for r in rows if r["privacy"] == "public"]
     print(f"VIDEOS in last {days_back} days: {len(rows)} (public {len(public)})")
     print("\n== BY SERIES (public only; views per video, median and mean; likes per 100 views) ==")
@@ -89,7 +117,12 @@ def main() -> int:
     for name, vs in sorted(by.items(), key=lambda kv: -sum(x["views"] for x in kv[1]) / len(kv[1])):
         views = [x["views"] for x in vs]
         lk = 100 * sum(x["likes"] for x in vs) / max(1, sum(views))
-        print(f"{name:14} n={len(vs):3} median={statistics.median(views):7.0f} mean={statistics.mean(views):8.0f} max={max(views):7} likes/100v={lk:4.1f}")
+        withp = [x for x in vs if x.get("avg_pct") is not None]
+        tv = sum(x["views"] for x in withp)
+        pct = sum(x["avg_pct"] * x["views"] for x in withp) / tv if tv else 0
+        subs_k = 1000 * sum(x["subs"] for x in withp) / tv if tv else 0
+        print(f"{name:14} n={len(vs):3} median={statistics.median(views):7.0f} mean={statistics.mean(views):8.0f} max={max(views):7} "
+              f"likes/100v={lk:4.1f} avg_view%={pct:5.1f} subs/1kviews={subs_k:5.2f}")
     print("\n== BY IST PUBLISH HOUR (public, age>=2d; mean views) ==")
     hh = collections.defaultdict(list)
     for r in public:
@@ -99,7 +132,7 @@ def main() -> int:
         print(f"{h:02d}:00  n={len(hh[h]):3} mean={statistics.mean(hh[h]):8.0f}")
     print("\n== TOP 15 ==")
     for r in sorted(public, key=lambda x: -x["views"])[:15]:
-        print(f"{r['views']:7} v  {r['likes']:4} l  {r['age_days']:5}d  [{r['series']}] {r['id']} {r['title']}")
+        print(f"{r['views']:7} v  {r['likes']:4} l  {r['age_days']:5}d  view%={r.get('avg_pct')} subs={r.get('subs')}  [{r['series']}] {r['id']} {r['title']}")
     print("\n== BOTTOM 15 (age>=3d) ==")
     for r in sorted([x for x in public if x["age_days"] >= 3], key=lambda x: x["views"])[:15]:
         print(f"{r['views']:7} v  {r['likes']:4} l  {r['age_days']:5}d  [{r['series']}] {r['id']} {r['title']}")
