@@ -48,6 +48,7 @@ _COMMON = dict(
     assets_dir=CHANNEL_DIR / "assets",
     font_channel_label=FONT_EN_LIGHT,
     music_glob="music/approved/*.mp3",
+    music_rotate=True,  # cycle the approved clips in order, one per Short (quote and quiz never share a clip)
     layouts=LAYOUTS,
     palettes=PALETTES,
     watermark_handle="",  # TODO: set the real @handle; falls back to the channel name
@@ -66,6 +67,7 @@ QUOTE_CFG = ChannelConfig(
         TextBlock(field="apply_te", font=FONT_TE, size=APPLY_SIZE, color_key="accent", bold=True,
                   strip_chars=QUOTES),
     ],
+    music_offset=0,
     **_COMMON,
 )
 
@@ -83,6 +85,7 @@ QUIZ_CFG = ChannelConfig(
         TextBlock(field="cta_en", font=FONT_EN_LIGHT, size=40, color_key="secondary", bold=False),
         TextBlock(field="cta_te", font=FONT_TE, size=40, color_key="secondary", bold=True),
     ],
+    music_offset=1,
     **_COMMON,
 )
 

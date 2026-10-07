@@ -66,6 +66,8 @@ class ChannelConfig:
     blocks: list[TextBlock]          # drawn top to bottom, in this order
     font_channel_label: Path         # light font for the small channel-name watermark
     music_glob: str = "*.mp3"
+    music_rotate: bool = False   # True: cycle clips in order by date (no repeats until all used) instead of random
+    music_offset: int = 0        # shifts the rotation so two Shorts on one day get different clips
     layouts: list = dataclasses.field(default_factory=lambda: DEFAULT_LAYOUTS)
     palettes: list = dataclasses.field(default_factory=lambda: DEFAULT_PALETTES)
     photo_box_override: dict = dataclasses.field(default_factory=dict)  # {"photo_04.jpg": 1020}
@@ -249,10 +251,13 @@ def _watermark(text_layer, handle, font_path, size=76, alpha=38):
     return Image.alpha_composite(text_layer, wm)
 
 
-def pick_music(rng, cfg: ChannelConfig):
+def pick_music(rng, cfg: ChannelConfig, date_key=None):
     clips = sorted(glob.glob(str(cfg.assets_dir / cfg.music_glob)))
     if not clips:
         raise SystemExit(f"No music matching {cfg.music_glob} found under {cfg.assets_dir}. Add music first.")
+    if cfg.music_rotate and date_key:
+        day = dt.date.fromisoformat(str(date_key)[:10]).toordinal()
+        return clips[(day * 2 + cfg.music_offset) % len(clips)]
     return rng.choice(clips)
 
 
@@ -276,7 +281,7 @@ def render(row, out_mp4, date_key, cfg: ChannelConfig, special=None, workdir="ou
         ),
         cfg.watermark_handle or cfg.channel_name, cfg.font_channel_label,
     ).save(tx_path)
-    music = pick_music(rng, cfg)
+    music = pick_music(rng, cfg, date_key)
     if cfg.zoom > 0:
         bg_f = (f"[0:v]scale=2160:3840,zoompan=z='1+{cfg.zoom}*sin(PI*on/150)':x='iw/2-(iw/zoom/2)':"
                 f"y='ih/2-(ih/zoom/2)':d=1:s=1080x1920:fps=30[bg];")
