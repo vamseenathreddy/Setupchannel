@@ -24,19 +24,24 @@ DATA = ROOT / "data"
 CHANNELS = {
     "mahanavi": dict(
         token="youtube_token.json", expect="mahanavi", lang="te",
-        keywords=['"Telugu devotional"', '"Rahu Kalam today"', '"Durmuhurtham today"', '"Shubha Ghadiyalu"',
-                  '"rashi mantra"', '"Bhagavad Gita Telugu"', '"Purana stories Telugu"', '"Telugu bhakti"',
-                  '"daily panchangam"', '"Telugu Shorts"', "Mahanavi", "మహానవి"],
+        keywords=['"Rahu Kalam today"', '"Durmuhurtham today"', '"Shubha Ghadiyalu"', '"rashi mantra"',
+                  '"Bhagavad Gita Telugu"', '"Purana stories Telugu"', '"telugu devotional"', '"telugu bhakthi"',
+                  '"daily mantra"', '"mahanavi spirituals"', '"vishnu songs"', '"shiva songs"', '"lakshmi mantra"',
+                  '"krishna bhajan"', '"telugu stotra"', '"devotional chants"', '"bhakti songs"',
+                  '"Ayyappa Songs"', '"karthika maasam songs"', '"Ammavari Songs"', '"powerful mantras"',
+                  '"telugu spiritual channel"'],
         description=(
-            "Mahanavi Spirituals | మహానవి స్పిరిచువల్స్\n\n"
-            "Daily Telugu devotional Shorts: today's Rahu Kalam, Durmuhurtham and Shubha Ghadiyalu, "
-            "rashi (zodiac) mantras, Bhagavad Gita slokas with meaning, and stories and concepts from the Puranas.\n\n"
-            "రోజూ తెలుగులో భక్తి షార్ట్స్: ఈరోజు రాహు కాలం, దుర్ముహూర్తం, శుభ ఘడియలు, రాశి మంత్రాలు, "
-            "భగవద్గీత శ్లోకాలు అర్థంతో, పురాణ కథలు, పురాణ విషయాలు.\n\n"
+            "Welcome to Mahanavi Spirituals, your sacred space for Telugu devotional music and daily bhakti. "
+            "| మహానవి స్పిరిచువల్స్\n\n"
+            "Devotional songs, bhajans, mantras and stotras (Vishnu, Shiva, Lakshmi, Hanuman, Ayyappa, Durga, "
+            "Venkateswara), plus daily Telugu Shorts: today's Rahu Kalam, Durmuhurtham and Shubha Ghadiyalu, "
+            "rashi mantras, Bhagavad Gita slokas with meaning, and Purana stories.\n\n"
+            "భక్తి పాటలు, భజనలు, మంత్రాలు, స్తోత్రాలు, అలాగే రోజూ తెలుగు షార్ట్స్: ఈరోజు రాహు కాలం, దుర్ముహూర్తం, "
+            "శుభ ఘడియలు, రాశి మంత్రాలు, భగవద్గీత శ్లోకాలు అర్థంతో, పురాణ కథలు.\n\n"
             "Subscribe so you never miss a day's timings and mantra.\n"
             "ప్రతి రోజు తెలుసుకోవాలంటే సబ్‌స్క్రైబ్ చేయండి.\n\n"
-            "Timings are shared for general guidance. For important events, please confirm with your family "
-            "priest or local panchangam."
+            "Timings are for general guidance. For important events, please confirm with your family priest "
+            "or local panchangam."
         ),
     ),
     "ramana": dict(
@@ -57,18 +62,21 @@ CHANNELS = {
     ),
     "jesus": dict(
         token="youtube_token_jesus.json", expect="jesus", lang="en",
-        keywords=['"Bible verse of the day"', '"Bible quiz"', '"Telugu Bible"', '"Telugu Christian"',
-                  '"Jesus worship"', '"Christian Shorts"', '"daily Bible quote"', '"Bible verse Telugu"',
-                  '"worship songs"', "బైబిల్"],
+        keywords=['"Bible verse of the day"', '"Bible quiz"', '"daily Bible quote"', '"Telugu Bible"',
+                  '"Bible verse Telugu"', '"Telugu Christian songs"', '"Yesu songs"', '"Jesus worship"',
+                  '"Christian worship songs"', '"Telugu Yesu Geethalu"', '"gospel songs"', '"Christian Shorts"',
+                  '"prayer music"', "బైబిల్"],
         description=(
-            "Jesus Worship Waves | జీసస్ వర్షిప్ వేవ్స్\n\n"
-            "Every morning: a Bible verse in English and Telugu, with a short thought on how it applies to our life.\n"
-            "Every evening: a Bible quiz. Which book and chapter is today's verse from? Test yourself and "
-            "answer in the comments.\n"
-            "Plus Telugu and English worship songs.\n\n"
+            "Welcome to Jesus Worship Waves, your home for Bible verses, Christian worship songs and Telugu "
+            "Yesu Geethalu.\n\n"
+            "Every morning: a Bible verse in English and Telugu, with a short thought on how it applies to "
+            "our life.\n"
+            "Every evening: a Bible quiz. Which book and chapter is today's verse from? Answer in the comments.\n"
+            "Plus Telugu and English worship songs, gospel praise and prayer music that bring peace, hope and "
+            "encouragement.\n\n"
             "ప్రతి ఉదయం బైబిల్ వచనం ఇంగ్లీష్, తెలుగులో, అది మన జీవితానికి ఎలా వర్తిస్తుందో చిన్న ఆలోచనతో. "
-            "ప్రతి సాయంత్రం బైబిల్ క్విజ్: ఈ వచనం ఏ పుస్తకం, ఏ అధ్యాయంలోనిది? కామెంట్‌లో మీ సమాధానం చెప్పండి. "
-            "అలాగే తెలుగు, ఇంగ్లీష్ ఆరాధన పాటలు.\n\n"
+            "ప్రతి సాయంత్రం బైబిల్ క్విజ్: ఈ వచనం ఏ పుస్తకం, ఏ అధ్యాయంలోనిది? అలాగే తెలుగు, ఇంగ్లీష్ "
+            "ఆరాధన పాటలు.\n\n"
             "Subscribe for a daily Bible quote and quiz.\n"
             "రోజూ బైబిల్ వచనం, క్విజ్ కోసం సబ్‌స్క్రైబ్ చేయండి."
         ),
@@ -129,11 +137,15 @@ def apply(key):
         print(f"::error::{key}: token acts as '{title}', expected a channel containing '{c['expect']}'. Skipped.")
         return False
     assert len(c["description"]) <= 1000, (key, len(c["description"]))
-    kw = " ".join(c["keywords"])
-    assert len(kw) <= 500, (key, len(kw))
+    kw = ""
+    for k in c["keywords"]:                            # keep order (most important first), stop at YouTube's 500-char limit
+        if len((kw + " " + k).strip()) <= 500:
+            kw = (kw + " " + k).strip()
     branding = r.get("brandingSettings", {})
     ch = branding.setdefault("channel", {})
-    ch["description"], ch["keywords"], ch["country"], ch["defaultLanguage"] = c["description"], kw, COUNTRY, c["lang"]
+    ch["description"], ch["keywords"] = c["description"], kw
+    ch.setdefault("country", COUNTRY)                  # keep what the channel already has
+    ch.setdefault("defaultLanguage", c["lang"])
     yt.channels().update(part="brandingSettings", body={"id": r["id"], "brandingSettings": branding}).execute()
     print(f"updated {key}: {title} (description {len(c['description'])} chars, keywords {len(kw)} chars)")
     return True
