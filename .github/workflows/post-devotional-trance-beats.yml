@@ -45,8 +45,13 @@ on:
         required: false
         default: ''
   schedule:
-    - cron: "30 13 * * *"  # 19:00 IST
-    - cron: "25 15 * * *"  # 20:55 IST, late safety net
+    - cron: "30 13 * * *"
+    - cron: "0 14 * * *"
+    - cron: "30 14 * * *"
+    - cron: "0 15 * * *"
+    - cron: "25 15 * * *"
+    # several pings inside the window: the gate posts on the first one past the day's target minute,
+    # so a delayed or dropped GitHub cron cannot make a day miss.
 
 concurrency:
   group: post-devotional-trance-beats
