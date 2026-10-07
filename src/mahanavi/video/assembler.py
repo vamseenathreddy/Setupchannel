@@ -50,8 +50,17 @@ import subprocess
 from pathlib import Path
 
 from mahanavi.exceptions import VideoAssemblyError
+from mahanavi.video.watermark import build_watermark_layers, overlay_filter
 
 logger = logging.getLogger(__name__)
+
+
+def _watermark_inputs(output_path: Path, positions_y: tuple[int, ...] | None = None) -> list[Path]:
+    """Generate the channel-handle watermark layers next to the output file."""
+    from mahanavi.config import get_settings
+
+    kwargs = {} if positions_y is None else {"positions_y": positions_y}
+    return build_watermark_layers(output_path.parent / ".watermark", get_settings().telugu_font_path, **kwargs)
 
 DEFAULT_DURATION_SECONDS = 10.0
 DEFAULT_FPS = 30
@@ -73,6 +82,8 @@ def assemble_short(
     fps: int = DEFAULT_FPS,
     fade_in_seconds: float = VIDEO_FADE_IN_SECONDS,
     fade_out_seconds: float = AUDIO_FADE_OUT_SECONDS,
+    watermark: bool = True,
+    watermark_positions_y: tuple[int, ...] | None = None,
 ) -> Path:
     """Assemble a static image (+ optional looped audio) into a .mp4.
 
@@ -114,7 +125,19 @@ def assemble_short(
     if fade_in_seconds > 0:
         video_filter += f",fade=t=in:st=0:d={fade_in_seconds}"
 
-    cmd += ["-t", str(duration_seconds), "-vf", video_filter]
+    if watermark:
+        wm_paths = _watermark_inputs(output_path, watermark_positions_y)
+        for wm in wm_paths:
+            cmd += ["-framerate", str(fps), "-loop", "1", "-i", str(wm)]
+        # inputs: 0 image, 1 audio, 2.. watermark layers
+        filter_complex = (
+            f"[0:v]{video_filter}[base];"
+            + overlay_filter("base", 2, len(wm_paths), "wmout")
+            + ";[wmout]format=yuv420p[vout]"
+        )
+        cmd += ["-t", str(duration_seconds), "-filter_complex", filter_complex, "-map", "[vout]", "-map", "1:a"]
+    else:
+        cmd += ["-t", str(duration_seconds), "-vf", video_filter]
 
     if fade_out_seconds > 0:
         fade_start = max(duration_seconds - fade_out_seconds, 0)
@@ -167,6 +190,7 @@ def assemble_purana_short_with_rotating_chakra(
     audio_path: Path | None = None,
     fps: int = DEFAULT_FPS,
     revolutions_per_loop: float = CHAKRA_REVOLUTIONS_PER_LOOP,
+    watermark: bool = True,
 ) -> Path:
     """Assembles the Purana Story Short's three separate layers
     (PuranaShortCardRenderer.render_layers()) into one .mp4 with the Sri
@@ -250,10 +274,21 @@ def assemble_purana_short_with_rotating_chakra(
         audio_map = ["-map", "3:a"]
 
     angle_expr = f"2*PI*{revolutions_per_loop}*t/{duration_seconds}"
+    if watermark:
+        wm_paths = _watermark_inputs(output_path)
+        for wm in wm_paths:  # inputs 4.. (after bg, chakra, text, audio)
+            cmd += ["-framerate", str(fps), "-loop", "1", "-i", str(wm)]
+        tail = (
+            f"[bg_chakra][2:v]overlay=0:0:format=auto,fps={fps}[card];"
+            + overlay_filter("card", 4, len(wm_paths), "wmout")
+            + ";[wmout]format=yuv420p[vout]"
+        )
+    else:
+        tail = f"[bg_chakra][2:v]overlay=0:0:format=auto,fps={fps},format=yuv420p[vout]"
     filter_complex = (
         f"[1:v]format=rgba,rotate=a='{angle_expr}':c=none:ow=iw:oh=ih[chakra_rot];"
         f"[0:v][chakra_rot]overlay={chakra_x}:{chakra_y}:format=auto[bg_chakra];"
-        f"[bg_chakra][2:v]overlay=0:0:format=auto,fps={fps},format=yuv420p[vout]"
+        + tail
     )
 
     cmd += [

@@ -76,6 +76,7 @@ from mahanavi.images.gita_sloka_card_renderer import GitaSlokaCard, GitaSlokaCar
 from mahanavi.publishers.blogger_publisher import post_to_blogger
 from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
 from mahanavi.video.assembler import assemble_short
+from mahanavi.video.watermark import GITA_POSITIONS_Y
 
 STATE_FILE = Path("data") / "last_gita_sloka_index.txt"
 
@@ -226,6 +227,7 @@ def main() -> int:
                 audio_path=settings.alert_short_music_path,
                 fade_in_seconds=0.0,
                 fade_out_seconds=0.0,
+                watermark_positions_y=GITA_POSITIONS_Y,
             )
             print(f"Assembled (loop-friendly, {settings.gita_sloka_short_duration_seconds}s, no fades): {video_path}")
 
@@ -262,6 +264,7 @@ def main() -> int:
                 audio_path=settings.alert_short_music_path,
                 fade_in_seconds=0.0,
                 fade_out_seconds=0.0,
+                watermark_positions_y=GITA_POSITIONS_Y,
             )
             print(f"Assembled (loop-friendly, {settings.gita_sloka_short_duration_seconds}s, no fades): {video_path}")
 
