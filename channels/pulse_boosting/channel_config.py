@@ -38,6 +38,8 @@ RENDER_CFG = ChannelConfig(
     ],
     font_channel_label=FONT_MAIN,
     music_glob="music/*.mp3",
+    logo_path=str(CHANNEL_DIR / "assets/logo.png"),
+    watermark_handle="@PulseBoosting",
     safe_bottom=1385,   # above the Shorts title/channel row
     text_max_w=780,     # clear of the Like/Comment/Save/Share buttons
     layouts=LAYOUTS,

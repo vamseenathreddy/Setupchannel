@@ -76,6 +76,9 @@ class ChannelConfig:
     # Text-heavy channels (Jesus quote/quiz) can claim more of the photo's height for text:
     photo_text_h: int = PHOTO_TEXT_H
     photo_text_bottom: int = PHOTO_TEXT_BOTTOM
+    logo_path: str = ""             # optional channel logo (transparent PNG) drawn near the top of every Short
+    logo_width: int = 300
+    logo_y: int = 250                # top edge; below the Shorts search/menu icons, above the text
     text_max_w: int = 0              # 0 = default MAX_TEXT_W; narrower keeps text clear of Shorts' right-hand buttons
     safe_bottom: int = 0             # 0 = default SAFE_BOTTOM; lower keeps text above the Shorts title/channel row
     photo_shade_from: int = 900      # y where the dark scrim under the text starts fading in
@@ -241,6 +244,16 @@ def make_text_layer(row, layout, cfg: ChannelConfig, label_primary="", label_sec
     return Image.alpha_composite(shade, text_l)
 
 
+def _logo(text_layer, cfg: ChannelConfig):
+    if not cfg.logo_path or not Path(cfg.logo_path).exists():
+        return text_layer
+    logo = Image.open(cfg.logo_path).convert("RGBA")
+    logo = logo.resize((cfg.logo_width, int(logo.height * cfg.logo_width / logo.width)), Image.LANCZOS)
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    layer.alpha_composite(logo, ((W - logo.width) // 2, cfg.logo_y))
+    return Image.alpha_composite(text_layer, layer)
+
+
 def _watermark(text_layer, handle, font_path, size=76, alpha=38):
     """Large, dim channel-handle watermark at the vertical middle of the frame
     (2026-10-07 request: overlaps the text on purpose, ~15% opacity)."""
@@ -277,11 +290,11 @@ def render(row, out_mp4, date_key, cfg: ChannelConfig, special=None, workdir="ou
         layout = dict(layout, anchor=0.78)
         max_h, bottom, channel = cfg.photo_text_h, cfg.photo_text_bottom, False
     _watermark(
-        make_text_layer(
+        _logo(make_text_layer(
             row, layout, cfg,
             (special or {}).get("label_primary", ""), (special or {}).get("label_secondary", ""),
             max_h, bottom, channel,
-        ),
+        ), cfg),
         cfg.watermark_handle or cfg.channel_name, cfg.font_channel_label,
     ).save(tx_path)
     music = pick_music(rng, cfg, date_key)
