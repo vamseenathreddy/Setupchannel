@@ -228,7 +228,8 @@ class Settings(BaseSettings):
     # same convention as every field above.
     jesus_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_jesus.json")
     jesus_blogger_blog_id: str | None = Field(default=None)
-    jesus_playlist_id: str | None = Field(default=None)
+    jesus_playlist_id: str | None = Field(default=None)        # Bible Quotes playlist (morning Short)
+    jesus_quiz_playlist_id: str | None = Field(default=None)   # Bible Quiz playlist (evening Short)
 
     infoshorts_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_infoshorts.json")
     infoshorts_blogger_blog_id: str | None = Field(default=None)

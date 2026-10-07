@@ -71,6 +71,10 @@ class ChannelConfig:
     photo_box_override: dict = dataclasses.field(default_factory=dict)  # {"photo_04.jpg": 1020}
     zoom: float = 0.0                # 0 = completely still picture
     watermark_handle: str = ""       # e.g. "@MyChannel"; empty -> falls back to channel_name
+    # Text-heavy channels (Jesus quote/quiz) can claim more of the photo's height for text:
+    photo_text_h: int = PHOTO_TEXT_H
+    photo_text_bottom: int = PHOTO_TEXT_BOTTOM
+    photo_shade_from: int = 900      # y where the dark scrim under the text starts fading in
 
 
 def _font(path, size):
@@ -138,8 +142,8 @@ def make_background(rng, date_key, cfg: ChannelConfig):
         back.paste(fg, ((W - fg.width) // 2, y), mask)
         shade = Image.new("L", (W, H), 0)
         sd = ImageDraw.Draw(shade)
-        for yy in range(900, H):
-            sd.line((0, yy, W, yy), fill=int(255 * 0.70 * min(1.0, (yy - 900) / 600)))
+        for yy in range(cfg.photo_shade_from, H):
+            sd.line((0, yy, W, yy), fill=int(255 * 0.70 * min(1.0, (yy - cfg.photo_shade_from) / 600)))
         img = Image.composite(Image.new("RGB", (W, H), (0, 0, 0)), back, shade)
     else:
         c1, c2 = rng.choice(cfg.palettes)
@@ -263,7 +267,7 @@ def render(row, out_mp4, date_key, cfg: ChannelConfig, special=None, workdir="ou
     max_h, bottom, channel = None, None, True
     if photo_for(date_key, cfg):  # keep faces clear: text sits at the bottom, below the photo
         layout = dict(layout, anchor=0.78)
-        max_h, bottom, channel = PHOTO_TEXT_H, PHOTO_TEXT_BOTTOM, False
+        max_h, bottom, channel = cfg.photo_text_h, cfg.photo_text_bottom, False
     _watermark(
         make_text_layer(
             row, layout, cfg,

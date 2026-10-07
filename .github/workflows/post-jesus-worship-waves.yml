@@ -1,5 +1,8 @@
-name: Post Jesus Worship Waves Short
+name: Post Jesus Worship Waves Short (morning Bible Quote)
 
+# MORNING Bible Quote Short (the evening quiz is post-jesus-bible-quiz.yml). Needs approved BGM
+# clips in channels/jesus/assets/music/approved/ -- with none it posts nothing.
+#
 # Part of the 7-channel expansion (channels/, added 2026-10) -- Pattern A (static content
 # bank), same shared-engine design as channels/engine/. Same cron-job.org + daily-reschedule
 # pattern as post-ramana-short.yml: a cron-job.org watchdog calls this workflow's

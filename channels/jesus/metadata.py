@@ -1,54 +1,52 @@
-"""Everything YouTube sees besides the pixels for Jesus Worship Waves: title, description,
-tags, captions, comment, localizations. Same shape as ramana/src/metadata.py, adapted so the
-PRIMARY (English) text leads, matching this channel's English-first render order."""
+"""Everything YouTube sees besides the pixels for Jesus Worship Waves' two daily Shorts:
+the morning Bible Quote and the evening Bible Quiz. English leads, Telugu follows."""
 import os
 
 CHANNEL = "Jesus Worship Waves"
-CAT_WORD = {"verse": "Bible Verse", "teaching": "Teaching", "praise": "Worship"}
-CAT_TAGS = {
-    "verse": ["#BibleVerse", "#Scripture", "#WordOfGod", "#DailyVerse"],
-    "teaching": ["#JesusTeaches", "#Gospel", "#ChristianFaith", "#Discipleship"],
-    "praise": ["#Hallelujah", "#Worship", "#PraiseGod", "#JesusIsLord"],
-}
 COMMON_TAGS = ["#Jesus", "#JesusChrist", "#ChristianShorts", "#Faith", "#తెలుగుక్రైస్తవ", "#యేసుప్రభు"]
 CORE_TAGS = ["#JesusWorshipWaves", "#Shorts", "#Christian"]
-KEYWORDS = ["Jesus", "Jesus Christ", "Bible verse", "Bible verse of the day", "Christian shorts",
-            "worship", "praise and worship", "Gospel", "Christian faith Telugu", "Telugu Christian songs",
-            "యేసుక్రీస్తు", "బైబిల్ వచనం", "క్రైస్తవ కీర్తనలు", "దేవుని వాక్యము", "ఆరాధన", "స్తుతి"]
+CAT_TAGS = {
+    "quote": ["#BibleVerse", "#Scripture", "#WordOfGod", "#DailyVerse"],
+    "quiz": ["#BibleQuiz", "#BibleTrivia", "#QuizTime", "#TeluguBibleQuiz"],
+}
+KEYWORDS = ["Jesus", "Jesus Christ", "Bible verse", "Christian shorts", "Gospel", "Christian faith Telugu",
+            "యేసుక్రీస్తు", "బైబిల్ వచనం", "దేవుని వాక్యము"]
 EXTRA_KEYWORDS = {
-    "verse": ["daily bible verse", "scripture reading", "verse of the day Telugu"],
-    "teaching": ["teachings of Jesus", "Jesus parables", "gospel teaching"],
-    "praise": ["praise and worship songs", "hallelujah chorus", "worship Jesus"],
+    "quote": ["bible verse of the day", "daily bible verse", "scripture reading", "verse of the day Telugu",
+              "how Bible verses apply to life"],
+    "quiz": ["bible quiz", "bible trivia", "bible quiz Telugu", "guess the bible verse", "బైబిల్ క్విజ్"],
 }
 COMMENTS = {
-    "verse": "Which verse spoke to your heart today? Share below. 🙏\nఈ వచనం మీ హృదయానికి ఏమి తెలియజేసింది? పంచుకోండి. 🙏",
-    "teaching": "How will you live out this teaching today? 🙏\nఈ బోధనను ఈ రోజు ఎలా పాటిస్తారు? 🙏",
-    "praise": "Say Hallelujah in the comments! 🙌\nకామెంట్లలో హల్లెలూయ చెప్పండి! 🙌",
+    "quote": "Which part of this verse speaks to you today? Share below. 🙏\nఈ వచనంలో మీ హృదయానికి తాకిన భాగం ఏది? పంచుకోండి. 🙏",
+    "quiz": "Which book and chapter? Type A, B, C or D below! 👇 (Hint: this morning's Short has the answer.)\nమీ సమాధానం A, B, C లేదా D కామెంట్ చేయండి! 👇",
 }
-DISCLOSURE = ("Visuals are digitally created worship artwork. Background music is an original/royalty-free "
-              "composition. Scripture text follows public-domain/standard translations.")
+DISCLOSURE = ("Visuals are digitally created worship artwork. Background music is an original "
+              "composition. Scripture English text is public-domain (KJV/WEB).")
 TAG_LIMIT = 500
 
 
-def plain(row):
-    strip = str.maketrans({c: None for c in "\"“”"})
-    return row["text_primary"].translate(strip).strip(), row["text_secondary"].translate(strip).strip()
+def _short(text, n):
+    words = text.split()
+    return " ".join(words[:n]) + ("…" if len(words) > n else "")
 
 
-def title(row, special):
-    en, te = plain(row)
-    word = CAT_WORD[row["category"]]
-    if special:
-        en = f"{special['label_primary']}: {en}"
-    for cand in (f"{en} | {word} | {te}", f"{en} | {word}", f"{en} | Jesus Worship Waves"):
+def title(row, special=None):
+    if row["category"] == "quote":
+        for cand in (f"{row['ref_en']} | {_short(row['verse_en'], 9)} | Bible Verse of the Day",
+                     f"{row['ref_en']} | Bible Verse of the Day | {row['ref_te']}",
+                     f"{row['ref_en']} | Bible Verse of the Day"):
+            if len(cand) <= 100:
+                return cand
+    # quiz title never spoils the reference
+    for cand in (f"Bible Quiz: \"{_short(row['text_primary'], 7)}\" Which book? | బైబిల్ క్విజ్",
+                 "Bible Quiz: Which book and chapter? | బైబిల్ క్విజ్",
+                 "Bible Quiz | బైబిల్ క్విజ్"):
         if len(cand) <= 100:
             return cand
-    tail = " | Jesus"
-    cut = en[: 100 - len(tail) - 1].rsplit(" ", 1)[0].rstrip(",.:;")
-    return f"{cut}…{tail}"
+    return "Bible Quiz"
 
 
-def hashtags(row, special):
+def hashtags(row, special=None):
     tags = CORE_TAGS + CAT_TAGS[row["category"]] + COMMON_TAGS
     seen, out = set(), []
     for h in tags:
@@ -58,31 +56,27 @@ def hashtags(row, special):
     return out[:15]
 
 
-def description(row, special, playlist_url=None, contact=None):
+def description(row, special=None, playlist_url=None, contact=None):
     playlist_url = playlist_url if playlist_url is not None else os.environ.get("PLAYLIST_URL", "")
     contact = contact if contact is not None else os.environ.get("CONTACT_EMAIL", "")
-    en, te = plain(row)
     out = []
-    if special:
-        out += [f"{special['label_primary']} | {special.get('label_secondary', '')}", ""]
-    out += [en, te, ""]
-    out += ["Jesus Worship Waves -- a daily 5 second Bible verse, teaching, or worship moment in "
-            "English and Telugu.", ""]
-    out += [DISCLOSURE, "", f"Source: {row['source']}", ""]
-    out += [f"Like, share and subscribe to {CHANNEL} for a daily moment of worship."]
+    if row["category"] == "quote":
+        out += [row["text_primary"], row["text_secondary"], "", row["apply_en"], row["apply_te"], ""]
+        out += [f"Source: {row['ref_en']} ({row['ref_te']})", ""]
+    else:
+        out += [row["text_primary"], row["text_secondary"], "",
+                "Which book and chapter is this verse from? Comment A, B, C or D.",
+                "ఈ వచనం ఏ పుస్తకం, ఏ అధ్యాయంలోనిది? A, B, C లేదా D కామెంట్ చేయండి.", ""]
+        out += [row["opt_a"], row["opt_b"], row["opt_c"], row["opt_d"], "",
+                "The answer is in this morning's Bible Quote Short.", ""]
+    out += [DISCLOSURE, "", f"Like, share and subscribe to {CHANNEL}: a Bible quote every morning and a Bible quiz every evening."]
     if playlist_url:
         out += [f"Playlist: {playlist_url}"]
-    out += [""]
-    out += [f"Credits: Scripture/teaching content, English and Telugu text by {CHANNEL}.",
-            f"© {CHANNEL}. Short quotations are used with attribution for devotional and educational purposes."]
+    out += ["", f"© {CHANNEL}."]
     if contact:
         out += [f"Contact: {contact}"]
-    out += ["", " ".join(hashtags(row, special))]
+    out += ["", " ".join(hashtags(row))]
     return "\n".join(out)
-
-
-def tag_cost(tag):
-    return len(tag) + (2 if " " in tag else 0)
 
 
 def fit_tags(tags, limit=TAG_LIMIT):
@@ -91,7 +85,7 @@ def fit_tags(tags, limit=TAG_LIMIT):
         k = tg.lower()
         if k in seen:
             continue
-        cost = tag_cost(tg) + (1 if out else 0)
+        cost = len(tg) + (2 if " " in tg else 0) + (1 if out else 0)
         if total + cost > limit:
             continue
         seen.add(k)
@@ -100,19 +94,21 @@ def fit_tags(tags, limit=TAG_LIMIT):
     return out
 
 
-def tags(row, special):
+def tags(row, special=None):
     return fit_tags(KEYWORDS + EXTRA_KEYWORDS[row["category"]])
 
 
-def localizations(row, special):
-    """Telugu title/description localization, same pattern as ramana's."""
-    _, te = plain(row)
-    label = f"{special['label_secondary']}: " if special else ""
-    desc = "\n".join([te, "", "ప్రతిరోజూ యేసుప్రభువు వాక్యము, బోధన, ఆరాధన.", "", " ".join(hashtags(row, special))])
-    return {"te": {"title": f"{label}{te} | యేసు ఆరాధన"[:100], "description": desc}}
+def localizations(row, special=None):
+    if row["category"] == "quote":
+        te_title = f"{row['ref_te']} | నేటి బైబిల్ వచనం | యేసు ఆరాధన"
+        te_desc = "\n".join([row["text_secondary"], "", row["apply_te"], "", " ".join(hashtags(row))])
+    else:
+        te_title = "బైబిల్ క్విజ్ | ఈ వచనం ఏ పుస్తకంలోనిది? | యేసు ఆరాధన"
+        te_desc = "\n".join([row["text_secondary"], "", row["question_te"], "", " ".join(hashtags(row))])
+    return {"te": {"title": te_title[:100], "description": te_desc}}
 
 
-def srt(text, seconds=5):
+def srt(text, seconds=15):
     lines = "\n".join(s.strip() for s in text.split("|"))
     return f"1\n00:00:00,000 --> 00:00:{seconds:02d},000\n{lines}\n"
 
@@ -121,10 +117,6 @@ def captions(row):
     return {"en": srt(row["text_primary"]), "te": srt(row["text_secondary"].replace('"', "").replace("'", ""))}
 
 
-def seed_comment(row):
-    return COMMENTS[row["category"]]
-
-
-def bundle(row, special):
-    return {"title": title(row, special), "description": description(row, special), "tags": tags(row, special),
-            "localizations": localizations(row, special), "comment": seed_comment(row)}
+def bundle(row, special=None):
+    return {"title": title(row), "description": description(row), "tags": tags(row),
+            "localizations": localizations(row), "comment": COMMENTS[row["category"]]}

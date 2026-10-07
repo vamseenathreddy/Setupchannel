@@ -153,6 +153,7 @@ SERIES = {
     # scripts/ci/gate.py window/latest, re-used here via the shared engine formula (see the
     # _engine_target_time import above) instead of hand-copying the sha256 formula again.
     "jesus": _engine_series("jesus", "post-jesus-worship-waves.yml", 6, 0, 40, 7, 55),
+    "jesus_quiz": _engine_series("jesus_quiz", "post-jesus-bible-quiz.yml", 18, 0, 40, 19, 55),
     "infoshorts": _engine_series("infoshorts", "post-infoshorts-telugu.yml", 7, 0, 40, 8, 55),
     "mantra_sangam": _engine_series("mantra_sangam", "post-divine-mantra-sangam.yml", 9, 0, 40, 10, 55),
     "trance_beats": _engine_series("trance_beats", "post-devotional-trance-beats.yml", 19, 0, 40, 20, 55),
