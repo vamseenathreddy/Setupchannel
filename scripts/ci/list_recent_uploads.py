@@ -37,7 +37,10 @@ def main() -> int:
     from googleapiclient.errors import HttpError
 
     try:
-        channels_resp = youtube.channels().list(part="contentDetails", mine=True).execute()
+        channels_resp = youtube.channels().list(part="snippet,contentDetails", mine=True).execute()
+        ch = channels_resp["items"][0]
+        # Which channel does this token actually act as? (Brand-account pick at consent decides it.)
+        print(f"CHANNEL: {ch['snippet']['title']}  id={ch['id']}  handle={ch['snippet'].get('customUrl', '-')}")
         uploads_playlist_id = channels_resp["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
 
         video_ids: list[str] = []

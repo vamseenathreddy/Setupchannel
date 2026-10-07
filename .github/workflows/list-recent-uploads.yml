@@ -17,6 +17,10 @@ on:
         description: "Only show titles containing this text (case-insensitive, optional)"
         required: false
         default: ""
+      token_file:
+        description: "Which saved token to check (default youtube_token.json; e.g. youtube_token_jesus.json)"
+        required: false
+        default: "youtube_token.json"
 
 permissions:
   contents: read
@@ -50,7 +54,7 @@ jobs:
 
       - name: List recent uploads
         env:
-          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/${{ inputs.token_file || 'youtube_token.json' }}
         run: |
           set -o pipefail
           python3 scripts/ci/list_recent_uploads.py "${{ inputs.max_results }}" "${{ inputs.title_filter }}" 2>&1 | tee data/recent_uploads_log.txt
