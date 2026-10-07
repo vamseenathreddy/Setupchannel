@@ -12,13 +12,23 @@ from channels.engine.post import ChannelPipeline, run
 from channels.trance_beats import channel_config, metadata
 
 DATA = Path(__file__).resolve().parents[1] / "data"
+_TAIL_HI = " रोज़ नए शॉर्ट्स के लिए चैनल को सब्सक्राइब करें।"
 PLAYLISTS = {
     "gita": ("भगवद्गीता श्लोक | Bhagavad Gita Daily Shloka (Hindi)",
-             "हर दिन एक भगवद्गीता श्लोक, सरल हिंदी अर्थ के साथ। A daily Bhagavad Gita shloka with a simple Hindi meaning."),
+             "श्रीमद्भगवद्गीता के चुने हुए श्लोक, सरल हिंदी अर्थ के साथ। कर्मयोग, भक्ति, ज्ञान और शांति की सीख, हर दिन एक शॉर्ट में।"
+             + _TAIL_HI + "\n\nBhagavad Gita shlokas with simple Hindi meaning, one short every day. Karma yoga, bhakti, "
+             "knowledge and peace from the words of Shri Krishna. Subscribe to Devotional Trance Beats for a new Gita shloka daily.\n\n"
+             "#BhagavadGita #GitaShloka #GeetaSaar #Krishna #HindiDevotional"),
     "bhagavatam": ("श्रीमद्भागवत कथा | Shrimad Bhagavatam Daily Stories (Hindi)",
-                   "हर दिन श्रीमद्भागवत की एक कथा, सरल हिंदी में। A daily Shrimad Bhagavatam story in simple Hindi."),
+                   "श्रीमद्भागवत महापुराण की कथाएँ सरल हिंदी में: प्रह्लाद, ध्रुव, गजेंद्र, कृष्ण लीला और भक्ति की सीख, हर दिन एक शॉर्ट में।"
+                   + _TAIL_HI + "\n\nStories from the Shrimad Bhagavatam in simple Hindi: Prahlad, Dhruva, Gajendra, Krishna leela "
+                   "and lessons of bhakti, one short every day. Subscribe to Devotional Trance Beats for a new Bhagavatam story daily.\n\n"
+                   "#ShrimadBhagavatam #BhagavatKatha #KrishnaKatha #Krishna #HindiDevotional"),
     "mantra": ("कृष्ण मंत्र और भजन | Krishna Mantra and Bhajan of the Day",
-               "हर दिन एक कृष्ण मंत्र, भजन या कीर्तन। A daily Krishna mantra, bhajan or kirtan."),
+               "हरे कृष्ण महामंत्र, कृष्ण मंत्र, भजन और कीर्तन, शांत संगीत के साथ। सुनें, जपें और मन को शांति दें।"
+               + _TAIL_HI + "\n\nHare Krishna maha mantra, Krishna mantras, bhajans and kirtans with calm devotional music. "
+               "Listen, chant along and find peace. Subscribe to Devotional Trance Beats for a new mantra or bhajan daily.\n\n"
+               "#KrishnaMantra #HareKrishna #KrishnaBhajan #Krishna #HindiDevotional"),
 }
 SERIES = {
     "gita": ("trance_beats", "gita.csv", channel_config.ROTATION_GITA, "MAHANAVI_TRANCE_BEATS_PLAYLIST_ID"),
