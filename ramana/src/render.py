@@ -18,7 +18,7 @@ PHOTO_TEXT_BOTTOM = 1600            # keep clear of the Shorts UI overlays
 PHOTO_TEXT_H = 640
 MAX_TEXT_W = 940
 ZOOM = 0.0                          # 0 = completely still picture. Try 0.03 for a slow breathing zoom (loops seamlessly)
-FONT_TE = ROOT / "assets/fonts/Ponnala-Regular.ttf"  # only one weight exists, bold look comes from stroke
+FONT_TE = ROOT / "assets/fonts/Ponnala-Regular.ttf"  # only one weight exists; plain Regular is used (no synthetic bold, owner request 2026-10-07)
 FONT_EN = ROOT / "assets/fonts/Poppins-Bold.ttf"      # bold, to match the weight of the Telugu text
 FONT_EN_LIGHT = ROOT / "assets/fonts/Poppins-Regular.ttf"
 CHANNEL = "Ramana Maharshi TV"
@@ -133,12 +133,12 @@ def _blocks(row, layout):
     en_lines = [s.strip() for s in row["english"].split("|")]
     blocks = []
     if row["category"] == "qa" and len(te_lines) == 2:
-        blocks.append((te_lines[0], FONT_TE, 84, layout["accent"], True))
-        blocks.append((te_lines[1], FONT_TE, 118, layout["te"], True))
+        blocks.append((te_lines[0], FONT_TE, 84, layout["accent"], False))
+        blocks.append((te_lines[1], FONT_TE, 118, layout["te"], False))
         blocks.append((en_lines[0], FONT_EN, 58, layout["accent"], False))
         blocks.append((en_lines[1] if len(en_lines) > 1 else "", FONT_EN, 80, layout["en"], False))
     else:
-        blocks.append((" ".join(te_lines), FONT_TE, 130, layout["te"], True))
+        blocks.append((" ".join(te_lines), FONT_TE, 130, layout["te"], False))
         blocks.append((" ".join(en_lines), FONT_EN, 84, layout["en"], False))
     return [b for b in blocks if b[0]]
 

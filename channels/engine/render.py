@@ -76,6 +76,7 @@ class ChannelConfig:
     # Text-heavy channels (Jesus quote/quiz) can claim more of the photo's height for text:
     photo_text_h: int = PHOTO_TEXT_H
     photo_text_bottom: int = PHOTO_TEXT_BOTTOM
+    telugu_font: str = ""           # if set, Telugu characters use this font (e.g. Ponnala) and everything else the block's own font
     logo_path: str = ""             # optional channel logo (transparent PNG) drawn near the top of every Short
     logo_width: int = 300
     logo_y: int = 250                # top edge; below the Shorts search/menu icons, above the text
@@ -86,6 +87,27 @@ class ChannelConfig:
 
 def _font(path, size):
     return ImageFont.truetype(str(path), size, layout_engine=ImageFont.Layout.RAQM)
+
+
+def _mixed_font(latin_path, size, telugu_path, bold=False):
+    """Telugu characters in `telugu_path` (plain, no synthetic bold), all other characters in `latin_path`.
+    Uses the ImageDraw run-splitting patch from mahanavi.images.fonts."""
+    import mahanavi.images.fonts as mf  # noqa: F401  (importing installs the ImageDraw patch)
+    from fontTools.ttLib import TTFont
+
+    cmap = _CMAPS.setdefault(str(telugu_path), frozenset(TTFont(str(telugu_path)).getBestCmap().keys()))
+    font = _font(telugu_path, size)
+    fb = _font(latin_path, size)
+    if bold:
+        try:
+            fb.set_variation_by_name("Bold")
+        except OSError:
+            pass
+    font._mv_stroke, font._mv_cmap, font._mv_fallback = 0, cmap, fb
+    return font
+
+
+_CMAPS: dict = {}
 
 
 def _wrap(draw, text, font, stroke, max_w=None):
@@ -192,7 +214,8 @@ def fit_text(row, layout, cfg: ChannelConfig, max_h=None):
         for text, path, size, color, bold in blocks:
             px = int(size * scale)
             stroke = max(1, px // 55) if bold else 0
-            font = _font(path, px)
+            font = (_mixed_font(path, px, cfg.telugu_font, bold)
+                    if cfg.telugu_font and Path(path) != Path(cfg.telugu_font) else _font(path, px))
             lines = _wrap(probe, text, font, stroke, cfg.text_max_w)
             lh = int(px * 1.45)
             laid.append((lines, font, color, stroke, lh))

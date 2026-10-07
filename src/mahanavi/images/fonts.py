@@ -69,16 +69,12 @@ class FontManager:
         font = ImageFont.truetype(str(self._font_path), size, layout_engine=layout_engine)
 
         if self._synthetic:
-            font._mv_stroke = 1 if size >= 44 else 0  # light synthetic bold (counters stay open)
+            font._mv_stroke = 0  # plain Ponnala Regular, NO synthetic bold (owner, 2026-10-07: "only ponnala not ponnala bold")
             font._mv_cmap = self._cmap
             font._mv_fallback = None
             if self._fallback_path is not None:
                 fb = ImageFont.truetype(str(self._fallback_path), size, layout_engine=layout_engine)
-                try:
-                    fb.set_variation_by_name("Bold")
-                except OSError:
-                    pass
-                font._mv_fallback = fb
+                font._mv_fallback = fb  # Latin/digits/punctuation in Noto at its default (regular) weight
             self._cache[cache_key] = font
             return font
 
@@ -122,8 +118,8 @@ _KEEP_WITH_RUN = " \u200c\u200d"
 
 
 def _runs(text: str, font) -> list[tuple[str, object, int]]:
-    """Split text into (chunk, font, stroke) runs: Ponnala-covered text with
-    synthetic bold, everything else in the Noto Bold fallback."""
+    """Split text into (chunk, font, stroke) runs: Ponnala-covered Telugu in plain Ponnala,
+    everything else in the Noto fallback."""
     cmap = font._mv_cmap
     fb = font._mv_fallback
     runs: list[list] = []

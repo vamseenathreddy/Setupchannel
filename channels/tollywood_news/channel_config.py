@@ -10,7 +10,8 @@ from channels.engine.render import ChannelConfig, TextBlock
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CHANNEL_DIR = Path(__file__).resolve().parent
 
-FONT_MAIN = REPO_ROOT / "assets/fonts/NotoSansTelugu-Variable.ttf"
+FONT_MAIN = REPO_ROOT / "assets/fonts/NotoSansTelugu-Variable.ttf"   # Latin/digits
+FONT_TELUGU = REPO_ROOT / "assets/fonts/Ponnala-Regular.ttf"          # every Telugu character (owner, 2026-10-07)
 
 GOLD, MAGENTA, WHITE, CREAM = (255, 210, 110), (255, 120, 180), (255, 255, 255), (250, 235, 215)
 
@@ -35,6 +36,7 @@ RENDER_CFG = ChannelConfig(
         TextBlock(field="text_secondary", font=FONT_MAIN, size=48, color_key="secondary", bold=False),
     ],
     font_channel_label=FONT_MAIN,
+    telugu_font=str(FONT_TELUGU),
     music_glob="music/*.mp3",
     layouts=LAYOUTS,
     palettes=PALETTES,

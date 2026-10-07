@@ -33,7 +33,7 @@ RENDER_CFG = ChannelConfig(
     channel_name="InfoShorts Telugu",
     assets_dir=CHANNEL_DIR / "assets",
     blocks=[
-        TextBlock(field="text_primary", font=FONT_TE, size=120, color_key="primary", bold=True,
+        TextBlock(field="text_primary", font=FONT_TE, size=120, color_key="primary", bold=False,
                   strip_chars="'\"‘’“”`"),
         TextBlock(field="text_secondary", font=FONT_EN, size=56, color_key="secondary", bold=False),
     ],
