@@ -400,19 +400,26 @@ class PuranaConceptCardRenderer:
     def _wrap_text(self, draw: ImageDraw.ImageDraw, text: str, font: "ImageFont.FreeTypeFont", max_width: int) -> list[str]:
         if not text:
             return [""]
-        words = text.split(" ")
+        # Hard line breaks ("\n", used by the Q&A / quiz entries) must be
+        # split BEFORE word-wrapping: Pillow would otherwise draw a "\n"
+        # inside one wrapped "line" and the extra rows would overprint the
+        # lines below (the overlap seen on the "What Is Dharma?" Short).
         lines: list[str] = []
-        current = ""
-        for word in words:
-            candidate = f"{current} {word}".strip()
-            bbox = draw.textbbox((0, 0), candidate, font=font)
-            if (bbox[2] - bbox[0]) <= max_width or not current:
-                current = candidate
-            else:
+        for paragraph in text.split("\n"):
+            if not paragraph.strip():
+                lines.append("")
+                continue
+            current = ""
+            for word in paragraph.split(" "):
+                candidate = f"{current} {word}".strip()
+                bbox = draw.textbbox((0, 0), candidate, font=font)
+                if (bbox[2] - bbox[0]) <= max_width or not current:
+                    current = candidate
+                else:
+                    lines.append(current)
+                    current = word
+            if current:
                 lines.append(current)
-                current = word
-        if current:
-            lines.append(current)
         return lines
 
     def _draw_centered_line(
