@@ -1,0 +1,50 @@
+name: Channel About / Pulse Playlist (One-Off Utility)
+
+# mode=read prints each channel's current About settings; mode=apply writes the new description, keywords,
+# country and default language (only those fields); mode=pulse-playlist creates the Pulse Boosting playlist.
+# Output is pushed to the pre-created Drive file recent_uploads_log.txt (job logs aren't readable from the dev sandbox).
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "read | apply | pulse-playlist"
+        required: true
+        default: "read"
+      channel:
+        description: "mahanavi | ramana | jesus | pulse | all"
+        required: false
+        default: "all"
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+      - name: Run
+        run: |
+          set -o pipefail
+          python3 scripts/ci/channel_about.py "${{ inputs.mode }}" "${{ inputs.channel }}" 2>&1 | tee data/recent_uploads_log.txt
+      - name: Push output log to Drive
+        if: always()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/push_drive_asset.py data/recent_uploads_log.txt recent_uploads_log.txt
