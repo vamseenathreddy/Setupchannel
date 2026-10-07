@@ -32,9 +32,12 @@ def slice_song(song: Path) -> list[Path]:
     CANDIDATES.mkdir(parents=True, exist_ok=True)
     total, made = duration(song), []
     n = int(total // CLIP_SECONDS)
+    # Numbered 001, 002, ... (continuing after any existing candidates) so the owner can approve by number.
+    next_no = max([int(p.stem) for p in CANDIDATES.glob("[0-9][0-9][0-9].mp3")] + [0]) + 1
     for i in range(n):
         start = i * CLIP_SECONDS
-        out = CANDIDATES / f"{song.stem}_{start // 60:02d}m{start % 60:02d}s.mp3"
+        out = CANDIDATES / f"{next_no + i:03d}.mp3"
+        (CANDIDATES / "index.txt").open("a").write(f"{out.stem}\t{song.name}\t{start // 60}:{start % 60:02d}\n")
         subprocess.run([
             "ffmpeg", "-y", "-loglevel", "error", "-ss", str(start), "-t", str(CLIP_SECONDS), "-i", str(song),
             "-af", f"afade=t=in:d={FADE},afade=t=out:st={CLIP_SECONDS - FADE}:d={FADE},loudnorm=I=-16:TP=-1.5:LRA=11",

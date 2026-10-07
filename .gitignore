@@ -39,3 +39,5 @@ run_daily_shorts_stdout.log
 
 # Source material (copyrighted book compilations) -- never commit to a public repo
 source_material/
+channels/jesus/assets/music/candidates/*.mp3
+channels/jesus/assets/music/candidates/index.txt
