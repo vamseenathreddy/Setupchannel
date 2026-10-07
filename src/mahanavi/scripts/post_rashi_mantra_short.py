@@ -61,7 +61,9 @@ STATE_FILE = Path("data") / "last_rashi_index.txt"
 # Short, generic comment prompt shown on the card itself -- distinct from
 # (but consistent with) the longer engagement text in the description
 # built by rashi_mantra_seo.py.
-COMMENT_PROMPT_TEXT = "మీము రాశి కామెంట్‌లో చెప్పండి!"
+# The card already shows the rashi, so it must NOT ask viewers for theirs
+# (2026-10-07 correction). Instead invite them to chant for loved ones.
+COMMENT_PROMPT_TEXT = "మీ సన్నిహితుల కోసం మీరే ఈ మంత్రం జపించవచ్చు,\nవారి పేరు, గోత్రం కామెంట్‌లో చెప్పండి!"
 
 
 def _icon_paths(settings: Settings) -> list[Path]:

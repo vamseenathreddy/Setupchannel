@@ -16,7 +16,8 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from PIL import ImageFont
+from PIL import ImageDraw, ImageFont
+from fontTools.ttLib import TTFont
 
 from mahanavi.exceptions import ImageRenderError
 
@@ -31,7 +32,7 @@ _VALID_WEIGHTS = {
 class FontManager:
     """Loads and caches Telugu font instances at requested weight/size."""
 
-    def __init__(self, font_path: Path) -> None:
+    def __init__(self, font_path: Path, fallback_path: Path | None = None) -> None:
         if not font_path.exists():
             raise ImageRenderError(
                 f"Telugu font not found at {font_path}. "
@@ -39,6 +40,19 @@ class FontManager:
                 "and set MAHANAVI_TELUGU_FONT_PATH, or place it at the default path."
             )
         self._font_path = font_path
+        # Ponnala (the channel's Telugu face, per explicit request
+        # 2026-10-07: "use ponnala bold for every telugu text") ships only
+        # a Regular weight and has NO Latin letters. So when it is the
+        # primary font: (1) bold is synthesized with a thin stroke, and
+        # (2) everything outside the Telugu block (Latin, digits, punctuation) is drawn with
+        # Noto Sans Telugu Bold -- see the ImageDraw patch at the bottom.
+        self._synthetic = "ponnala" in font_path.name.lower()
+        self._fallback_path = None
+        self._cmap: frozenset[int] = frozenset()
+        if self._synthetic:
+            fb = fallback_path or font_path.parent / "NotoSansTelugu-Variable.ttf"
+            self._fallback_path = fb if fb.exists() else None
+            self._cmap = frozenset(TTFont(str(font_path)).getBestCmap().keys())
         self._cache: dict[tuple[str, int], ImageFont.FreeTypeFont] = {}
         self._raqm_available = self._check_raqm()
 
@@ -53,6 +67,20 @@ class FontManager:
 
         layout_engine = ImageFont.Layout.RAQM if self._raqm_available else ImageFont.Layout.BASIC
         font = ImageFont.truetype(str(self._font_path), size, layout_engine=layout_engine)
+
+        if self._synthetic:
+            font._mv_stroke = 1 if size >= 44 else 0  # light synthetic bold (counters stay open)
+            font._mv_cmap = self._cmap
+            font._mv_fallback = None
+            if self._fallback_path is not None:
+                fb = ImageFont.truetype(str(self._fallback_path), size, layout_engine=layout_engine)
+                try:
+                    fb.set_variation_by_name("Bold")
+                except OSError:
+                    pass
+                font._mv_fallback = fb
+            self._cache[cache_key] = font
+            return font
 
         try:
             font.set_variation_by_name(weight)
@@ -82,3 +110,69 @@ class FontManager:
                 "Install a Pillow build with raqm support to fix this."
             )
         return available
+
+
+# ---------------------------------------------------------------------------
+# Synthetic-bold + Latin-fallback support for Ponnala (see FontManager).
+# Patches ImageDraw so every renderer in the project picks it up with no
+# call-site changes. Fonts that FontManager did not tag (_mv_cmap) are
+# passed straight through to Pillow unchanged.
+# ---------------------------------------------------------------------------
+_KEEP_WITH_RUN = " \u200c\u200d"
+
+
+def _runs(text: str, font) -> list[tuple[str, object, int]]:
+    """Split text into (chunk, font, stroke) runs: Ponnala-covered text with
+    synthetic bold, everything else in the Noto Bold fallback."""
+    cmap = font._mv_cmap
+    fb = font._mv_fallback
+    runs: list[list] = []
+    for ch in text:
+        covered = fb is None or (0x0C00 <= ord(ch) <= 0x0C7F and ord(ch) in cmap)
+        if ch in _KEEP_WITH_RUN and runs:
+            runs[-1][0] += ch
+            continue
+        f, st = (font, font._mv_stroke) if covered else (fb, 0)
+        if runs and runs[-1][1] is f:
+            runs[-1][0] += ch
+        else:
+            runs.append([ch, f, st])
+    return [(r[0], r[1], r[2]) for r in runs]
+
+
+_orig_text = ImageDraw.ImageDraw.text
+_orig_textbbox = ImageDraw.ImageDraw.textbbox
+_orig_textlength = ImageDraw.ImageDraw.textlength
+
+
+def _text(self, xy, text, fill=None, font=None, *args, **kwargs):
+    if font is None or not hasattr(font, "_mv_cmap") or "\n" in str(text) or args:
+        return _orig_text(self, xy, text, fill, font, *args, **kwargs)
+    x, y = xy
+    for chunk, f, stroke in _runs(str(text), font):
+        _orig_text(self, (x, y), chunk, fill, f, stroke_width=stroke, stroke_fill=fill)
+        x += _orig_textlength(self, chunk, f) + 2 * stroke
+    return None
+
+
+def _textbbox(self, xy, text, font=None, *args, **kwargs):
+    if font is None or not hasattr(font, "_mv_cmap") or "\n" in str(text) or args:
+        return _orig_textbbox(self, xy, text, font, *args, **kwargs)
+    x, y = xy
+    box = None
+    for chunk, f, stroke in _runs(str(text), font):
+        b = _orig_textbbox(self, (x, y), chunk, f, stroke_width=stroke)
+        box = b if box is None else (min(box[0], b[0]), min(box[1], b[1]), max(box[2], b[2]), max(box[3], b[3]))
+        x += _orig_textlength(self, chunk, f) + 2 * stroke
+    return box if box is not None else _orig_textbbox(self, xy, text, font, *args, **kwargs)
+
+
+def _textlength(self, text, font=None, *args, **kwargs):
+    if font is None or not hasattr(font, "_mv_cmap") or "\n" in str(text) or args:
+        return _orig_textlength(self, text, font, *args, **kwargs)
+    return sum(_orig_textlength(self, c, f) + 2 * st for c, f, st in _runs(str(text), font))
+
+
+ImageDraw.ImageDraw.text = _text
+ImageDraw.ImageDraw.textbbox = _textbbox
+ImageDraw.ImageDraw.textlength = _textlength

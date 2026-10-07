@@ -226,8 +226,10 @@ class RashiCardRenderer:
 
             comment_font = None
             if card.comment_prompt_text:
+                # May hold hard line breaks ("\n"): fit the LONGEST line.
+                longest_comment_line = max(card.comment_prompt_text.split("\n"), key=len)
                 comment_font = self._fit_font_to_width(
-                    draw, card.comment_prompt_text, max_width=content_width,
+                    draw, longest_comment_line, max_width=content_width,
                     start_size=int(width * COMMENT_FONT_FRAC), weight="Bold",
                 )
 
@@ -236,7 +238,7 @@ class RashiCardRenderer:
             # glyphs a given string happens to contain.
             subscribe_h = int(subscribe_font.size * 1.15)
             footer_line_gap = int(height * 0.015)
-            comment_h = int(comment_font.size * 1.15) if (card.comment_prompt_text and comment_font is not None) else 0
+            comment_h = int(comment_font.size * 1.15) * len(card.comment_prompt_text.split("\n")) if (card.comment_prompt_text and comment_font is not None) else 0
             icon_size = int(width * ICON_FRAC)
 
             # Both trimmed (0.014->0.009, 0.020->0.013) to free vertical
@@ -319,7 +321,9 @@ class RashiCardRenderer:
 
             self._draw_centered_line(draw, card.subscribe_text, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT)
             if card.comment_prompt_text and comment_font is not None:
-                self._draw_centered_line(draw, card.comment_prompt_text, comment_font, width, comment_top, COLOR_TEXT_LIGHT)
+                line_h = int(comment_font.size * 1.15)
+                for k, comment_line in enumerate(card.comment_prompt_text.split("\n")):
+                    self._draw_centered_line(draw, comment_line, comment_font, width, comment_top + k * line_h, COLOR_TEXT_LIGHT)
 
             output_path = self._build_output_path(card)
             final = canvas.convert("RGB")

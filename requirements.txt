@@ -10,6 +10,7 @@ prokerala-api>=0.1.0
 
 # --- Module 4: Image rendering ---
 Pillow>=10.3
+fonttools>=4.40
 
 # --- Module 6: Publishers ---
 playwright>=1.44,<2.0

@@ -163,7 +163,7 @@ def build_rashi_mantra_seo(
     hook_te, hook_en = _pick_rotating_pair(_HOOKS_TE, _HOOKS_EN, rashi_pick_index)
     cta_te, cta_en = _pick_rotating_pair(_CTAS_TE, _CTAS_EN, rashi_pick_index + 1)
     comment_en = _pick_rotating(_COMMENT_PROMPTS_EN, rashi_pick_index + 2)
-    comment_te = "మీ రాశి కామెంట్‌లో చెప్పండి, ఈ మంత్రం కావాల్సిన వారిని ట్యాగ్ చేయండి!"
+    comment_te = "మీ సన్నిహితుల కోసం మీరే ఈ మంత్రం జపించవచ్చు, వారి పేరు గోత్రం కామెంట్‌లో చెప్పండి!"
 
     transit_line_te = f"\n\n{transit.status_label_te}: {transit.note_te}" if transit else ""
     transit_line_en = ""

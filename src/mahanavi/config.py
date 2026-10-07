@@ -58,12 +58,13 @@ class Settings(BaseSettings):
     timezone: str = Field(default="Asia/Kolkata")
 
     # --- Branding ---
-    # Primary font: needs BOTH Telugu and Latin glyph coverage, since the
+    # Primary font is now Ponnala (bold synthesized; Latin falls back to Noto
+    # Sans Telugu Bold -- see images/fonts.py). Original note: needs BOTH Telugu and Latin glyph coverage, since the
     # Panchang panel mixes Telugu labels with content that's often in
     # English (tithi/nakshatram names, "AM"/"PM" in times) — Noto Sans
     # Telugu covers both; a Telugu-only display font would render tofu
     # boxes for any Latin content (confirmed via a real render test).
-    telugu_font_path: Path = Field(default=PROJECT_ROOT / "assets" / "fonts" / "NotoSansTelugu-Variable.ttf")
+    telugu_font_path: Path = Field(default=PROJECT_ROOT / "assets" / "fonts" / "Ponnala-Regular.ttf")
 
     # --- Alert Shorts (Rahu Kalam / Shubha Ghadiyalu) ---
     # Icons shown in a row at the top of each card, in this left-to-right
