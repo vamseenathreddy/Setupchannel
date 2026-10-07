@@ -24,8 +24,9 @@ IST = ZoneInfo("Asia/Kolkata")
 # Order matters: first match wins. Titles carry the series keyword (see each channel's metadata.py).
 SERIES = [
     ("ramana-qa", r"satsang"), ("ramana-life", r"ramana maharshi life"), ("ramana-quote", r"ramana maharshi teachings"),
-    ("stotra", r"stotr|kamakhya|స్తోత్ర"), ("gita", r"gita|గీత"), ("rashi", r"rashi|రాశి"),
+    ("stotra", r"stotr|kamakhya|స్తోత్ర"), ("gita", r"gita|గీత"), ("rashi", r"rashi|రాశి|మేషం|కర్కాటకం|వారికి"),
     ("purana", r"purana|puranam|పురాణ"), ("navaratri", r"navaratri|నవరాత్రి"), ("alert", r"durmuhurt|rahu|yamagand|దుర్ముహూర్త|రాహు"),
+    ("timings", r"muhurt|good time|auspicious|amrit|abhijit|pooja time|timings|శుభ|మంచి సమయం|అభిజిత్"),
     ("quiz", r"quiz|క్విజ్"), ("bhajan/mantra", r"mantra|bhajan|మంత్ర|భజన"), ("song", r"song|పాట"),
 ]
 
