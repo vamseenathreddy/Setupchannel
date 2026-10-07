@@ -216,6 +216,43 @@ class Settings(BaseSettings):
     ramana_blogger_blog_id: str | None = Field(default=None)
     ramana_playlist_id: str | None = Field(default=None)
 
+    # --- The 7-channel expansion (channels/ at the repo root, added 2026-10) ---
+    # Same pattern as ramana_* above for every field: a separate YouTube OAuth
+    # token file (possibly a different Google account entirely -- "is all
+    # this channels are my different gmail accounts but some might be in
+    # same gmail account" -- each channel's own token is created
+    # independently via `youtube_shorts_auth_setup.py --token-file ...`
+    # regardless of which account it belongs to), an optional dedicated
+    # Blogger blog, and an optional playlist. All unset = silently skipped,
+    # same convention as every field above.
+    jesus_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_jesus.json")
+    jesus_blogger_blog_id: str | None = Field(default=None)
+    jesus_playlist_id: str | None = Field(default=None)
+
+    infoshorts_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_infoshorts.json")
+    infoshorts_blogger_blog_id: str | None = Field(default=None)
+    infoshorts_playlist_id: str | None = Field(default=None)
+
+    mantra_sangam_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_mantra_sangam.json")
+    mantra_sangam_blogger_blog_id: str | None = Field(default=None)
+    mantra_sangam_playlist_id: str | None = Field(default=None)
+
+    trance_beats_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_trance_beats.json")
+    trance_beats_blogger_blog_id: str | None = Field(default=None)
+    trance_beats_playlist_id: str | None = Field(default=None)
+
+    # Pattern B (live/trending content, one Short/day each, see
+    # channels/engine/trending.py) -- same shape, no playlist field since
+    # these don't have a natural single-topic playlist.
+    pulse_boosting_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_pulse_boosting.json")
+    pulse_boosting_blogger_blog_id: str | None = Field(default=None)
+
+    tollywood_news_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_tollywood_news.json")
+    tollywood_news_blogger_blog_id: str | None = Field(default=None)
+
+    live_hyderabad_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_live_hyderabad.json")
+    live_hyderabad_blogger_blog_id: str | None = Field(default=None)
+
     # --- Telegram alerts (pipeline health review, 2026-10-03) ---
     # See notifications/telegram_alert.py's module docstring for the
     # one-time @BotFather setup. Both unset = alerts are silently

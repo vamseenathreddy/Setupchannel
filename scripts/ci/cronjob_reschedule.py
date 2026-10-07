@@ -53,6 +53,7 @@ Usage: python3 scripts/ci/cronjob_reschedule.py [--dry-run]
 
 from __future__ import annotations
 
+import datetime as dt
 import hashlib
 import json
 import os
@@ -61,10 +62,42 @@ import sys
 import urllib.error
 import urllib.request
 from datetime import datetime
+from pathlib import Path
 from zoneinfo import ZoneInfo
+
+# This script is invoked as `python3 scripts/ci/cronjob_reschedule.py` (same convention as
+# every other scripts/ci/*.py in this repo), which puts scripts/ci/ -- not the repo root -- on
+# sys.path[0], so `channels` would not otherwise resolve. Add the repo root explicitly before
+# importing it.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+# channels/engine/gate.py's target_time() is the SAME sha256-offset-in-window formula the
+# "ramana" entry below duplicates by hand (it predates channels/engine/). For the 7-channel
+# expansion we import it directly instead of copying the formula a 7th/8th/9th time.
+from channels.engine.gate import target_time as _engine_target_time
 
 IST = ZoneInfo("Asia/Kolkata")
 API_BASE = "https://api.cron-job.org"
+
+
+def _engine_series(channel_key: str, url_fragment: str, window_start_hour: int, window_start_minute: int,
+                    window_minutes: int, safety_hour: int, safety_minute: int) -> dict:
+    """Build a SERIES entry for a channels/engine/gate.py-based channel: "custom" calls the
+    shared engine target_time() with that channel's own window, exactly mirroring its own
+    scripts/ci/gate.py's WINDOW_START/WINDOW_MINUTES (channel_key salts the hash so every
+    channel lands on a different offset-from-window-start minute, same as the gate itself)."""
+    window_start = dt.time(window_start_hour, window_start_minute)
+    return {
+        "url_fragment": url_fragment,
+        "custom": lambda today: _dt_to_hm(_engine_target_time(channel_key, today, window_start, window_minutes)),
+        "safety_hour": safety_hour,
+        "safety_minute": safety_minute,
+    }
+
+
+def _dt_to_hm(target_dt) -> tuple[int, int]:
+    return target_dt.hour, target_dt.minute
+
 
 # One entry per cron-job.org-driven gated series. start_hour/span/seed_fn
 # are copied verbatim from each series' scripts/ci/*_gate.py so this
@@ -116,6 +149,16 @@ SERIES = {
         "safety_hour": 7,
         "safety_minute": 55,
     },
+    # --- The 7-channel expansion (channels/, added 2026-10) --- each channel's own
+    # scripts/ci/gate.py window/latest, re-used here via the shared engine formula (see the
+    # _engine_target_time import above) instead of hand-copying the sha256 formula again.
+    "jesus": _engine_series("jesus", "post-jesus-worship-waves.yml", 6, 0, 40, 7, 55),
+    "infoshorts": _engine_series("infoshorts", "post-infoshorts-telugu.yml", 7, 0, 40, 8, 55),
+    "mantra_sangam": _engine_series("mantra_sangam", "post-divine-mantra-sangam.yml", 9, 0, 40, 10, 55),
+    "trance_beats": _engine_series("trance_beats", "post-devotional-trance-beats.yml", 19, 0, 40, 20, 55),
+    "pulse_boosting": _engine_series("pulse_boosting", "post-pulse-boosting.yml", 12, 0, 40, 14, 25),
+    "tollywood_news": _engine_series("tollywood_news", "post-tollywood-news.yml", 13, 0, 40, 15, 25),
+    "live_hyderabad": _engine_series("live_hyderabad", "post-live-hyderabad.yml", 14, 0, 40, 16, 25),
 }
 
 

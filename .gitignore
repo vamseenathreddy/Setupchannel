@@ -14,6 +14,12 @@ data/
 # again, here or for any future channel's own committed content bank.
 !ramana/data/
 !ramana/data/**
+# Same bug, same fix, for every channel added under channels/<name>/data/ (Jesus Worship
+# Waves, InfoShorts Telugu, Divine Mantra Sangam, Devotional Trance Beats, and any future
+# static-content-bank channel) -- their content.csv files are real committed content, not
+# runtime state, and must not be swallowed by the unanchored "data/" rule above.
+!channels/*/data/
+!channels/*/data/**
 *.db
 .venv/
 venv/

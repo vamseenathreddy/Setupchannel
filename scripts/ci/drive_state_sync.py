@@ -190,6 +190,27 @@ STATE_FILES = [
     "last_run_date_rashi_mantra.txt",
     "youtube_token_ramana.json",  # Ramana Maharshi TV channel's own OAuth token (separate channel, see config.py)
     "ramana_state.json",          # Ramana Maharshi TV's "posted"/"used_ids" state (ramana/src/state.py)
+    # --- The 7-channel expansion (channels/ at the repo root, added 2026-10) --- same pattern
+    # as the Ramana pair above, one token + one state file per channel. *** EACH OF THESE 14
+    # FILES MUST BE PRE-CREATED BY HAND IN THE SAME DRIVE FOLDER BEFORE THAT CHANNEL'S FIRST
+    # REAL RUN *** -- same storageQuotaExceeded reason documented at length above: an empty
+    # file for each "youtube_token_*.json" (overwritten for real the first time
+    # drive_state_sync.py push runs after a local youtube_shorts_auth_setup.py --token-file
+    # run for that channel), and a file containing just "{}" for each "*_state.json".
+    "youtube_token_jesus.json",
+    "jesus_state.json",
+    "youtube_token_infoshorts.json",
+    "infoshorts_state.json",
+    "youtube_token_mantra_sangam.json",
+    "mantra_sangam_state.json",
+    "youtube_token_trance_beats.json",
+    "trance_beats_state.json",
+    "youtube_token_pulse_boosting.json",
+    "pulse_boosting_state.json",
+    "youtube_token_tollywood_news.json",
+    "tollywood_news_state.json",
+    "youtube_token_live_hyderabad.json",
+    "live_hyderabad_state.json",
 ]
 
 
