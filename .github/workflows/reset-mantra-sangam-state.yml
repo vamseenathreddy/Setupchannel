@@ -1,0 +1,40 @@
+name: Reset Divine Mantra Sangam Series State (One-Off)
+
+# One-off: clears the posted/used markers of the five Divine Mantra Sangam series (fresh start). Does not touch the token.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Reset Mantra Sangam series state to empty
+        run: |
+          for k in rahu shubh durm purana rashi; do echo '{}' > data/mantra_sangam_${k}_state.json; done
+          ls data/mantra_sangam_*_state.json
+
+      - name: Push state to Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py push
