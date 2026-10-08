@@ -15,7 +15,7 @@ PHOTO_BOX_H = 1500                  # photos are fitted to the full width, this 
 PHOTO_BOX_OVERRIDE = {"photo_04.jpg": 1020, "photo_09.jpg": 1220}  # face-heavy photos: smaller so the chin stays above the text
 SHOW_SOURCE_ON_VIDEO = False        # the source is always in the YouTube description
 PHOTO_TEXT_BOTTOM = 1600            # keep clear of the Shorts UI overlays
-PHOTO_TEXT_H = 640
+PHOTO_TEXT_H = 680
 MAX_TEXT_W = 780
 ZOOM = 0.0                          # 0 = completely still picture. Try 0.03 for a slow breathing zoom (loops seamlessly)
 FONT_TE = ROOT / "assets/fonts/Ponnala-Regular.ttf"  # only one weight exists; plain Regular is used (no synthetic bold, owner request 2026-10-07)
@@ -126,20 +126,36 @@ def make_background(rng, date_key):
     return Image.composite(Image.new("RGB", (W, H), (0, 0, 0)), img, scrim)
 
 
+ATTR_TE, ATTR_EN = "- భగవాన్ రమణ మహర్షి", "- Bhagavan Ramana Maharshi"
+ATTRIBUTED = ("quote", "qa")  # his own teachings; life facts are about him, so no attribution line there
+
+# The Om clip owner approved on 2026-10-08 ("this current audio is good, use that only").
+MUSIC_FILE = "om_04.mp3"
+
+
 def _blocks(row, layout):
     # Ponnala has no glyphs for quote marks, they would show as empty boxes
     te_clean = row["telugu"].translate({ord(c): None for c in "'\"‘’“”`"})
     te_lines = [s.strip() for s in te_clean.split("|")]
     en_lines = [s.strip() for s in row["english"].split("|")]
     blocks = []
+    attr = row["category"] in ATTRIBUTED
     if row["category"] == "qa" and len(te_lines) == 2:
-        blocks.append((te_lines[0], FONT_TE, 84, layout["accent"], False))
-        blocks.append((te_lines[1], FONT_TE, 118, layout["te"], False))
-        blocks.append((en_lines[0], FONT_EN, 58, layout["accent"], False))
-        blocks.append((en_lines[1] if len(en_lines) > 1 else "", FONT_EN, 80, layout["en"], False))
+        blocks.append((te_lines[0], FONT_TE, 72, layout["accent"], False))
+        blocks.append((te_lines[1], FONT_TE, 104, layout["te"], False))
+        if attr:
+            blocks.append((ATTR_TE, FONT_TE, 54, layout["accent"], False))
+        blocks.append((en_lines[0], FONT_EN, 50, layout["accent"], False))
+        blocks.append((en_lines[1] if len(en_lines) > 1 else "", FONT_EN, 70, layout["en"], False))
+        if attr:
+            blocks.append((ATTR_EN, FONT_EN, 38, layout["accent"], False))
     else:
         blocks.append((" ".join(te_lines), FONT_TE, 130, layout["te"], False))
+        if attr:
+            blocks.append((ATTR_TE, FONT_TE, 62, layout["accent"], False))
         blocks.append((" ".join(en_lines), FONT_EN, 84, layout["en"], False))
+        if attr:
+            blocks.append((ATTR_EN, FONT_EN, 44, layout["accent"], False))
     return [b for b in blocks if b[0]]
 
 
@@ -223,6 +239,9 @@ def _watermark(text_layer, handle, font_path, size=76, alpha=38):
 
 
 def pick_music(rng):
+    fixed = ROOT / "assets" / MUSIC_FILE
+    if fixed.exists():
+        return str(fixed)
     clips = sorted(glob.glob(str(ROOT / "assets/om_0*.mp3")))
     if not clips:
         raise SystemExit("No assets/om_0*.mp3 found. Add your Om clips first.")
