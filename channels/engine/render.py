@@ -203,9 +203,10 @@ def _blocks(row, layout, cfg: ChannelConfig):
         text = (row.get(b.field) or "").strip()
         if b.strip_chars:
             text = text.translate({ord(c): None for c in b.strip_chars})
-        text = " ".join(s.strip() for s in text.split("|") if s.strip())
-        if text:
-            out.append((text, b.font, b.size, layout[b.color_key], b.bold))
+        for para in text.split("\n"):  # "\n" = separate line (e.g. comment prompt, then subscribe)
+            para = " ".join(s.strip() for s in para.split("|") if s.strip())
+            if para:
+                out.append((para, b.font, b.size, layout[b.color_key], b.bold))
     return out
 
 
@@ -213,7 +214,10 @@ def _cta_lines(draw, cfg: ChannelConfig):
     if not cfg.cta_text:
         return [], None
     font = _font(cfg.font_channel_label, cfg.cta_size)
-    return _wrap(draw, cfg.cta_text, font, 0, cfg.text_max_w), font
+    lines = []
+    for para in cfg.cta_text.split("\n"):  # "\n" starts a separate line (e.g. subscribe + comment prompt)
+        lines += _wrap(draw, para, font, 0, cfg.text_max_w)
+    return lines, font
 
 
 def _cta_height(draw, cfg: ChannelConfig):

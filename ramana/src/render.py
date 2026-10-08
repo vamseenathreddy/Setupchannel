@@ -132,6 +132,10 @@ ATTRIBUTED = ("quote", "qa")  # his own teachings; life facts are about him, so 
 # The Om clip owner approved on 2026-10-08 ("this current audio is good, use that only").
 MUSIC_FILE = "om_04.mp3"
 
+# One fixed engagement line on every Short (2026-10-08 request), small, last in the text block.
+OPINION_TE = "ఈ వీడియోపై మీ అభిప్రాయాన్ని కామెంట్ చేయండి"
+OPINION_EN = "Share your thoughts on this video in the comments"
+
 
 def _blocks(row, layout):
     # Ponnala has no glyphs for quote marks, they would show as empty boxes
@@ -156,6 +160,8 @@ def _blocks(row, layout):
         blocks.append((" ".join(en_lines), FONT_EN, 84, layout["en"], False))
         if attr:
             blocks.append((ATTR_EN, FONT_EN, 44, layout["accent"], False))
+    blocks.append((OPINION_TE, FONT_TE, 44, layout["accent"], False))
+    blocks.append((OPINION_EN, FONT_EN, 34, layout["accent"], False))
     return [b for b in blocks if b[0]]
 
 

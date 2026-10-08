@@ -45,6 +45,7 @@ from mahanavi.content.rashi_mantra_content import RashiMantraContent
 from mahanavi.exceptions import ImageRenderError
 from mahanavi.images.fonts import FontManager
 
+from mahanavi.images.opinion_line import OPINION_TE
 logger = logging.getLogger(__name__)
 
 CARD_WIDTH = 1080
@@ -264,7 +265,14 @@ class RashiCardRenderer:
             # whatever vertical space is LEFT, is the same fix already
             # applied once to the comment/subscribe pair -- just
             # extended to cover the icon row too.
-            subscribe_top = footer_bottom - subscribe_h
+            # Fixed engagement line ("comment your opinion on this video") sits at the validated
+            # footer_bottom; the subscribe line (and everything above it) moves up by its height.
+            opinion_font = self._fit_font_to_width(
+                draw, OPINION_TE, max_width=content_width, start_size=int(width * 0.036), weight="Bold",
+            )
+            opinion_h = int(opinion_font.size * 1.15)
+            opinion_top = footer_bottom - opinion_h
+            subscribe_top = opinion_top - int(height * 0.012) - subscribe_h
             comment_top = subscribe_top - footer_line_gap - comment_h if card.comment_prompt_text else subscribe_top
             icon_row_top = comment_top - mantra_block_gap - icon_size if card.icon_paths else comment_top
             content_bottom_limit = icon_row_top
@@ -320,6 +328,7 @@ class RashiCardRenderer:
                 self._draw_icon_row(canvas, card.icon_paths, width, icon_row_top)
 
             self._draw_centered_line(draw, card.subscribe_text, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT)
+            self._draw_centered_line(draw, OPINION_TE, opinion_font, width, opinion_top, COLOR_TEXT_LIGHT)
             if card.comment_prompt_text and comment_font is not None:
                 line_h = int(comment_font.size * 1.15)
                 for k, comment_line in enumerate(card.comment_prompt_text.split("\n")):

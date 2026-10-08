@@ -68,6 +68,7 @@ from mahanavi.images.fonts import FontManager
 from mahanavi.images.layout import vertical_gradient
 from mahanavi.images.sri_chakra import draw_sri_chakra_roundel
 
+from mahanavi.images.opinion_line import OPINION_TE
 logger = logging.getLogger(__name__)
 
 CARD_WIDTH = 1080
@@ -283,7 +284,14 @@ class PuranaShortCardRenderer:
             block_gap = int(height * 0.022)
             icon_size = int(width * ICON_FRAC)
 
-            subscribe_top = footer_bottom - subscribe_h
+            # Fixed engagement line ("comment your opinion on this video") sits at the validated
+            # footer_bottom; the subscribe line (and everything above it) moves up by its height.
+            opinion_font = self._fit_font_to_width(
+                draw, OPINION_TE, max_width=content_width, start_size=int(width * 0.036), weight="Bold",
+            )
+            opinion_h = int(opinion_font.size * 1.15)
+            opinion_top = footer_bottom - opinion_h
+            subscribe_top = opinion_top - int(height * 0.012) - subscribe_h
             icon_row_top = subscribe_top - block_gap - icon_size if card.icon_paths else subscribe_top
             source_top = icon_row_top - block_gap - source_h
             moral_top = source_top - int(block_gap * 0.6) - moral_h
@@ -327,6 +335,7 @@ class PuranaShortCardRenderer:
                 self._draw_icon_row(text_layer, card.icon_paths, width, icon_row_top)
 
             self._draw_centered_line(draw, card.subscribe_text, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT)
+            self._draw_centered_line(draw, OPINION_TE, opinion_font, width, opinion_top, COLOR_TEXT_LIGHT)
 
             return background, chakra_img, chakra_cx, chakra_cy, text_layer
 

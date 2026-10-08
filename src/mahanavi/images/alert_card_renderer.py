@@ -57,6 +57,7 @@ from mahanavi.exceptions import ImageRenderError
 from mahanavi.images.fonts import FontManager
 from mahanavi.images.layout import vertical_gradient
 
+from mahanavi.images.opinion_line import OPINION_TE
 logger = logging.getLogger(__name__)
 
 # True YouTube Shorts vertical format (9:16). NOT the same as the main
@@ -211,7 +212,14 @@ class AlertCardRenderer:
             # always lands in the same already-validated-safe spot.
             footer_bottom = int(height * 0.68)
             footer_line_gap = int(height * 0.015)
-            footer_block_h = subscribe_h + (comment_h + footer_line_gap if card.comment_prompt_text else 0)
+            # Fixed engagement line at the very bottom of the footer block (2026-10-08 request).
+            opinion_font = self._fit_font_to_width(
+                draw, OPINION_TE, max_width=content_width, start_size=int(width * SUBSCRIBE_FONT_FRAC), weight="Bold",
+            )
+            opinion_bbox = draw.textbbox((0, 0), OPINION_TE, font=opinion_font)
+            opinion_h = int(opinion_bbox[3] - opinion_bbox[1])
+            footer_block_h = (subscribe_h + footer_line_gap + opinion_h
+                              + (comment_h + footer_line_gap if card.comment_prompt_text else 0))
             footer_top = footer_bottom - footer_block_h
 
             content_top = badge_bottom + int(height * 0.04) if card.date_text else (
@@ -348,11 +356,18 @@ class AlertCardRenderer:
                             )
                     # else: genuinely no room even at the smallest size -- skip silently.
 
-            subscribe_top = footer_bottom - subscribe_h
+            opinion_top = footer_bottom - opinion_h
+            subscribe_top = opinion_top - footer_line_gap - subscribe_h
             subscribe_w = subscribe_bbox[2] - subscribe_bbox[0]
             draw.text(
                 ((width - subscribe_w) // 2, subscribe_top - subscribe_bbox[1]),
                 card.subscribe_text, font=subscribe_font, fill=COLOR_TEXT_LIGHT,
+            )
+
+            opinion_w = opinion_bbox[2] - opinion_bbox[0]
+            draw.text(
+                ((width - opinion_w) // 2, opinion_top - opinion_bbox[1]),
+                OPINION_TE, font=opinion_font, fill=COLOR_TEXT_LIGHT,
             )
 
             if card.comment_prompt_text and comment_font is not None and comment_bbox is not None:

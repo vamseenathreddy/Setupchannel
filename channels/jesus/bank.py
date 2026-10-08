@@ -38,7 +38,8 @@ def quote_row(v: dict) -> dict:
         "apply_en": v["apply_en"], "apply_te": v["apply_te"],
         "ref_en": v["ref_en"], "ref_te": v["ref_te"], "verse_en": v["text_en"], "verse_te": v["text_te"],
         "theme": v.get("theme", ""),
-        "sub_en": SUBSCRIBE_EN, "sub_te": SUBSCRIBE_TE,
+        "sub_en": "Comment your thoughts on this video!\n" + SUBSCRIBE_EN,
+        "sub_te": "ఈ వీడియోపై మీ అభిప్రాయాన్ని కామెంట్ చేయండి!\n" + SUBSCRIBE_TE,
     }
 
 
