@@ -143,12 +143,7 @@ SERIES = {
     # seed_fn/random.Random formula below since this one is hash-based,
     # not a uniform draw. safety ping placed at 07:55, a few minutes
     # before ramana_gate.py's LATEST=08:00 hard cutoff.
-    "ramana": {
-        "url_fragment": "post-ramana-short.yml",
-        "custom": lambda today: _ramana_target_minutes(today),
-        "safety_hour": 7,
-        "safety_minute": 55,
-    },
+    # "ramana" removed 2026-10-08: the three Ramana Shorts now use static 10-minute pings (cronjob_create.py).
     # --- The 7-channel expansion (channels/, added 2026-10) --- each channel's own
     # scripts/ci/gate.py window/latest, re-used here via the shared engine formula (see the
     # _engine_target_time import above) instead of hand-copying the sha256 formula again.

@@ -1,0 +1,36 @@
+name: Create cron-job.org pings (Ramana x3, Jesus Bible Quiz)
+
+# One-off. Creates the cron-job.org jobs that dispatch the Ramana quote/Q&A/Life and Jesus Bible Quiz workflows
+# (cloned from the Rashi Mantra job). Run with dry_run ON first to see the plan.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only print the plan"
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Create / update jobs
+        env:
+          CRONJOB_ORG_API_KEY: ${{ secrets.CRONJOB_ORG_API_KEY }}
+        run: |
+          ARGS=""
+          if [ "${{ inputs.dry_run }}" != "false" ]; then ARGS="--dry-run"; fi
+          set -o pipefail
+          python3 scripts/ci/cronjob_create.py $ARGS 2>&1 | tee run.log
+          rc=${PIPESTATUS[0]}
+          echo "::notice::$(tail -c 1500 run.log | tr '\n' ' ')"
+          exit $rc
