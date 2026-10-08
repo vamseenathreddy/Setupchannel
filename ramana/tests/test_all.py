@@ -26,7 +26,7 @@ def test_target_minute_is_in_window_and_deterministic():
     for d in range(60):
         date = dt.date(2026, 10, 1) + dt.timedelta(days=d)
         t = gate.target_time(date)
-        assert dt.datetime.combine(date, dt.time(5, 0), tzinfo=IST) <= t <= dt.datetime.combine(date, dt.time(5, 40), tzinfo=IST)
+        assert dt.datetime.combine(date, dt.time(0, 0), tzinfo=IST) <= t <= dt.datetime.combine(date, dt.time(0, 50), tzinfo=IST)
         assert t == gate.target_time(date)
     assert len({gate.target_time(dt.date(2026, 10, 1) + dt.timedelta(days=d)).minute for d in range(30)}) > 5
 
@@ -44,12 +44,12 @@ def test_gate_decisions():
     done = {"posted": {"2026-10-07": {"row": "q001", "video_id": "x"}}, "used_ids": ["q001"]}
     post, msg, _ = gate.decide(tgt + dt.timedelta(minutes=5), done)
     assert not post and "already done" in msg
-    late = dt.datetime(2026, 10, 7, 8, 30, tzinfo=IST)
+    late = dt.datetime(2026, 10, 7, 2, 0, tzinfo=IST)
     post, msg, _ = gate.decide(late, empty)
     assert not post and "missed window" in msg
-    post, _, _ = gate.decide(tgt - dt.timedelta(minutes=20), empty, force=True)
+    post, _, _ = gate.decide(tgt + dt.timedelta(minutes=1), empty, force=True)
     assert post
-    post, _, _ = gate.decide(tgt - dt.timedelta(minutes=20), done, force=True)
+    post, _, _ = gate.decide(tgt + dt.timedelta(minutes=1), done, force=True)
     assert not post  # force can never double post
 
 

@@ -15,7 +15,7 @@ PHOTO_BOX_H = 1500                  # photos are fitted to the full width, this 
 PHOTO_BOX_OVERRIDE = {"photo_04.jpg": 1020, "photo_09.jpg": 1220}  # face-heavy photos: smaller so the chin stays above the text
 SHOW_SOURCE_ON_VIDEO = False        # the source is always in the YouTube description
 PHOTO_TEXT_BOTTOM = 1600            # keep clear of the Shorts UI overlays
-PHOTO_TEXT_H = 680
+PHOTO_TEXT_H = 800
 MAX_TEXT_W = 780
 ZOOM = 0.0                          # 0 = completely still picture. Try 0.03 for a slow breathing zoom (loops seamlessly)
 FONT_TE = ROOT / "assets/fonts/Ponnala-Regular.ttf"  # only one weight exists; plain Regular is used (no synthetic bold, owner request 2026-10-07)
