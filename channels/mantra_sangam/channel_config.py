@@ -70,6 +70,7 @@ TIMING_CFG = ChannelConfig(
     layouts=LAYOUTS,
     palettes=PALETTES,
     watermark_handle="@DivineMantraSangam",
-    photo_text_h=1000, photo_text_bottom=1385, safe_bottom=1385, safe_top=240, text_max_w=780,
+    logo_path=str(CHANNEL_DIR / "assets" / "logo.png"), logo_width=210, logo_y=240,
+    photo_text_h=1000, photo_text_bottom=1385, safe_bottom=1385, safe_top=480, text_max_w=780,
     photo_shade_from=420, photo_shade_alpha=0.88,
 )

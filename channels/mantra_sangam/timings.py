@@ -78,7 +78,7 @@ def timing_row(kind: str, d: date) -> dict:
             row.update(t_title="आज के शुभ मुहूर्त", t_label="ब्रह्म मुहूर्त", t_time=row["brahma"],
                        t_note="आज बुधवार है, अभिजीत मुहूर्त नहीं माना जाता", t_other="")
     else:
-        row.update(t_title="आज का दुर्मुहूर्त", t_label="समय", t_time=p.durmuhurtham,
+        row.update(t_title="आज का दुर्मुहूर्त", t_label="समय", t_time=p.durmuhurtham.replace(", ", "\n"),
                    t_note="इस समय शुभ कार्य टालें", t_other=f"राहु काल: {p.rahu_kalam}  |  यमगंड: {p.yamagandam}")
     return row
 
