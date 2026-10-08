@@ -87,7 +87,7 @@ class ChannelConfig:
     cta_size: int = 46
     photo_shade_from: int = 900      # y where the dark scrim under the text starts fading in
     safe_top: int = 0                # 0 = default SAFE_TOP; lower lets a text-heavy card start higher
-    photo_shade_alpha: float = 0.70  # peak darkness of that scrim (higher = easier to read the text)
+    photo_shade_alpha: float = 0.82  # peak darkness of that scrim (higher = easier to read the text)
 
 
 def _font(path, size):

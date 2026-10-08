@@ -105,7 +105,7 @@ def test_title_starts_with_the_text_on_the_short():
 def test_text_fits_for_every_row_and_layout():
     for r in ROWS:
         for layout in render.LAYOUTS:
-            _laid, total, fits, scale = render.fit_text(r, layout, render.PHOTO_TEXT_H)
+            _laid, total, fits, scale = render.fit_text(r, layout, render.TEXT_TOP_H)
             assert fits and scale >= 0.52, (r["id"], scale, total)
 
 

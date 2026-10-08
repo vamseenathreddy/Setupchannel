@@ -16,6 +16,8 @@ PHOTO_BOX_OVERRIDE = {"photo_04.jpg": 1020, "photo_09.jpg": 1220}  # face-heavy 
 SHOW_SOURCE_ON_VIDEO = False        # the source is always in the YouTube description
 PHOTO_TEXT_BOTTOM = 1600            # keep clear of the Shorts UI overlays
 PHOTO_TEXT_H = 800
+TEXT_TOP_START = 230                # first text line sits just below the Shorts top bar
+TEXT_TOP_H = 1230                  # room for the whole block (down to ~1460, above the caption)
 MAX_TEXT_W = 780
 ZOOM = 0.0                          # 0 = completely still picture. Try 0.03 for a slow breathing zoom (loops seamlessly)
 FONT_TE = ROOT / "assets/fonts/Ponnala-Regular.ttf"  # only one weight exists; plain Regular is used (no synthetic bold, owner request 2026-10-07)
@@ -115,14 +117,9 @@ def make_background(rng, date_key):
         ImageDraw.Draw(glow).ellipse((W // 2 - 420, 520, W // 2 + 420, 1360), fill=70)
         glow = glow.filter(ImageFilter.GaussianBlur(160))
         img = Image.composite(Image.new("RGB", (W, H), (255, 210, 140)), img, glow)
-    # readability scrim: darker at top and bottom, softly dark in the middle
-    scrim = Image.new("L", (W, H), 135)
-    grad = Image.linear_gradient("L").resize((W, H))
-    top_dark = grad.point(lambda v: max(0, 170 - v))
-    bot_dark = grad.point(lambda v: max(0, v - 90))
-    scrim = Image.eval(scrim, lambda v: v)
-    scrim.paste(top_dark, (0, 0), top_dark)
-    scrim.paste(bot_dark, (0, 0), bot_dark)
+    # readability scrim (2026-10-08: "make the background darker, text must be richer than the picture"):
+    # the whole frame is dimmed to about a third of its brightness, a little darker towards the bottom.
+    scrim = Image.linear_gradient("L").resize((W, H)).point(lambda v: int(255 * (0.66 + 0.16 * v / 255)))
     return Image.composite(Image.new("RGB", (W, H), (0, 0, 0)), img, scrim)
 
 
@@ -137,6 +134,9 @@ OPINION_TE = "ఈ వీడియోపై మీ అభిప్రాయాన
 OPINION_EN = "Share your thoughts on this video in the comments"
 
 
+UNIFORM_SIZE = 78  # every line of the card is drawn at this one size (2026-10-08 request), then scaled to fit
+
+
 def _blocks(row, layout):
     # Ponnala has no glyphs for quote marks, they would show as empty boxes
     te_clean = row["telugu"].translate({ord(c): None for c in "'\"‘’“”`"})
@@ -144,24 +144,25 @@ def _blocks(row, layout):
     en_lines = [s.strip() for s in row["english"].split("|")]
     blocks = []
     attr = row["category"] in ATTRIBUTED
+    z = UNIFORM_SIZE
     if row["category"] == "qa" and len(te_lines) == 2:
-        blocks.append((te_lines[0], FONT_TE, 72, layout["accent"], False))
-        blocks.append((te_lines[1], FONT_TE, 104, layout["te"], False))
+        blocks.append((te_lines[0], FONT_TE, z, layout["accent"], False))
+        blocks.append((te_lines[1], FONT_TE, z, layout["te"], False))
         if attr:
-            blocks.append((ATTR_TE, FONT_TE, 54, layout["accent"], False))
-        blocks.append((en_lines[0], FONT_EN, 50, layout["accent"], False))
-        blocks.append((en_lines[1] if len(en_lines) > 1 else "", FONT_EN, 70, layout["en"], False))
+            blocks.append((ATTR_TE, FONT_TE, z, layout["accent"], False))
+        blocks.append((en_lines[0], FONT_EN, z, layout["accent"], False))
+        blocks.append((en_lines[1] if len(en_lines) > 1 else "", FONT_EN, z, layout["en"], False))
         if attr:
-            blocks.append((ATTR_EN, FONT_EN, 38, layout["accent"], False))
+            blocks.append((ATTR_EN, FONT_EN, z, layout["accent"], False))
     else:
-        blocks.append((" ".join(te_lines), FONT_TE, 130, layout["te"], False))
+        blocks.append((" ".join(te_lines), FONT_TE, z, layout["te"], False))
         if attr:
-            blocks.append((ATTR_TE, FONT_TE, 62, layout["accent"], False))
-        blocks.append((" ".join(en_lines), FONT_EN, 84, layout["en"], False))
+            blocks.append((ATTR_TE, FONT_TE, z, layout["accent"], False))
+        blocks.append((" ".join(en_lines), FONT_EN, z, layout["en"], False))
         if attr:
-            blocks.append((ATTR_EN, FONT_EN, 44, layout["accent"], False))
-    blocks.append((OPINION_TE, FONT_TE, 44, layout["accent"], False))
-    blocks.append((OPINION_EN, FONT_EN, 34, layout["accent"], False))
+            blocks.append((ATTR_EN, FONT_EN, z, layout["accent"], False))
+    blocks.append((OPINION_TE, FONT_TE, z, layout["accent"], False))
+    blocks.append((OPINION_EN, FONT_EN, z, layout["accent"], False))
     return [b for b in blocks if b[0]]
 
 
@@ -188,7 +189,7 @@ def fit_text(row, layout, max_h=None):
     return laid, total, False, scale
 
 
-def make_text_layer(row, layout, label_en="", label_te="", max_h=None, bottom=None, channel=True):
+def make_text_layer(row, layout, label_en="", label_te="", max_h=None, bottom=None, channel=True, top_start=None):
     laid, total, _fits, _scale = fit_text(row, layout, max_h)
 
     text_l = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -196,6 +197,8 @@ def make_text_layer(row, layout, label_en="", label_te="", max_h=None, bottom=No
     d, sd = ImageDraw.Draw(text_l), ImageDraw.Draw(shadow)
     y = int(layout["anchor"] * H - total / 2)
     y = max(SAFE_TOP + 40, min(y, (bottom or SAFE_BOTTOM) - total))
+    if top_start is not None:
+        y = top_start
 
     if layout["ornament"]:
         d.line((W // 2 - 70, y, W // 2 + 70, y), fill=layout["accent"], width=3)
@@ -263,12 +266,14 @@ def render(row, out_mp4, date_key, special=None, workdir="out"):
     bg_path, tx_path = work / "bg.png", work / "text.png"
     make_background(rng, date_key).save(bg_path)
     max_h, bottom, channel = None, None, True
-    if photo_for(date_key):  # keep faces clear: text sits at the bottom, below the photo's face
-        layout = dict(layout, anchor=0.78)
-        max_h, bottom, channel = PHOTO_TEXT_H, PHOTO_TEXT_BOTTOM, False
+    top_start = None
+    if photo_for(date_key):  # text now starts near the top of the screen (2026-10-08), over a darkened picture
+        layout = dict(layout, anchor=0.30)
+        max_h, bottom, channel = TEXT_TOP_H, PHOTO_TEXT_BOTTOM, False
+        top_start = TEXT_TOP_START
     _watermark(
         make_text_layer(row, layout, (special or {}).get("label_en", ""), (special or {}).get("label_te", ""),
-                        max_h, bottom, channel),
+                        max_h, bottom, channel, top_start),
         HANDLE, FONT_EN,
     ).save(tx_path)
     music = pick_music(rng)
