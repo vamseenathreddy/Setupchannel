@@ -85,6 +85,7 @@ jobs:
         env:
           STATE_FILE: data/mantra_sangam_durm_state.json
           MAHANAVI_MANTRA_SANGAM_YOUTUBE_TOKEN_FILE: ./data/youtube_token_mantra_sangam.json
+          FORCE_POST: ${{ inputs.bypass_gate && 'true' || 'false' }}
           MAHANAVI_MANTRA_SANGAM_BLOGGER_BLOG_ID: ${{ secrets.MAHANAVI_MANTRA_SANGAM_BLOGGER_BLOG_ID }}
           CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
         run: |
