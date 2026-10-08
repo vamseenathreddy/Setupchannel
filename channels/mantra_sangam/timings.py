@@ -60,7 +60,7 @@ def timing_row(kind: str, d: date) -> dict:
     row = {
         "id": f"{kind}-{d.isoformat()}", "category": kind, "special": "", "source": "Local Swiss Ephemeris panchang",
         "text_primary": "", "text_secondary": "",
-        "t_date": date_hi(d), "t_place": f"({LOCATION_NAME_HI} के अनुसार)",
+        "t_date": f"{date_hi(d)} ({LOCATION_NAME_HI})", "t_place": "",
         "t_mantra_label": f"आज के देव: {deity}", "t_mantra": mantra,
         "t_comment": pick, "t_sub": CTA[kind], "t_opinion": OPINION,
         "weekday_en": WEEKDAY_EN[d.weekday()], "date_iso": d.isoformat(),
