@@ -86,6 +86,8 @@ class ChannelConfig:
     cta_text: str = ""               # optional call-to-action (e.g. subscribe line) drawn under the text block
     cta_size: int = 46
     photo_shade_from: int = 900      # y where the dark scrim under the text starts fading in
+    safe_top: int = 0                # 0 = default SAFE_TOP; lower lets a text-heavy card start higher
+    photo_shade_alpha: float = 0.70  # peak darkness of that scrim (higher = easier to read the text)
 
 
 def _font(path, size):
@@ -176,7 +178,7 @@ def make_background(rng, date_key, cfg: ChannelConfig):
         shade = Image.new("L", (W, H), 0)
         sd = ImageDraw.Draw(shade)
         for yy in range(cfg.photo_shade_from, H):
-            sd.line((0, yy, W, yy), fill=int(255 * 0.70 * min(1.0, (yy - cfg.photo_shade_from) / 600)))
+            sd.line((0, yy, W, yy), fill=int(255 * cfg.photo_shade_alpha * min(1.0, (yy - cfg.photo_shade_from) / 600)))
         img = Image.composite(Image.new("RGB", (W, H), (0, 0, 0)), back, shade)
     else:
         c1, c2 = rng.choice(cfg.palettes)
@@ -222,7 +224,7 @@ def _cta_height(draw, cfg: ChannelConfig):
 def fit_text(row, layout, cfg: ChannelConfig, max_h=None):
     """Largest scale at which the text block fits. Returns (laid, total_height, fits, scale)."""
     probe = ImageDraw.Draw(Image.new("L", (W, H)))
-    limit = (max_h or (cfg.safe_bottom or SAFE_BOTTOM) - SAFE_TOP) - _cta_height(probe, cfg)
+    limit = (max_h or (cfg.safe_bottom or SAFE_BOTTOM) - (cfg.safe_top or SAFE_TOP)) - _cta_height(probe, cfg)
     blocks = _blocks(row, layout, cfg)
     for scale in SCALES:
         laid, total = [], 0
@@ -250,7 +252,7 @@ def make_text_layer(row, layout, cfg: ChannelConfig, label_primary="", label_sec
     d, sd = ImageDraw.Draw(text_l), ImageDraw.Draw(shadow)
     cta_h = _cta_height(d, cfg)
     y = int(layout["anchor"] * H - (total + cta_h) / 2)
-    y = max(SAFE_TOP + 40, min(y, (bottom or cfg.safe_bottom or SAFE_BOTTOM) - total - cta_h))
+    y = max((cfg.safe_top or SAFE_TOP) + 40, min(y, (bottom or cfg.safe_bottom or SAFE_BOTTOM) - total - cta_h))
 
     if layout.get("ornament"):
         d.line((W // 2 - 70, y, W // 2 + 70, y), fill=layout["accent"], width=3)

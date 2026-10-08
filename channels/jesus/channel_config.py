@@ -41,7 +41,7 @@ PALETTES = [  # fallback gradients (no real photos yet) -- soft heavenly blues
 ]
 
 SHORT_SECONDS = 5.0    # every Short is 5 seconds (owner request); BGM clips are cut to this length
-VERSE_SIZE = 70        # English and Telugu verse use the SAME size
+VERSE_SIZE = 92        # English and Telugu verse use the SAME size
 APPLY_SIZE = 44
 
 _COMMON = dict(
@@ -55,8 +55,10 @@ _COMMON = dict(
     photo_text_h=860,       # text-heavy cards: give the text most of the lower photo
     photo_text_bottom=1385, # stay above the Shorts title/channel/Subscribe row (starts ~y1430)
     safe_bottom=1385,
+    safe_top=240,           # no logo on this channel: start below the Shorts search/menu icons
     text_max_w=780,         # x 150..930: clear of the Like/Comment/Save/Share buttons (x>940)
-    photo_shade_from=560,
+    photo_shade_from=420,
+    photo_shade_alpha=0.88,  # darker scrim: readability matters more than the picture
 )
 
 QUOTE_CFG = ChannelConfig(
@@ -65,11 +67,8 @@ QUOTE_CFG = ChannelConfig(
         TextBlock(field="text_primary", font=FONT_EN_BOLD, size=VERSE_SIZE, color_key="primary", bold=True),
         TextBlock(field="text_secondary", font=FONT_TE, size=VERSE_SIZE, color_key="secondary", bold=False,
                   strip_chars=QUOTES),
-        TextBlock(field="apply_en", font=FONT_EN_LIGHT, size=APPLY_SIZE, color_key="accent", bold=False),
-        TextBlock(field="apply_te", font=FONT_TE, size=APPLY_SIZE, color_key="accent", bold=False,
-                  strip_chars=QUOTES),
-        TextBlock(field="sub_en", font=FONT_EN_LIGHT, size=38, color_key="secondary", bold=False),
-        TextBlock(field="sub_te", font=FONT_TE, size=40, color_key="secondary", bold=False),
+        TextBlock(field="sub_en", font=FONT_EN_BOLD, size=48, color_key="accent", bold=True),
+        TextBlock(field="sub_te", font=FONT_TE, size=52, color_key="accent", bold=False),
     ],
     music_offset=0,
     **_COMMON,
@@ -78,16 +77,16 @@ QUOTE_CFG = ChannelConfig(
 QUIZ_CFG = ChannelConfig(
     channel_name="Jesus Worship Waves",
     blocks=[
-        TextBlock(field="quiz_label", font=FONT_EN_BOLD, size=48, color_key="accent", bold=True),
-        TextBlock(field="text_primary", font=FONT_EN_BOLD, size=58, color_key="primary", bold=True),
-        TextBlock(field="text_secondary", font=FONT_TE, size=58, color_key="secondary", bold=False,
+        TextBlock(field="quiz_label", font=FONT_EN_BOLD, size=56, color_key="accent", bold=True),
+        TextBlock(field="text_primary", font=FONT_EN_BOLD, size=70, color_key="primary", bold=True),
+        TextBlock(field="text_secondary", font=FONT_TE, size=70, color_key="secondary", bold=False,
                   strip_chars=QUOTES),
-        TextBlock(field="question_en", font=FONT_EN_BOLD, size=46, color_key="accent", bold=True),
-        TextBlock(field="question_te", font=FONT_TE, size=46, color_key="accent", bold=False),
-        TextBlock(field="opts_ab", font=FONT_EN_BOLD, size=50, color_key="primary", bold=True),
-        TextBlock(field="opts_cd", font=FONT_EN_BOLD, size=50, color_key="primary", bold=True),
-        TextBlock(field="sub_en", font=FONT_EN_LIGHT, size=38, color_key="accent", bold=False),
-        TextBlock(field="sub_te", font=FONT_TE, size=40, color_key="accent", bold=False),
+        TextBlock(field="question_en", font=FONT_EN_BOLD, size=54, color_key="accent", bold=True),
+        TextBlock(field="question_te", font=FONT_TE, size=56, color_key="accent", bold=False),
+        TextBlock(field="opts_ab", font=FONT_EN_BOLD, size=58, color_key="primary", bold=True),
+        TextBlock(field="opts_cd", font=FONT_EN_BOLD, size=58, color_key="primary", bold=True),
+        TextBlock(field="sub_en", font=FONT_EN_BOLD, size=44, color_key="accent", bold=True),
+        TextBlock(field="sub_te", font=FONT_TE, size=48, color_key="accent", bold=False),
     ],
     music_offset=1,
     **_COMMON,
