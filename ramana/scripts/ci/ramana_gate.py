@@ -25,9 +25,11 @@ LATEST = dt.time(8, 0)           # a late backup run may still post until this t
 # Three Shorts a day (2026-10-08): one per content category, each with its own window and state file.
 # The "quote" slot keeps the original window and hash salt, so cronjob_reschedule.py's formula still matches.
 SLOTS = {
-    "quote": (dt.time(5, 0), 40, dt.time(8, 0), "ramana-gate-"),
-    "qa": (dt.time(12, 0), 40, dt.time(15, 0), "ramana-qa-gate-"),
-    "life": (dt.time(18, 0), 40, dt.time(21, 0), "ramana-life-gate-"),
+    # Windows from 2026-10-09: 12-1 AM, 10-11 AM and 5-6 PM IST. "latest" is 30 minutes past the window so a
+    # delayed GitHub schedule ping can still post.
+    "quote": (dt.time(0, 0), 50, dt.time(1, 30), "ramana-gate-"),
+    "qa": (dt.time(10, 0), 50, dt.time(11, 30), "ramana-qa-gate-"),
+    "life": (dt.time(17, 0), 50, dt.time(18, 30), "ramana-life-gate-"),
 }
 
 
