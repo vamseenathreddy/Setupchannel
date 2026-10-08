@@ -74,3 +74,27 @@ TIMING_CFG = ChannelConfig(
     photo_text_h=1000, photo_text_bottom=1385, safe_bottom=1385, safe_top=480, text_max_w=780,
     photo_shade_from=420, photo_shade_alpha=0.88,
 )
+
+
+# ---- Hindi Purana story / Rashi mantra Shorts (bank series) ----
+SERIES_CFG = ChannelConfig(
+    channel_name="Divine Mantra Sangam",
+    assets_dir=CHANNEL_DIR / "assets",
+    blocks=[
+        TextBlock(field="t_label", font=FONT_LABEL, size=46, color_key="accent", bold=False),
+        TextBlock(field="t_title", font=FONT_HI, size=104, color_key="primary", bold=True),
+        TextBlock(field="t_story", font=FONT_HI_BOLD, size=50, color_key="secondary", bold=False),
+        TextBlock(field="t_moral", font=FONT_HI, size=60, color_key="accent", bold=False),
+        TextBlock(field="t_invoke", font=FONT_LABEL, size=42, color_key="primary", bold=False),
+        TextBlock(field="t_sub", font=FONT_HI_BOLD, size=46, color_key="accent", bold=False),
+        TextBlock(field="t_opinion", font=FONT_LABEL, size=44, color_key="secondary", bold=False),
+    ],
+    font_channel_label=FONT_LABEL,
+    music_glob="music/*.mp3",
+    layouts=LAYOUTS,
+    palettes=PALETTES,
+    watermark_handle="@DivineMantraSangam",
+    logo_path=str(CHANNEL_DIR / "assets" / "logo.png"), logo_width=210, logo_y=240,
+    photo_text_h=1000, photo_text_bottom=1385, safe_bottom=1385, safe_top=480, text_max_w=780,
+    photo_shade_from=420, photo_shade_alpha=0.88,
+)

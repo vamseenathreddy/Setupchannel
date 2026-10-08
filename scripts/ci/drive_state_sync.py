@@ -204,6 +204,8 @@ STATE_FILES = [
     "mantra_sangam_rahu_state.json",  # Hindi timing Shorts (3/day); MUST be pre-created containing {}
     "mantra_sangam_shubh_state.json",
     "mantra_sangam_durm_state.json",
+    "mantra_sangam_purana_state.json",
+    "mantra_sangam_rashi_state.json",
     "jesus_quiz_state.json",  # evening Bible Quiz Short (shares youtube_token_jesus.json); MUST be pre-created containing {}
     "youtube_token_infoshorts.json",
     "infoshorts_state.json",
