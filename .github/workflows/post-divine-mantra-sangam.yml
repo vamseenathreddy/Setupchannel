@@ -44,6 +44,9 @@ on:
         default: ''
   schedule:
     - cron: "30 3 * * *"  # 09:00 IST
+    - cron: "0 4 * * *"  # extra ping (gate posts on the first one past the target minute)
+    - cron: "30 4 * * *"  # extra ping (gate posts on the first one past the target minute)
+    - cron: "0 5 * * *"  # extra ping (gate posts on the first one past the target minute)
     - cron: "25 5 * * *"  # 10:55 IST, late safety net
 
 concurrency:
