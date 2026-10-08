@@ -44,3 +44,32 @@ RENDER_CFG = ChannelConfig(
 
 # Mon=0..Sun=6. mantra/quote/aarti rotate; Monday (Shiva) and Thursday get mantra emphasis via content choice.
 ROTATION = {0: "mantra", 1: "quote", 2: "mantra", 3: "aarti", 4: "quote", 5: "mantra", 6: "aarti"}
+
+
+# ---- Daily timing Shorts (Hindi version of Mahanavi's Rahu Kalam / Shubha Ghadiyalu / Durmuhurtham) ----
+FONT_HI_BOLD = REPO_ROOT / "channels/engine/assets/fonts/Hind-Bold.ttf"
+TIMING_CFG = ChannelConfig(
+    channel_name="Divine Mantra Sangam",
+    assets_dir=CHANNEL_DIR / "assets",
+    blocks=[
+        TextBlock(field="t_date", font=FONT_LABEL, size=48, color_key="secondary", bold=False),
+        TextBlock(field="t_title", font=FONT_HI, size=116, color_key="primary", bold=True),
+        TextBlock(field="t_label", font=FONT_LABEL, size=56, color_key="accent", bold=False),
+        TextBlock(field="t_time", font=FONT_HI_BOLD, size=84, color_key="secondary", bold=False),
+        TextBlock(field="t_place", font=FONT_LABEL, size=38, color_key="accent", bold=False),
+        TextBlock(field="t_note", font=FONT_LABEL, size=50, color_key="primary", bold=False),
+        TextBlock(field="t_mantra_label", font=FONT_LABEL, size=46, color_key="accent", bold=False),
+        TextBlock(field="t_mantra", font=FONT_HI, size=64, color_key="primary", bold=False),
+        TextBlock(field="t_other", font=FONT_LABEL, size=40, color_key="secondary", bold=False),
+        TextBlock(field="t_comment", font=FONT_LABEL, size=44, color_key="primary", bold=False),
+        TextBlock(field="t_sub", font=FONT_HI_BOLD, size=48, color_key="accent", bold=False),
+        TextBlock(field="t_opinion", font=FONT_LABEL, size=44, color_key="secondary", bold=False),
+    ],
+    font_channel_label=FONT_LABEL,
+    music_glob="music/*.mp3",
+    layouts=LAYOUTS,
+    palettes=PALETTES,
+    watermark_handle="@DivineMantraSangam",
+    photo_text_h=1000, photo_text_bottom=1385, safe_bottom=1385, safe_top=240, text_max_w=780,
+    photo_shade_from=420, photo_shade_alpha=0.88,
+)

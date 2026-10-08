@@ -201,6 +201,9 @@ STATE_FILES = [
     # run for that channel), and a file containing just "{}" for each "*_state.json".
     "youtube_token_jesus.json",
     "jesus_state.json",
+    "mantra_sangam_rahu_state.json",  # Hindi timing Shorts (3/day); MUST be pre-created containing {}
+    "mantra_sangam_shubh_state.json",
+    "mantra_sangam_durm_state.json",
     "jesus_quiz_state.json",  # evening Bible Quiz Short (shares youtube_token_jesus.json); MUST be pre-created containing {}
     "youtube_token_infoshorts.json",
     "infoshorts_state.json",

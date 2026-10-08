@@ -1,0 +1,124 @@
+name: Post Divine Mantra Sangam Rahu Kaal Short
+
+# Hindi daily timing Short (rahu) for Divine Mantra Sangam; times computed locally (Swiss Ephemeris, no API).
+# Posts UNLISTED by default until the channel owner approves. Needs data/youtube_token_mantra_sangam.json
+# to act as the Divine Mantra Sangam channel (the pipeline refuses to post to any other channel).
+on:
+  workflow_dispatch:
+    inputs:
+      public:
+        description: "Upload as public. Uncheck for an unlisted test/review run."
+        required: false
+        type: boolean
+        default: false
+      bypass_gate:
+        description: >-
+          Post immediately, ignoring the 05:30-06:10 IST window and today's already-posted
+          marker. For manual testing/review runs only.
+        required: false
+        type: boolean
+        default: false
+      force_row:
+        description: "Force a specific content row id instead of the normal rotation. Leave blank for normal behavior."
+        required: false
+        default: ''
+  # schedule DISABLED until the Divine Mantra Sangam channel is connected (the saved token currently acts as
+  # another channel and the pipeline refuses to post). To enable, remove the '#' from these lines:
+  # schedule:
+  # - cron: "0 0 * * *"
+  # - cron: "30 0 * * *"
+  # - cron: "0 1 * * *"
+  # - cron: "30 1 * * *"
+  # - cron: "0 2 * * *"
+    # several pings inside the window: the gate posts on the first one past the day's target minute
+
+concurrency:
+  group: post-mantra-sangam-rahu
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  post-mantra-sangam-rahu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync + gate
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Decide whether this call should post today
+        id: gate
+        env:
+          STATE_FILE: data/mantra_sangam_rahu_state.json
+          FORCE_POST: ${{ inputs.bypass_gate && 'true' || 'false' }}
+        run: TIMING_KIND=rahu python -m channels.mantra_sangam.scripts.ci.gate_timings
+
+      - name: Install ffmpeg + text shaping libs
+        if: steps.gate.outputs.post == 'true'
+        run: |
+          bash scripts/ci/apt_install.sh ffmpeg libraqm0 libfribidi0 libharfbuzz0b
+
+      - name: Install full Python dependencies
+        if: steps.gate.outputs.post == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Run Divine Mantra Sangam timing pipeline
+        id: pipeline
+        if: steps.gate.outputs.post == 'true'
+        env:
+          STATE_FILE: data/mantra_sangam_rahu_state.json
+          MAHANAVI_MANTRA_SANGAM_YOUTUBE_TOKEN_FILE: ./data/youtube_token_mantra_sangam.json
+          MAHANAVI_MANTRA_SANGAM_BLOGGER_BLOG_ID: ${{ secrets.MAHANAVI_MANTRA_SANGAM_BLOGGER_BLOG_ID }}
+          CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
+        run: |
+          ARGS=""
+          if [ "${{ inputs.public }}" = "true" ]; then
+            ARGS="$ARGS --public"
+          fi
+          if [ -n "${{ inputs.force_row }}" ]; then
+            ARGS="$ARGS --row ${{ inputs.force_row }}"
+          fi
+          TIMING_KIND=rahu python3 -m channels.mantra_sangam.scripts.post_timings $ARGS
+
+      - name: Push state to Drive (includes advanced rotation + any refreshed token)
+        if: always() && steps.gate.outputs.post == 'true'
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py push
+
+      - name: Upload run output as artifact (debugging)
+        if: steps.gate.outputs.post == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mantra-sangam-rahu-run-${{ github.run_id }}
+          path: |
+            out/short.mp4
+            out/meta.json
+            out/captions_*.srt
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/ci/notify_failure.py "Post Divine Mantra Sangam Rahu Kaal Short"

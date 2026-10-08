@@ -42,12 +42,14 @@ on:
         description: "Force a specific content row id instead of the normal rotation. Leave blank for normal behavior."
         required: false
         default: ''
-  schedule:
-    - cron: "30 3 * * *"  # 09:00 IST
-    - cron: "0 4 * * *"  # extra ping (gate posts on the first one past the target minute)
-    - cron: "30 4 * * *"  # extra ping (gate posts on the first one past the target minute)
-    - cron: "0 5 * * *"  # extra ping (gate posts on the first one past the target minute)
-    - cron: "25 5 * * *"  # 10:55 IST, late safety net
+  # schedule DISABLED until the Divine Mantra Sangam channel is connected (the saved token currently acts as
+  # another channel and the pipeline refuses to post). To enable, remove the '#' from these lines:
+  # schedule:
+  # - cron: "30 3 * * *"  # 09:00 IST
+  # - cron: "0 4 * * *"  # extra ping (gate posts on the first one past the target minute)
+  # - cron: "30 4 * * *"  # extra ping (gate posts on the first one past the target minute)
+  # - cron: "0 5 * * *"  # extra ping (gate posts on the first one past the target minute)
+  # - cron: "25 5 * * *"  # 10:55 IST, late safety net
 
 concurrency:
   group: post-divine-mantra-sangam

@@ -19,6 +19,7 @@ def main():
     settings = get_settings()
     pipeline = ChannelPipeline(
         channel_key="mantra_sangam",
+        expected_channel="Mantra Sangam",
         content_csv=CHANNEL_DIR / "data" / "content.csv",
         special_csv=None,
         render_cfg=channel_config.RENDER_CFG,
