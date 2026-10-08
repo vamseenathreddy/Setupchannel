@@ -13,7 +13,7 @@ on:
         default: false
       bypass_gate:
         description: >-
-          Post immediately, ignoring the 04:00-04:40 IST window and today's already-posted
+          Post immediately, ignoring the posting window and today's already-posted
           marker. For manual testing/review runs only.
         required: false
         type: boolean
@@ -22,15 +22,12 @@ on:
         description: "Force a specific content row id instead of the normal rotation. Leave blank for normal behavior."
         required: false
         default: ''
-  # schedule DISABLED until the Divine Mantra Sangam channel is connected (the saved token currently acts as
-  # another channel and the pipeline refuses to post). To enable, remove the '#' from these lines:
-  # schedule:
-  # - cron: "30 22 * * *"
-  # - cron: "0 23 * * *"
-  # - cron: "30 23 * * *"
-  # - cron: "0 0 * * *"
-  # - cron: "30 0 * * *"
-    # several pings inside the window: the gate posts on the first one past the day's target minute
+  # Same IST windows as Mahanavi Spirituals; several pings per window, the gate posts on the first one past the day's target minute.
+  schedule:
+  - cron: "40 19 * * *"
+  - cron: "50 19 * * *"
+  - cron: "0 20 * * *"
+  - cron: "15 20 * * *"
 
 concurrency:
   group: post-mantra-sangam-shubh

@@ -38,6 +38,7 @@ RENDER_CFG = ChannelConfig(
     ],
     font_channel_label=FONT_LABEL,
     music_glob="music/*.mp3",
+    music_rotate=True,
     layouts=LAYOUTS,
     palettes=PALETTES,
 )
@@ -63,6 +64,7 @@ TIMING_CFG = ChannelConfig(
     ],
     font_channel_label=FONT_LABEL,
     music_glob="music/*.mp3",
+    music_rotate=True,
     layouts=LAYOUTS,
     palettes=PALETTES,
     watermark_handle="@DivineMantraSangam",
@@ -87,6 +89,7 @@ SERIES_CFG = ChannelConfig(
     ],
     font_channel_label=FONT_LABEL,
     music_glob="music/*.mp3",
+    music_rotate=True,
     layouts=LAYOUTS,
     palettes=PALETTES,
     watermark_handle="@DivineMantraSangam",

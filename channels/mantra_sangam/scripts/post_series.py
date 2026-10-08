@@ -2,6 +2,7 @@
 
   SERIES_KIND=purana python -m channels.mantra_sangam.scripts.post_series [--dry-run] [--public]
 """
+import dataclasses
 import os
 import sys
 
@@ -26,7 +27,7 @@ def main():
         channel_key=f"mantra_{kind}",
         expected_channel="Mantra Sangam",
         fetch_row=series.fetch_row_for(kind),
-        render_cfg=channel_config.SERIES_CFG,
+        render_cfg=dataclasses.replace(channel_config.SERIES_CFG, music_offset={"purana": 7, "rashi": 9}[kind]),
         metadata_bundle=metadata_series.bundle,
         metadata_captions=metadata_series.captions,
         youtube_token_file=settings.mantra_sangam_youtube_token_file,

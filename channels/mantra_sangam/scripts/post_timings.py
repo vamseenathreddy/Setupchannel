@@ -25,7 +25,7 @@ def main():
         channel_key={"rahu": "mantra_rahu", "shubh": "mantra_shubh", "durm": "mantra_durm"}[kind],
         expected_channel="Mantra Sangam",
         fetch_row=timings.fetch_row_for(kind),
-        render_cfg=channel_config.TIMING_CFG,
+        render_cfg=dataclasses.replace(channel_config.TIMING_CFG, music_offset={"rahu": 0, "shubh": 3, "durm": 5}[kind]),
         metadata_bundle=metadata_timings.bundle,
         metadata_captions=metadata_timings.captions,
         youtube_token_file=settings.mantra_sangam_youtube_token_file,
