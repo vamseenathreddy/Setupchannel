@@ -87,6 +87,7 @@ SERIES_LABEL_FONT_FRAC = 0.040
 TITLE_FONT_FRAC = 0.072
 STORY_START_FONT_FRAC = 0.052   # starting size the auto-fit shrinks DOWN from
 STORY_MIN_FONT_FRAC = 0.030     # legibility floor -- see module docstring
+STORY_COMFORT_FONT_FRAC = 0.036  # footer decorations are dropped before the story shrinks below this
 MORAL_FONT_FRAC = 0.042
 SOURCE_FONT_FRAC = 0.030
 SUBSCRIBE_FONT_FRAC = 0.038
@@ -292,19 +293,38 @@ class PuranaShortCardRenderer:
             opinion_h = int(opinion_font.size * 1.15)
             opinion_top = footer_bottom - opinion_h
             subscribe_top = opinion_top - int(height * 0.012) - subscribe_h
-            icon_row_top = subscribe_top - block_gap - icon_size if card.icon_paths else subscribe_top
-            source_top = icon_row_top - block_gap - source_h
-            moral_top = source_top - int(block_gap * 0.6) - moral_h
-
             story_box_top = (
                 content_top + invocation_h + block_gap + series_h + block_gap + title_h + block_gap
             )
-            story_box_bottom = moral_top - block_gap
-            story_box_height = max(story_box_bottom - story_box_top, int(height * 0.1))
 
-            story_font, story_lines, story_block_height = self._fit_paragraph_to_box(
-                draw, card.story.story_te, max_width=content_width, max_height=story_box_height,
-            )
+            # Long stories (festival specials) used to overflow into the moral/source lines. The footer
+            # now gives up its decorations in stages (icon row, then source line) until the story fits
+            # at a comfortable size; whatever layout wins is the one drawn, so nothing can overlap.
+            best = None
+            for show_icons, show_source in (
+                (bool(card.icon_paths), True), (False, True), (False, False),
+            ):
+                icon_row_top = subscribe_top - block_gap - icon_size if show_icons else subscribe_top
+                if show_source:
+                    source_top = icon_row_top - block_gap - source_h
+                    moral_top = source_top - int(block_gap * 0.6) - moral_h
+                else:
+                    source_top = None
+                    moral_top = icon_row_top - block_gap - moral_h
+                story_box_bottom = moral_top - block_gap
+                story_box_height = max(story_box_bottom - story_box_top, int(height * 0.1))
+                fit = self._fit_paragraph_to_box(
+                    draw, card.story.story_te, max_width=content_width, max_height=story_box_height,
+                )
+                cand = (fit, story_box_height, show_icons, show_source, icon_row_top, source_top, moral_top)
+                fits = fit[2] <= story_box_height
+                if fits and fit[0].size >= int(CARD_WIDTH * STORY_COMFORT_FONT_FRAC):
+                    best = cand
+                    break
+                if best is None or (fits, fit[0].size) > (best[0][2] <= best[1], best[0][0].size):
+                    best = cand
+            (story_font, story_lines, story_block_height), story_box_height, show_icons, show_source, \
+                icon_row_top, source_top, moral_top = best
             if story_block_height > story_box_height:
                 logger.warning(
                     "Purana short story '%s' still overflows its box at the font floor "
@@ -329,9 +349,10 @@ class PuranaShortCardRenderer:
             self._draw_paragraph(draw, story_lines, story_font, width, story_top, COLOR_TEXT_LIGHT)
 
             self._draw_centered_line(draw, card.story.moral_te, moral_font, width, moral_top, COLOR_GOLD)
-            self._draw_centered_line(draw, source_line, source_font, width, source_top, COLOR_TEXT_LIGHT)
+            if show_source:
+                self._draw_centered_line(draw, source_line, source_font, width, source_top, COLOR_TEXT_LIGHT)
 
-            if card.icon_paths:
+            if show_icons:
                 self._draw_icon_row(text_layer, card.icon_paths, width, icon_row_top)
 
             self._draw_centered_line(draw, card.subscribe_text, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT)
