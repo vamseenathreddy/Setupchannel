@@ -29,3 +29,14 @@ def test_quiz_title_does_not_reveal_the_reference():
     v = bank.load_verses()[0]
     assert v["ref_en"] not in metadata.title(bank.quiz_row(v))
     assert v["ref_en"] in metadata.title(bank.quote_row(v))
+
+
+def test_trivia_rows_valid():
+    from channels.jesus import bank, metadata
+    qs = bank.load_trivia()
+    assert len(qs) >= 30
+    for q in qs:
+        assert q["answer"] in q["options"] and len(set(q["options"])) == 4
+        r = bank.trivia_row(q)
+        assert r[f"opt_{r['correct_letter'].lower()}"].endswith(q["answer"])
+        assert len(metadata.title(r)) <= 100
