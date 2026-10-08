@@ -114,7 +114,10 @@ def build_purana_concept_seo(
     """Build title/description/hashtags for one Purana Concept Short."""
     pick_index = for_date_ordinal + concept_index
     templates = _TITLE_TEMPLATES[concept.concept_type]
-    title = templates[pick_index % len(templates)].format(title=concept.title_te)
+    _tpl = templates[pick_index % len(templates)]
+    title = _tpl.format(title=f"{concept.title_te} ({concept.title_en})")
+    if len(title) > 95:  # keep the title under YouTube's limit: drop the English name, templates still carry English
+        title = _tpl.format(title=concept.title_te)
 
     hook_te, hook_en = _pick_rotating_pair(_HOOKS_TE, _HOOKS_EN, pick_index)
     cta_te, cta_en = _pick_rotating_pair(_CTAS_TE, _CTAS_EN, pick_index + 1)

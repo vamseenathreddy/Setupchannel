@@ -158,7 +158,7 @@ def build_rashi_mantra_seo(
     a week to start, prioritize Mondays and Saturdays.
     """
     rashi_pick_index = for_date_ordinal + rashi_index
-    title = _pick_rotating(_TITLE_TEMPLATES, rashi_pick_index).format(rashi=content.name_te)
+    title = _pick_rotating(_TITLE_TEMPLATES, rashi_pick_index).format(rashi=f"{content.name_te} {content.name_en}")
 
     hook_te, hook_en = _pick_rotating_pair(_HOOKS_TE, _HOOKS_EN, rashi_pick_index)
     cta_te, cta_en = _pick_rotating_pair(_CTAS_TE, _CTAS_EN, rashi_pick_index + 1)

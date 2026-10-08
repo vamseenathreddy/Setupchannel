@@ -88,7 +88,11 @@ def _pick_rotating_pair(pool_te: list[str], pool_en: list[str], index: int) -> t
 def build_purana_short_seo(story: PuranaShortStory, story_index: int, for_date_ordinal: int) -> ShortSeoContent:
     """Build title/description/hashtags for one Purana Story Short."""
     pick_index = for_date_ordinal + story_index
-    title = _pick_rotating(_TITLE_TEMPLATES, pick_index).format(title=story.title_te)
+    _tpl = _pick_rotating(_TITLE_TEMPLATES, pick_index)
+    # Telugu name plus its English name; fall back to the Telugu name alone if that passes 95 chars
+    title = _tpl.format(title=f"{story.title_te} ({story.title_en})")
+    if len(title) > 95:
+        title = _tpl.format(title=story.title_te)
 
     hook_te, hook_en = _pick_rotating_pair(_HOOKS_TE, _HOOKS_EN, pick_index)
     cta_te, cta_en = _pick_rotating_pair(_CTAS_TE, _CTAS_EN, pick_index + 1)
