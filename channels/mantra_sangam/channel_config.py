@@ -69,7 +69,7 @@ TIMING_CFG = ChannelConfig(
     palettes=PALETTES,
     watermark_handle="@DivineMantraSangam",
     logo_path=str(CHANNEL_DIR / "assets" / "logo.png"), logo_width=170, logo_y=230,
-    photo_text_h=1000, photo_text_bottom=1385, safe_bottom=1385, safe_top=430, text_max_w=880,
+    photo_text_h=1090, photo_text_bottom=1470, safe_bottom=1470, safe_top=430, text_max_w=880,
     photo_shade_from=420, photo_shade_alpha=0.88,
 )
 
@@ -94,6 +94,6 @@ SERIES_CFG = ChannelConfig(
     palettes=PALETTES,
     watermark_handle="@DivineMantraSangam",
     logo_path=str(CHANNEL_DIR / "assets" / "logo.png"), logo_width=170, logo_y=230,
-    photo_text_h=1000, photo_text_bottom=1385, safe_bottom=1385, safe_top=430, text_max_w=880,
+    photo_text_h=1090, photo_text_bottom=1470, safe_bottom=1470, safe_top=430, text_max_w=880,
     photo_shade_from=420, photo_shade_alpha=0.88,
 )

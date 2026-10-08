@@ -245,8 +245,8 @@ class PuranaShortCardRenderer:
             text_layer = Image.new("RGBA", (width, height), (0, 0, 0, 0))
             draw = ImageDraw.Draw(text_layer)
 
-            content_top = int(height * 0.08)
-            footer_bottom = int(height * 0.68)
+            content_top = int(height * 0.055)   # starts near the top of the phone screen (was 0.08)
+            footer_bottom = int(height * 0.77)  # uses the lower half too (was 0.68); Shorts caption starts ~0.80
 
             invocation_font = self._fit_font_to_width(
                 draw, card.story.invocation_te, max_width=content_width,
