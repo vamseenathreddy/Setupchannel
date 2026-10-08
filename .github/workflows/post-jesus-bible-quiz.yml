@@ -120,7 +120,8 @@ jobs:
           if [ -n "${{ inputs.force_row }}" ]; then
             ARGS="$ARGS --row ${{ inputs.force_row }}"
           fi
-          python3 -m channels.jesus.scripts.post_quiz $ARGS
+          set -o pipefail
+          python3 -m channels.jesus.scripts.post_quiz $ARGS 2>&1 | tee run.log || { echo "::error::$(tail -n 6 run.log | tr '\n' ' ' | cut -c1-900)"; exit 1; }
 
       - name: Push state to Drive (includes advanced rotation + any refreshed token)
         if: always() && steps.gate.outputs.post == 'true'
