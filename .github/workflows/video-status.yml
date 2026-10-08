@@ -1,0 +1,50 @@
+name: Video Status (One-Off Utility)
+
+# Read-only. Prints upload/processing status, rejection reasons and view counts for the given video ids.
+on:
+  workflow_dispatch:
+    inputs:
+      video_ids:
+        description: "Space separated YouTube video ids"
+        required: true
+      token_file:
+        description: "Saved token for the channel that owns them"
+        required: false
+        default: youtube_token.json
+
+permissions:
+  contents: read
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+      - run: pip install google-auth google-api-python-client
+      - name: Restore state from Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+      - name: Install full Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+      - name: Read status
+        env:
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/${{ inputs.token_file || 'youtube_token.json' }}
+        run: |
+          set -o pipefail
+          python3 scripts/ci/video_status.py ${{ inputs.video_ids }} 2>&1 | tee data/recent_uploads_log.txt
+      - name: Push output log to Drive
+        if: always()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/push_drive_asset.py data/recent_uploads_log.txt recent_uploads_log.txt
