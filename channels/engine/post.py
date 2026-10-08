@@ -61,7 +61,7 @@ def run(ch: ChannelPipeline, argv=None) -> int:
     now = dt.datetime.now(IST)
     date = dt.date.fromisoformat(args.date) if args.date else now.date()
     st = state_mod.load()
-    if date.isoformat() in st["posted"] and not args.dry_run:
+    if date.isoformat() in st["posted"] and not args.dry_run and os.environ.get("FORCE_POST") != "true":
         print(f"Already posted for {date}. Nothing to do.")
         return 0
 

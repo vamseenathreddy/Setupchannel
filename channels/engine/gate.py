@@ -31,7 +31,7 @@ def decide(channel_key, now, state, window_start, window_minutes, latest, force=
     date = now.date()
     iso = date.isoformat()
     tgt = target_time(channel_key, date, window_start, window_minutes)
-    if iso in state.get("posted", {}):
+    if iso in state.get("posted", {}) and not force:
         return False, f"DECISION: skip, already done ({state['posted'][iso]['row']} -> {state['posted'][iso]['video_id']})", iso
     if force:
         return True, f"DECISION: post {channel_key} (forced)", iso
