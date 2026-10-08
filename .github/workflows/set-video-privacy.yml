@@ -9,6 +9,10 @@ on:
         description: "public | unlisted | private"
         required: true
         default: public
+      token_file:
+        description: "Saved token for the channel that owns the video (youtube_token.json, youtube_token_ramana.json, ...)"
+        required: false
+        default: youtube_token.json
 permissions:
   contents: read
 jobs:
@@ -34,5 +38,5 @@ jobs:
           pip install -e .
       - name: Set privacy
         env:
-          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/${{ inputs.token_file || 'youtube_token.json' }}
         run: python3 scripts/ci/set_video_privacy.py "${{ inputs.video_id }}" "${{ inputs.privacy }}"
