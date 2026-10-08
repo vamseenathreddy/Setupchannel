@@ -107,6 +107,7 @@ jobs:
         if: steps.gate.outputs.post == 'true'
         env:
           STATE_FILE: data/jesus_quiz_state.json
+          FORCE_POST: ${{ inputs.bypass_gate && 'true' || 'false' }}
           MAHANAVI_JESUS_YOUTUBE_TOKEN_FILE: ./data/youtube_token_jesus.json
           MAHANAVI_JESUS_QUIZ_PLAYLIST_ID: ${{ secrets.MAHANAVI_JESUS_QUIZ_PLAYLIST_ID }}
           MAHANAVI_JESUS_BLOGGER_BLOG_ID: ${{ secrets.MAHANAVI_JESUS_BLOGGER_BLOG_ID }}
