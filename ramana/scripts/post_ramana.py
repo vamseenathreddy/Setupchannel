@@ -40,13 +40,8 @@ def main():
     ap.add_argument("--date", help="YYYY-MM-DD (IST). Default: today")
     ap.add_argument("--row", help="force a content row id, e.g. q001 (used for the very first post)")
     ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument(
-        "--public", action="store_true",
-        help=(
-            "Upload as public instead of private/draft. Omit this until you've reviewed the "
-            "result yourself in YouTube Studio and manually set it to Public (or Unlisted)."
-        ),
-    )
+    ap.add_argument("--public", action="store_true", help="kept for compatibility; public is now the default")
+    ap.add_argument("--private", action="store_true", help="upload as a private draft instead of public")
     ap.add_argument("--slot", choices=("quote", "qa", "life"), default=os.environ.get("RAMANA_SLOT", "quote"),
                     help="which of the day's three Shorts this is (content category); default quote")
     ap.add_argument("--out", default="out")
@@ -86,15 +81,10 @@ def main():
 
     settings = get_settings()
     yt = upload.service(settings.ramana_youtube_token_file)
-    # "private" (not "unlisted") by default -- added 2026-10-07 per owner's explicit request
-    # to review every Ramana short in Studio before it's reachable by anyone at all, not just
-    # before it's public. Pass --public once a short is reviewed and ready to go live.
-    privacy_status = "public" if args.public else "private"
-    if not args.public:
-        print(
-            "Uploading as PRIVATE (draft, default). Review it in YouTube Studio and switch it "
-            "to Public (or Unlisted) yourself once you're happy, or pass --public to skip the draft step."
-        )
+    # Public by default since 2026-10-08 (owner approved the quotes, background and music).
+    # Pass --private for a draft test run.
+    privacy_status = "private" if args.private and not args.public else "public"
+    print(f"Uploading as {privacy_status.upper()}.")
     video_id = upload.upload_video(yt, str(out / "short.mp4"), meta["title"], meta["description"], meta["tags"],
                                     meta["localizations"], privacy_status=privacy_status)
     print(f"UPLOADED ({privacy_status}) {video_id}")
