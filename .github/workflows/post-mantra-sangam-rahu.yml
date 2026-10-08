@@ -93,7 +93,10 @@ jobs:
           if [ -n "${{ inputs.force_row }}" ]; then
             ARGS="$ARGS --row ${{ inputs.force_row }}"
           fi
-          TIMING_KIND=rahu python3 -m channels.mantra_sangam.scripts.post_timings $ARGS
+          TIMING_KIND=rahu python3 -m channels.mantra_sangam.scripts.post_timings $ARGS 2>&1 | tee run.log
+          rc=${PIPESTATUS[0]}
+          if [ "$rc" -ne 0 ]; then echo "::error::$(tail -c 900 run.log | tr '\n' ' ')"; fi
+          exit $rc
 
       - name: Push state to Drive (includes advanced rotation + any refreshed token)
         if: always() && steps.gate.outputs.post == 'true'
