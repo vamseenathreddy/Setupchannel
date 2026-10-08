@@ -31,16 +31,16 @@ _ROTATING_POOL = [
 # same researched pattern used for the Rashi Mantra titles -- curiosity
 # outperforms a flat statement for this kind of Shorts content.
 _TITLE_TEMPLATES = [
-    "{title} కథ తెలుసా?",
-    "{title} - ఈ కథ వినండి",
+    "Purana Story | {title} కథ తెలుసా?",
+    "Purana Story | {title} - ఈ కథ వినండి",
     "{title} | Purana Story",
-    "{title} - పూర్తి కథ ఇదే",
-    "ఈ {title} కథ మీకు తెలుసా?",
-    "{title} - నీతి ఏంటో తెలుసా?",
+    "Purana Story | {title} - పూర్తి కథ ఇదే",
+    "Purana Story | ఈ {title} కథ మీకు తెలుసా?",
+    "Purana Story | {title} - నీతి ఏంటో తెలుసా?",
     "{title} Story - Watch Till End",
-    "{title} - పురాణాల్లో ఈ కథ",
-    "{title} కథ వింటే గూస్‌బంప్స్!",
-    "{title} - ఈ నీతి మర్చిపోకండి",
+    "Purana Story | {title} - పురాణాల్లో ఈ కథ",
+    "Purana Story | {title} కథ వింటే గూస్‌బంప్స్!",
+    "Purana Story | {title} - ఈ నీతి మర్చిపోకండి",
 ]
 
 _HOOKS_TE = [

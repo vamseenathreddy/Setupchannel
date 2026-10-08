@@ -27,12 +27,12 @@ _ROTATING_POOL = [
 # below builds -- kept separate from the template so chapter/verse stay
 # numerals (easier to scan in a title) rather than spelled out.
 _TITLE_TEMPLATES = [
-    "భగవద్గీత {ref} - అర్థం తెలుసా?",
+    "Bhagavad Gita | భగవద్గీత {ref} - అర్థం తెలుసా?",
     "గీతా శ్లోకం {ref} | Bhagavad Gita",
-    "నేటి గీతా సందేశం - {ref}",
-    "{ref} - ఈ శ్లోకం జీవితాన్ని మారుస్తుంది",
-    "కృష్ణుడి మాట - {ref}",
-    "భగవద్గీత {ref} - వినండి, అర్థం చేసుకోండి",
+    "Bhagavad Gita | నేటి గీతా సందేశం - {ref}",
+    "Bhagavad Gita | {ref} - ఈ శ్లోకం జీవితాన్ని మారుస్తుంది",
+    "Bhagavad Gita | కృష్ణుడి మాట - {ref}",
+    "Bhagavad Gita | భగవద్గీత {ref} - వినండి, అర్థం చేసుకోండి",
 ]
 
 _HOOKS_TE = [

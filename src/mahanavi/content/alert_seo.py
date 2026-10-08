@@ -169,7 +169,7 @@ _DURMUHURTHAM_TITLES = [
     "Avoid This Time - దుర్ముహూర్తం కాలం",
     "ఈరోజు దుర్ముహూర్తం - Avoid This Time",
     "Durmuhurtham Alert - ఈరోజు సమయం",
-    "జాగ్రత్త! దుర్ముహూర్తం ఈరోజు సమయం",
+    "Durmuhurtham | జాగ్రత్త! దుర్ముహూర్తం ఈరోజు సమయం",
     "Today's Durmuhurtham - ఈరోజు వేళ ఇదే",
     "దుర్ముహూర్తం Timing - ఈరోజు జాగ్రత్త!",
     "Durmuhurtham Today - Don't Start Anything",
