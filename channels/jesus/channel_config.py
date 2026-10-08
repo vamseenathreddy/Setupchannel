@@ -77,19 +77,19 @@ QUOTE_CFG = ChannelConfig(
 QUIZ_CFG = ChannelConfig(
     channel_name="Jesus Worship Waves",
     blocks=[
-        TextBlock(field="quiz_label", font=FONT_EN_BOLD, size=56, color_key="accent", bold=True),
-        TextBlock(field="text_primary", font=FONT_EN_BOLD, size=70, color_key="primary", bold=True),
-        TextBlock(field="text_secondary", font=FONT_TE, size=70, color_key="secondary", bold=False,
-                  strip_chars=QUOTES),
-        TextBlock(field="question_en", font=FONT_EN_BOLD, size=54, color_key="accent", bold=True),
-        TextBlock(field="question_te", font=FONT_TE, size=56, color_key="accent", bold=False),
-        TextBlock(field="opts_ab", font=FONT_EN_BOLD, size=58, color_key="primary", bold=True),
-        TextBlock(field="opts_cd", font=FONT_EN_BOLD, size=58, color_key="primary", bold=True),
-        TextBlock(field="sub_en", font=FONT_EN_BOLD, size=44, color_key="accent", bold=True),
-        TextBlock(field="sub_te", font=FONT_TE, size=48, color_key="accent", bold=False),
+        TextBlock(field="quiz_label", font=FONT_EN_BOLD, size=60, color_key="accent", bold=True),
+        TextBlock(field="question_en", font=FONT_EN_BOLD, size=84, color_key="primary", bold=True),
+        TextBlock(field="question_te", font=FONT_TE, size=84, color_key="secondary", bold=False),
+        TextBlock(field="opt_a", font=FONT_EN_BOLD, size=76, color_key="primary", bold=True),
+        TextBlock(field="opt_b", font=FONT_EN_BOLD, size=76, color_key="primary", bold=True),
+        TextBlock(field="opt_c", font=FONT_EN_BOLD, size=76, color_key="primary", bold=True),
+        TextBlock(field="opt_d", font=FONT_EN_BOLD, size=76, color_key="primary", bold=True),
+        TextBlock(field="sub_en", font=FONT_EN_BOLD, size=48, color_key="accent", bold=True),
+        TextBlock(field="sub_te", font=FONT_TE, size=52, color_key="accent", bold=False),
     ],
     music_offset=1,
-    **_COMMON,
+    **{**_COMMON, "photo_text_h": 1230, "safe_top": 230, "photo_text_bottom": 1400, "safe_bottom": 1400,
+       "text_max_w": 760, "photo_shade_from": 200},
 )
 
 # Kept for modules that still import the old name.

@@ -71,6 +71,41 @@ def quiz_row(v: dict) -> dict:
     return row
 
 
+TRIVIA = Path(__file__).resolve().parent / "data" / "quiz_bank.json"
+
+
+def load_trivia() -> list[dict]:
+    return json.loads(TRIVIA.read_text(encoding="utf-8"))["questions"]
+
+
+def next_trivia(used_ids) -> dict:
+    qs = load_trivia()
+    for q in qs:
+        if q["id"] not in used_ids:
+            return q
+    return qs[len(used_ids) % len(qs)]
+
+
+def trivia_row(q: dict) -> dict:
+    """Real Bible question (who/what/how many) with 4 English options; stable shuffle per id."""
+    opts = list(q["options"])
+    random.Random(q["id"]).shuffle(opts)
+    letters = "ABCD"
+    row = {
+        "id": q["id"], "category": "quiz", "special": "", "source": q["ref_en"],
+        "quiz_label": "BIBLE QUIZ",
+        "question_en": q["q_en"], "question_te": q["q_te"],
+        "text_primary": q["q_en"], "text_secondary": q["q_te"],
+        "answer": q["answer"], "answer_te": q["answer_te"], "ref_en": q["ref_en"], "ref_te": q["ref_te"],
+        "sub_en": "Comment your answer!", "sub_te": "మీ సమాధానం కామెంట్ చేయండి!",
+        "theme": "",
+    }
+    for letter, opt in zip(letters, opts):
+        row[f"opt_{letter.lower()}"] = f"{letter}) {opt}"
+    row["correct_letter"] = letters[opts.index(q["answer"])]
+    return row
+
+
 PLAYLISTS = Path(__file__).resolve().parent / "data" / "playlists.json"
 
 

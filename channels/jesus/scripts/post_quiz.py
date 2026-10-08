@@ -20,14 +20,8 @@ QUOTE_STATE = Path("data") / "jesus_state.json"
 IST = ZoneInfo("Asia/Kolkata")
 
 
-def fetch_row(_used_ids):
-    today = dt.datetime.now(IST).date().isoformat()
-    posted = state_mod.load(QUOTE_STATE)["posted"].get(today)
-    if not posted:
-        print("This morning's Bible Quote Short did not post -- no quiz today.")
-        return None
-    v = bank.by_id(posted["row"])
-    return bank.quiz_row(v) if v else None
+def fetch_row(used_ids):
+    return bank.trivia_row(bank.next_trivia(used_ids))
 
 
 def main(argv=None):

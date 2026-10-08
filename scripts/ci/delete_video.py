@@ -9,6 +9,27 @@ from mahanavi.exceptions import YouTubeUploadError
 from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
 
 
+def clear_from_playlists(yt, video_id: str) -> int:
+    """Remove the video from every playlist of the channel (deleted Shorts must not linger)."""
+    n, tok = 0, None
+    while True:
+        r = yt.playlists().list(part="id", mine=True, maxResults=50, pageToken=tok).execute()
+        for p in r.get("items", []):
+            ptok = None
+            while True:
+                q = yt.playlistItems().list(part="id", playlistId=p["id"], videoId=video_id,
+                                            maxResults=50, pageToken=ptok).execute()
+                for it in q.get("items", []):
+                    yt.playlistItems().delete(id=it["id"]).execute()
+                    n += 1
+                ptok = q.get("nextPageToken")
+                if not ptok:
+                    break
+        tok = r.get("nextPageToken")
+        if not tok:
+            return n
+
+
 def main() -> int:
     video_id = sys.argv[1]
     expect = sys.argv[2] if len(sys.argv) > 2 else ""
@@ -26,6 +47,8 @@ def main() -> int:
     if expect and expect not in title:
         print("FAILED: title does not match expectation, not deleting", file=sys.stderr)
         return 1
+    removed = clear_from_playlists(yt, video_id)
+    print(f"Removed from {removed} playlist item(s)")
     yt.videos().delete(id=video_id).execute()
     print(f"DELETED {video_id}")
     return 0

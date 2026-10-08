@@ -18,7 +18,6 @@ EXTRA_KEYWORDS = {
 }
 COMMENTS = {
     "quote": "Which part of this verse speaks to you today? Share below. 🙏\nఈ వచనంలో మీ హృదయానికి తాకిన భాగం ఏది? పంచుకోండి. 🙏",
-    "quiz": "Which book and chapter? Type A, B, C or D below! 👇 (Hint: this morning's Short has the answer.)\nమీ సమాధానం A, B, C లేదా D కామెంట్ చేయండి! 👇",
 }
 DISCLOSURE = ("Visuals are digitally created worship artwork. Background music is an original "
               "composition. Scripture English text is public-domain (KJV/WEB).")
@@ -37,9 +36,8 @@ def title(row, special=None):
                      f"{row['ref_en']} | Bible Verse of the Day"):
             if len(cand) <= 100:
                 return cand
-    # quiz title never spoils the reference
-    for cand in (f"Bible Quiz: \"{_short(row['text_primary'], 7)}\" Which book? | బైబిల్ క్విజ్",
-                 "Bible Quiz: Which book and chapter? | బైబిల్ క్విజ్",
+    for cand in (f"Bible Quiz: {row['question_en']} | బైబిల్ క్విజ్",
+                 f"Bible Quiz: {row['question_en']}",
                  "Bible Quiz | బైబిల్ క్విజ్"):
         if len(cand) <= 100:
             return cand
@@ -64,11 +62,9 @@ def description(row, special=None, playlist_url=None, contact=None):
         out += [row["text_primary"], row["text_secondary"], "", row["apply_en"], row["apply_te"], ""]
         out += [f"Source: {row['ref_en']} ({row['ref_te']})", ""]
     else:
-        out += [row["text_primary"], row["text_secondary"], "",
-                "Which book and chapter is this verse from? Comment A, B, C or D.",
-                "ఈ వచనం ఏ పుస్తకం, ఏ అధ్యాయంలోనిది? A, B, C లేదా D కామెంట్ చేయండి.", ""]
+        out += [row["question_en"], row["question_te"], "", "Comment A, B, C or D.", ""]
         out += [row["opt_a"], row["opt_b"], row["opt_c"], row["opt_d"], "",
-                "The answer is in this morning's Bible Quote Short.", ""]
+                f"Answer: {row['correct_letter']}) {row['answer']} ({row['ref_en']}) - see the pinned comment.", ""]
     out += [DISCLOSURE, "", f"Like, share and subscribe to {CHANNEL}: a Bible quote every morning and a Bible quiz every evening."]
     if playlist_url:
         out += [f"Playlist: {playlist_url}"]
@@ -103,7 +99,7 @@ def localizations(row, special=None):
         te_title = f"{row['ref_te']} | నేటి బైబిల్ వచనం | యేసు ఆరాధన"
         te_desc = "\n".join([row["text_secondary"], "", row["apply_te"], "", " ".join(hashtags(row))])
     else:
-        te_title = "బైబిల్ క్విజ్ | ఈ వచనం ఏ పుస్తకంలోనిది? | యేసు ఆరాధన"
+        te_title = f"బైబిల్ క్విజ్ | {row['question_te']} | యేసు ఆరాధన"
         te_desc = "\n".join([row["text_secondary"], "", row["question_te"], "", " ".join(hashtags(row))])
     return {"te": {"title": te_title[:100], "description": te_desc}}
 
@@ -117,6 +113,13 @@ def captions(row):
     return {"en": srt(row["text_primary"]), "te": srt(row["text_secondary"].replace('"', "").replace("'", ""))}
 
 
+def comment(row):
+    if row["category"] == "quote":
+        return COMMENTS["quote"]
+    return (f"Answer: {row['correct_letter']}) {row['answer']} ({row['ref_en']}). Did you get it right? Comment below! 🙏\n"
+            f"సమాధానం: {row['correct_letter']}) {row['answer_te']} ({row['ref_te']}). మీరు సరిగ్గా చెప్పారా? 🙏")
+
+
 def bundle(row, special=None):
     return {"title": title(row), "description": description(row), "tags": tags(row),
-            "localizations": localizations(row), "comment": COMMENTS[row["category"]]}
+            "localizations": localizations(row), "comment": comment(row)}
