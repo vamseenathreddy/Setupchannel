@@ -83,8 +83,7 @@ jobs:
       - name: Install ffmpeg + text shaping libs
         if: steps.gate.outputs.post == 'true'
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y --no-install-recommends ffmpeg libraqm0 libfribidi0 libharfbuzz0b
+          bash scripts/ci/apt_install.sh ffmpeg libraqm0 libfribidi0 libharfbuzz0b
 
       - name: Install full Python dependencies
         if: steps.gate.outputs.post == 'true'

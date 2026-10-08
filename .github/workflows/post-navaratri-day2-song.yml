@@ -51,7 +51,7 @@ jobs:
         run: python scripts/ci/fetch_drive_asset.py navaratri_balatripurasundari_song_02.wav
 
       - name: Install ffmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+        run: bash scripts/ci/apt_install.sh ffmpeg
 
       - name: Install full Python dependencies
         run: |

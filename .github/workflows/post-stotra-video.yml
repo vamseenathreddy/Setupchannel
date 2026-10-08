@@ -50,7 +50,7 @@ jobs:
           python scripts/ci/fetch_drive_asset.py "stotra_${SLUG}.mp3"
           python scripts/ci/fetch_drive_asset.py "stotra_${SLUG}.jpg" || echo "no background image, fallback will be used"
       - name: Install ffmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+        run: bash scripts/ci/apt_install.sh ffmpeg
       - name: Install full Python dependencies
         run: |
           python -m pip install --upgrade pip

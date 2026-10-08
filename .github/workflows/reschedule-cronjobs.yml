@@ -64,7 +64,19 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" != "false" ]; then
             ARGS="--dry-run"
           fi
-          python3 scripts/ci/cronjob_reschedule.py $ARGS
+          set -o pipefail
+          mkdir -p data
+          python3 scripts/ci/cronjob_reschedule.py $ARGS 2>&1 | tee data/reschedule_log.txt
+
+      # Job logs are not readable from the coding session, so the output is also written to Drive.
+      - name: Push reschedule log to Drive
+        if: always()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: |
+          pip install google-auth google-api-python-client
+          python scripts/ci/push_drive_asset.py data/reschedule_log.txt reschedule_log.txt
 
       - name: Notify on failure
         if: failure()

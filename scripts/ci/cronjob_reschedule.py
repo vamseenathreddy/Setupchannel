@@ -235,10 +235,12 @@ def main() -> int:
         if job_id is None:
             print(
                 f"[cronjob-reschedule] {series_key}: no cron-job.org job found matching "
-                f"'{cfg['url_fragment']}' -- skipped",
+                f"'{cfg['url_fragment']}' -- skipped (this series then runs from its GitHub schedule pings only)",
                 file=sys.stderr,
             )
-            exit_code = 1
+            # Not a failure: every gated workflow also has its own GitHub cron pings, and series that were
+            # added without a cron-job.org job (most of the newer channels) were failing this whole run
+            # every night, hiding the real alerts. Only API errors set a failing exit code.
             continue
 
         print(

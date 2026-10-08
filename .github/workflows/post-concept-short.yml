@@ -70,7 +70,7 @@ jobs:
 
       - name: Install ffmpeg
         if: steps.gate.outputs.target == 'post'
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+        run: bash scripts/ci/apt_install.sh ffmpeg
 
       - name: Install full Python dependencies
         if: steps.gate.outputs.target == 'post'
