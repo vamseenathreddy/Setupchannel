@@ -150,7 +150,7 @@ SERIES = {
     # _engine_target_time import above) instead of hand-copying the sha256 formula again.
     # "jesus" / "jesus_quiz" removed 2026-10-10: the three Jesus Shorts now use static 10-minute pings (cronjob_create.py).
     "infoshorts": _engine_series("infoshorts", "post-infoshorts-telugu.yml", 7, 0, 40, 8, 55),
-    "trance_beats": _engine_series("trance_beats", "post-devotional-trance-beats.yml", 19, 0, 40, 20, 55),
+    # "trance_beats" removed 2026-10-09: the three Trance Beats Shorts now use static 10-minute pings (cronjob_create.py).
     "pulse_boosting": _engine_series("pulse_boosting", "post-pulse-boosting.yml", 12, 0, 40, 14, 25),
     "tollywood_news": _engine_series("tollywood_news", "post-tollywood-news.yml", 13, 0, 40, 15, 25),
     "live_hyderabad": _engine_series("live_hyderabad", "post-live-hyderabad.yml", 14, 0, 40, 16, 25),

@@ -43,6 +43,14 @@ TARGETS = [
     ("post-jesus-worship-waves.yml", "Jesus - Bible Quote Short (12-1 AM)", *_every_10(0, 0, 6)),
     ("post-jesus-bible-quiz.yml", "Jesus - Bible Quiz Short (9-10 AM)", *_every_10(9, 0, 6)),
     ("post-jesus-bible-quote-pm.yml", "Jesus - Bible Quote Short 2 (5-6 PM)", *_every_10(17, 0, 6)),
+    # Divine Mantra Sangam (from Sat 10 Oct 2026) and Devotional Trance Beats (2026-10-09): static 10-minute pings.
+    ("post-mantra-sangam-rahu.yml", "Mantra Sangam - Rahu Kaal Short (12 AM)", *_every_10(0, 5, 6)),
+    ("post-mantra-sangam-shubh.yml", "Mantra Sangam - Shubh Muhurat Short (1 AM)", *_every_10(1, 5, 6)),
+    ("post-mantra-sangam-durm.yml", "Mantra Sangam - Durmuhurat Short (2 AM)", *_every_10(2, 5, 6)),
+    ("post-mantra-sangam-purana.yml", "Mantra Sangam - Purana Story Short (5 PM)", *_every_10(17, 0, 6)),
+    ("post-trance-bhagavatam.yml", "Trance Beats - Bhagavatam Short (7 AM)", *_every_10(7, 0, 12)),
+    ("post-trance-mantra.yml", "Trance Beats - Mantra Short (1 PM)", *_every_10(13, 0, 12)),
+    ("post-devotional-trance-beats.yml", "Trance Beats - Gita Short (7 PM)", *_every_10(19, 0, 12)),
 ]
 
 
