@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from mahanavi.config import get_settings
-from mahanavi.content.request_shorts import NARASIMHA, SPECS
+from mahanavi.content.request_shorts import NARASIMHA, SHANI_HI, SHANI_TE, SPECS
 from mahanavi.images.request_card_renderer import SAFE_BOTTOM, SAFE_L, SAFE_R, SAFE_TOP, RequestCardRenderer
 
 
@@ -24,7 +24,7 @@ def test_spec_has_four_mantras_with_beeja_first():
     kinds = [x.kind for x in NARASIMHA.slides]
     assert kinds[0] == "intro" and kinds[-1] == "outro" and kinds.count("mantra") == 4
     first = next(x for x in NARASIMHA.slides if x.kind == "mantra")
-    assert "బీజ" in first.label_te and "నృం" in first.text_te
+    assert "బీజ" in first.label and "నృం" in first.text
     assert NARASIMHA.total_seconds <= 60
     assert SPECS[NARASIMHA.slug] is NARASIMHA
 
@@ -61,3 +61,21 @@ def test_assemble_matches_total_duration(tmp_path: Path):
         ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(video)],
         capture_output=True, text=True, check=True).stdout)
     assert abs(dur - NARASIMHA.total_seconds) < 0.3
+
+
+@pytest.mark.parametrize("spec", [SHANI_TE, SHANI_HI])
+def test_shani_amavasya_specs(spec, tmp_path: Path):
+    assert len(spec.title) <= 100 and len(spec.title_en) <= 100
+    assert spec.hashtags[0] == "#Shorts" and len(spec.hashtags) <= 5
+    assert len(spec.description()) <= 5000 and len(", ".join(spec.tags)) <= 500
+    assert spec.total_seconds <= 60
+    assert "108" in spec.description_te and "9:21" in spec.description_te
+    for s in RequestCardRenderer(get_settings()).render_all(spec, tmp_path):
+        for x0, y0, x1, y1 in s.boxes:
+            assert x0 >= SAFE_L - 4 and x1 <= SAFE_R + 4 and y0 >= SAFE_TOP and y1 <= SAFE_BOTTOM, (s.path.name, x0, y0, x1, y1)
+
+
+def test_hindi_spec_posts_to_mantra_sangam():
+    assert SHANI_HI.lang == "hi" and SHANI_HI.expected_channel == "Mantra Sangam"
+    assert SHANI_HI.token_file == "youtube_token_mantra_sangam.json"
+    assert SHANI_TE.token_file == "youtube_token.json"

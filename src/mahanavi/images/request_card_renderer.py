@@ -16,7 +16,6 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 from mahanavi.config import Settings
 from mahanavi.content.request_shorts import RequestShort, Slide
 from mahanavi.images.fonts import FontManager
-from mahanavi.images.opinion_line import OPINION_TE
 from mahanavi.video.watermark import bake_watermark
 
 W, H = 1080, 1920
@@ -24,7 +23,7 @@ SAFE_L, SAFE_R, SAFE_TOP, SAFE_BOTTOM = 150, 930, 230, 1385
 TEXT_W = SAFE_R - SAFE_L
 GOLD, CREAM, SOFT = (240, 196, 92), (255, 246, 226), (214, 206, 224)
 STACK_TOP, STACK_H = 560, 700   # mantra / transliteration / meaning band (ends well above the footer tag at 1318)
-SUBSCRIBE_TE = "మరిన్ని మంత్రాల కోసం సబ్‌స్క్రైబ్ చేయండి"
+ENGINE_FONTS = Path(__file__).resolve().parents[3] / "channels" / "engine" / "assets" / "fonts"
 
 
 Box = tuple[int, int, int, int]
@@ -42,7 +41,11 @@ class RequestCardRenderer:
         self._probe = ImageDraw.Draw(Image.new("RGB", (4, 4)))
 
     # ---- helpers -----------------------------------------------------------------------------
+    lang = "te"
+
     def _font(self, size: int) -> ImageFont.FreeTypeFont:
+        if self.lang == "hi":  # Devanagari: Hind (Telugu font has no Devanagari glyphs)
+            return ImageFont.truetype(str(ENGINE_FONTS / "Hind-Bold.ttf"), size, layout_engine=ImageFont.Layout.RAQM)
         return self._fonts.get_font(size=size, weight="Regular")
 
     def _greedy(self, para: str, font: ImageFont.FreeTypeFont, max_w: float) -> list[str]:
@@ -87,7 +90,7 @@ class RequestCardRenderer:
             size -= 2
 
     @staticmethod
-    def _background(spec: RequestShort, handle: str) -> Image.Image:
+    def _background(spec: RequestShort) -> Image.Image:
         top, mid, bot = spec.bg_top, spec.bg_mid, spec.bg_bottom
         im = Image.new("RGB", (W, H))
         px = ImageDraw.Draw(im)
@@ -102,7 +105,7 @@ class RequestCardRenderer:
         d = ImageDraw.Draw(im)
         d.rectangle((30, 30, W - 30, H - 30), outline=GOLD, width=4)
         d.rectangle((42, 42, W - 42, H - 42), outline=GOLD, width=2)
-        return bake_watermark(im.convert("RGBA"), handle="@MahanaviSpirituals").convert("RGB")
+        return bake_watermark(im.convert("RGBA"), handle=spec.watermark).convert("RGB")
 
     # ---- drawing -----------------------------------------------------------------------------
     def _line(self, layer: Image.Image, boxes: list[Box], text: str, font: ImageFont.FreeTypeFont, y: int,
@@ -137,34 +140,36 @@ class RequestCardRenderer:
         d.polygon([(W // 2, y - 13), (W // 2 + 13, y), (W // 2, y + 13), (W // 2 - 13, y)], fill=GOLD)
 
     def render(self, spec: RequestShort, index: int, out: Path) -> RenderedSlide:
+        self.lang = spec.lang
         slide: Slide = spec.slides[index]
         boxes: list[Box] = []
         layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-        tag_line = f"{spec.handle} గారి కోరిక మేరకు"
 
         if slide.kind == "intro":
-            self._line(layer, boxes, "మీ కోరిక మేరకు", self._font(60), 500, GOLD)
-            lines, font, lh = self._fit(spec.deity_te + "\nమంత్రాలు", 120, 70, 420, 1.3)
-            y = self._block(layer, boxes, lines, font, lh, 640, CREAM)
+            self._line(layer, boxes, slide.label, self._font(52), 470, GOLD)
+            lines, font, lh = self._fit(slide.text, 120, 70, 420, 1.3)
+            y = self._block(layer, boxes, lines, font, lh, 600, CREAM)
             self._ornament(layer, y + 40)
-            lines, font, lh = self._fit("బీజ మంత్రంతో సహా 4 మంత్రాలు", 58, 36, 150)
+            lines, font, lh = self._fit(slide.translit, 52, 34, 170)
             y = self._block(layer, boxes, lines, font, lh, y + 90, SOFT)
-            lines, font, lh = self._fit(spec.handle, 60, 30, 100)
-            self._block(layer, boxes, lines, font, lh, 1140, GOLD)
+            lines, font, lh = self._fit(slide.meaning, 60, 30, 130)
+            self._block(layer, boxes, lines, font, lh, y + 40, GOLD)
         elif slide.kind == "mantra":
-            mantra_idx = sum(1 for s in spec.slides[:index] if s.kind == "mantra")
-            total = sum(1 for s in spec.slides if s.kind == "mantra")
-            self._line(layer, boxes, spec.deity_te, self._font(40), 262, SOFT)
-            self._dots(layer, mantra_idx, total, 345)
-            lines, font, lh = self._fit(slide.label_te, 76, 52, 110)
+            mantra_idx = sum(1 for x in spec.slides[:index] if x.kind == "mantra")
+            total = sum(1 for x in spec.slides if x.kind == "mantra")
+            if spec.header:
+                self._line(layer, boxes, spec.header, self._font(40), 262, SOFT)
+            if total > 1:
+                self._dots(layer, mantra_idx, total, 345)
+            lines, font, lh = self._fit(slide.label, 76, 52, 110)
             self._block(layer, boxes, lines, font, lh, 420, GOLD)
             # Fit the three blocks into the band between the heading and the footer tag: shrink the mantra a
             # little at a time until the whole stack fits, so a long verse never crowds the footer.
             budget = 430
             while True:
-                m_lines, m_font, m_lh = self._fit(slide.text_te, 92, 44, budget)
+                m_lines, m_font, m_lh = self._fit(slide.text, 92, 44, budget)
                 t_lines, t_font, t_lh = self._fit(slide.translit, 42, 28, 190, 1.35)
-                n_lines, n_font, n_lh = self._fit(slide.meaning_te, 44, 30, 150)
+                n_lines, n_font, n_lh = self._fit(slide.meaning, 44, 30, 150)
                 heights = (len(m_lines) * m_lh, 60, len(t_lines) * t_lh, 40, len(n_lines) * n_lh)
                 if sum(heights) <= STACK_H or budget <= 200:
                     break
@@ -174,25 +179,43 @@ class RequestCardRenderer:
             self._ornament(layer, y + 30)
             y = self._block(layer, boxes, t_lines, t_font, t_lh, y + 60, SOFT)
             self._block(layer, boxes, n_lines, n_font, n_lh, y + 40, GOLD)
-            lines, font, lh = self._fit(tag_line, 38, 24, 60)
-            self._block(layer, boxes, lines, font, lh, 1318, SOFT)
+            if spec.tag_footer:
+                lines, font, lh = self._fit(spec.tag_footer, 38, 24, 60)
+                self._block(layer, boxes, lines, font, lh, 1318, SOFT)
+        elif slide.kind == "points":
+            if spec.header:
+                self._line(layer, boxes, spec.header, self._font(40), 262, SOFT)
+            self._line(layer, boxes, slide.label, self._font(72), 360, GOLD)
+            points = slide.text.split("\n")
+            budget = 1290 - 520
+            per = budget // len(points) - 70
+            blocks = []
+            size_cap = 62
+            while True:
+                blocks = [self._fit(pt, size_cap, 30, max(per, 80)) for pt in points]
+                total = sum(len(b[0]) * b[2] for b in blocks) + 70 * (len(points) - 1)
+                if total <= budget or size_cap <= 34:
+                    break
+                size_cap -= 4
+            y = 520 + max(0, (budget - total) // 2)
+            for i, (lines, font, lh) in enumerate(blocks):
+                y = self._block(layer, boxes, lines, font, lh, y, CREAM if i % 2 == 0 else SOFT)
+                if i < len(blocks) - 1:
+                    self._ornament(layer, y + 35)
+                    y += 70
         else:  # outro
-            self._line(layer, boxes, "ఎలా చదవాలి?", self._font(72), 460, GOLD)
+            self._line(layer, boxes, slide.label, self._font(72), 460, GOLD)
             y = 610
-            for text, start, color in (
-                ("ప్రతి మంత్రం 11, 21 లేదా 108 సార్లు", 62, CREAM),
-                ("శనివారం, నరసింహ జయంతి రోజున చదవడం శుభప్రదం", 50, CREAM),
-                ("శుభ్రంగా, ప్రశాంతంగా కూర్చుని చదవండి", 50, SOFT),
-            ):
-                lines, font, lh = self._fit(text, start, 34, 190)
-                y = self._block(layer, boxes, lines, font, lh, y, color) + 36
+            for k, text in enumerate(slide.text.split("\n")):
+                lines, font, lh = self._fit(text, 62 if k == 0 else 50, 34, 190)
+                y = self._block(layer, boxes, lines, font, lh, y, CREAM if k < 2 else SOFT) + 36
             self._ornament(layer, y + 10)
-            lines, font, lh = self._fit(OPINION_TE, 46, 30, 150)
-            y = self._block(layer, boxes, lines, font, lh, y + 60, GOLD) + 14
-            lines, font, lh = self._fit(SUBSCRIBE_TE, 46, 30, 150)
-            self._block(layer, boxes, lines, font, lh, y, CREAM)
+            y += 60
+            for k, text in enumerate(spec.cta_lines):
+                lines, font, lh = self._fit(text, 46, 30, 150)
+                y = self._block(layer, boxes, lines, font, lh, y, GOLD if k == 0 else CREAM) + 14
 
-        bg = self._background(spec, spec.handle).convert("RGBA")
+        bg = self._background(spec).convert("RGBA")
         out.parent.mkdir(parents=True, exist_ok=True)
         Image.alpha_composite(bg, layer).convert("RGB").save(out)
         return RenderedSlide(out, boxes)

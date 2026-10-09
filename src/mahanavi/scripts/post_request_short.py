@@ -51,18 +51,20 @@ def assemble(spec: RequestShort, images: list[Path], music: Path, out: Path) -> 
     return out
 
 
-def upload(youtube: Any, spec: RequestShort, video: Path, privacy: str) -> str:
+def upload(youtube: Any, spec: RequestShort, video: Path, privacy: str, publish_at: str = "") -> str:
     from googleapiclient.http import MediaFileUpload
 
     body = {
         "snippet": {
             "title": spec.title, "description": spec.description(), "tags": spec.tags,
-            "categoryId": DEFAULT_CATEGORY_ID, "defaultLanguage": "te", "defaultAudioLanguage": "te",
+            "categoryId": DEFAULT_CATEGORY_ID, "defaultLanguage": spec.lang, "defaultAudioLanguage": spec.lang,
         },
         "status": {"privacyStatus": privacy, "selfDeclaredMadeForKids": False},
         "localizations": {"en": {"title": spec.title_en,
                                  "description": f"{spec.description_en}\n\n{_CHANNEL_FOOTER_EN}\n\n{' '.join(spec.hashtags)}"}},
     }
+    if publish_at:  # scheduled release: uploaded private, YouTube makes it public at that moment
+        body["status"] = {"privacyStatus": "private", "publishAt": publish_at, "selfDeclaredMadeForKids": False}
     media = MediaFileUpload(str(video), mimetype="video/mp4", chunksize=-1, resumable=True)
     resp = youtube.videos().insert(part="snippet,status,localizations", body=body, media_body=media).execute()
     return str(resp["id"])
@@ -82,6 +84,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--spec", default="narasimha_mantras", choices=sorted(SPECS))
     parser.add_argument("--privacy", default="private", choices=["private", "unlisted", "public"])
+    parser.add_argument("--publish-at", default="", help="ISO time with offset, e.g. 2026-10-09T23:00:00+05:30: schedule the release.")
     parser.add_argument("--dry-run", action="store_true", help="Render slides + video only; no upload.")
     parser.add_argument("--after-publish", metavar="VIDEO_ID", help="Reply to the viewer + first comment on a public Short.")
     args = parser.parse_args(argv)
@@ -104,7 +107,15 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
         youtube = YouTubeShortsUploader(settings)._build_service()  # noqa: SLF001
-        video_id = upload(youtube, spec, video, args.privacy)
+        got = youtube.channels().list(part="snippet", mine=True).execute()["items"][0]["snippet"]["title"]
+        if spec.expected_channel.lower() not in got.lower():
+            raise MahanaviError(f"NOT posting: the token acts as channel '{got}', expected '{spec.expected_channel}'.")
+        publish_at = ""
+        if args.publish_at:
+            import datetime as dt
+            publish_at = dt.datetime.fromisoformat(args.publish_at).astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        video_id = upload(youtube, spec, video, args.privacy, publish_at)
+        print(f"Channel: {got}" + (f" | scheduled public at {args.publish_at}" if args.publish_at else ""))
         print(f"Uploaded ({args.privacy}): https://www.youtube.com/watch?v={video_id}")
         print(f"Studio: https://studio.youtube.com/video/{video_id}/edit")
         print(f"VIDEO_ID={video_id}")

@@ -15,6 +15,14 @@ on:
         description: "private (default), unlisted or public"
         required: false
         default: "private"
+      publish_at:
+        description: "Optional scheduled public release, e.g. 2026-10-09T23:00:00+05:30"
+        required: false
+        default: ""
+      token_file:
+        description: "Saved token of the channel to post on (youtube_token.json or youtube_token_mantra_sangam.json)"
+        required: false
+        default: "youtube_token.json"
       after_publish_video_id:
         description: "Only after publishing: video id to reply to the viewer on (skips building/uploading)"
         required: false
@@ -65,7 +73,7 @@ jobs:
           MAHANAVI_DATABASE_PATH: ./data/mahanavi.db
           MAHANAVI_LOG_DIR: ./data/logs
           MAHANAVI_TIMEZONE: Asia/Kolkata
-          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/${{ inputs.token_file }}
         run: |
           set -o pipefail
           ARGS="--spec ${{ inputs.spec }}"
@@ -73,6 +81,7 @@ jobs:
             ARGS="$ARGS --after-publish ${{ inputs.after_publish_video_id }}"
           else
             ARGS="$ARGS --privacy ${{ inputs.privacy }}"
+            if [ -n "${{ inputs.publish_at }}" ]; then ARGS="$ARGS --publish-at ${{ inputs.publish_at }}"; fi
           fi
           python3 -m mahanavi.scripts.post_request_short $ARGS 2>&1 | tee data/recent_uploads_log.txt
 
