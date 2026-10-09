@@ -118,3 +118,14 @@ class TestForceOverride:
     def test_empty_force_target_falls_back_to_normal_rules(self, isolated_data_dir: Path) -> None:
         now = _ist(2026, 9, 30, 15, 0)
         assert scheduler_gate._decide(now, "") == "none"
+
+
+def test_no_early_posting_of_later_shorts(tmp_path, monkeypatch):
+    from datetime import datetime
+    monkeypatch.setattr(scheduler_gate, "DATA_DIR", tmp_path)
+    t = lambda h, m: datetime(2026, 10, 9, h, m, tzinfo=scheduler_gate.IST)
+    today = "2026-10-09"
+    (tmp_path / "last_run_date_rahu_kalam.txt").write_text(today)
+    assert scheduler_gate._decide(t(0, 26), "") == "none"
+    assert scheduler_gate._decide(t(0, 46), "") == "none"
+    assert scheduler_gate._decide(t(1, 5), "") == "shubha_ghadiyalu"

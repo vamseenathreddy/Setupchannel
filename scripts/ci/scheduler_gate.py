@@ -83,12 +83,12 @@ def _decide(now: datetime, force_target: str) -> str:
     if not (WINDOW_START <= now.time() < WINDOW_END):
         return "none"
 
-    if not _posted_today("rahu_kalam", today):
-        return "rahu_kalam"
-    if not _posted_today("shubha_ghadiyalu", today):
-        return "shubha_ghadiyalu"
-    if not _posted_today("durmuhurtham", today):
-        return "durmuhurtham"
+    # Each Short owns its own hour (Rahu 12-1 AM, Shubh 1-2 AM, Durm 2-3 AM IST). A tick never
+    # posts a later Short early, so extra pings inside the 12-1 AM hour cannot burn the others.
+    h = now.hour  # 0, 1 or 2 inside the window
+    for w in ("rahu_kalam", "shubha_ghadiyalu", "durmuhurtham")[:h + 1]:  # earlier misses catch up first
+        if not _posted_today(w, today):
+            return w
     return "none"
 
 
