@@ -55,6 +55,7 @@ from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from mahanavi.config import Settings
 from mahanavi.exceptions import ImageRenderError
 from mahanavi.images.fonts import FontManager
+from mahanavi.video.watermark import bake_watermark
 from mahanavi.images.layout import vertical_gradient
 
 from mahanavi.images.opinion_line import OPINION_TE
@@ -159,7 +160,7 @@ class AlertCardRenderer:
         content_width = width - 2 * margin_x
 
         try:
-            canvas = vertical_gradient(width, height, card.top_color, card.bottom_color).convert("RGBA")
+            canvas = bake_watermark(vertical_gradient(width, height, card.top_color, card.bottom_color).convert("RGBA"))
             draw = ImageDraw.Draw(canvas)
 
             icons_bottom = self._draw_icon_row(canvas, card.icon_paths, width)

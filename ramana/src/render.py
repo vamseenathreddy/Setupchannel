@@ -234,9 +234,9 @@ def make_text_layer(row, layout, label_en="", label_te="", max_h=None, bottom=No
     return Image.alpha_composite(shade, text_l)
 
 
-def _watermark(text_layer, handle, font_path, size=76, alpha=38):
+def _watermark(text_layer, handle, font_path, size=76, alpha=40):
     """Large, dim channel-handle watermark at the vertical middle of the frame
-    (2026-10-07 request: overlaps the text on purpose, ~15% opacity)."""
+    (2026-10-09: now baked into the BACKGROUND image, behind the text, locked to the picture)."""
     wm = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(wm)
     f = ImageFont.truetype(str(font_path), size, layout_engine=ImageFont.Layout.RAQM)
@@ -264,18 +264,15 @@ def render(row, out_mp4, date_key, special=None, workdir="out"):
     work = Path(workdir)
     work.mkdir(parents=True, exist_ok=True)
     bg_path, tx_path = work / "bg.png", work / "text.png"
-    make_background(rng, date_key).save(bg_path)
+    _watermark(make_background(rng, date_key).convert("RGBA"), HANDLE, FONT_EN).convert("RGB").save(bg_path)
     max_h, bottom, channel = None, None, True
     top_start = None
     if photo_for(date_key):  # text now starts near the top of the screen (2026-10-08), over a darkened picture
         layout = dict(layout, anchor=0.30)
         max_h, bottom, channel = TEXT_TOP_H, PHOTO_TEXT_BOTTOM, False
         top_start = TEXT_TOP_START
-    _watermark(
-        make_text_layer(row, layout, (special or {}).get("label_en", ""), (special or {}).get("label_te", ""),
-                        max_h, bottom, channel, top_start),
-        HANDLE, FONT_EN,
-    ).save(tx_path)
+    make_text_layer(row, layout, (special or {}).get("label_en", ""), (special or {}).get("label_te", ""),
+                    max_h, bottom, channel, top_start).save(tx_path)
     music = pick_music(rng)
     if ZOOM > 0:
         bg_f = (f"[0:v]scale=2160:3840,zoompan=z='1+{ZOOM}*sin(PI*on/150)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"

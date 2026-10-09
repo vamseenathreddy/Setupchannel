@@ -64,6 +64,7 @@ from mahanavi.config import Settings
 from mahanavi.content.bhagavad_gita_slokas import GitaSloka
 from mahanavi.exceptions import ImageRenderError
 from mahanavi.images.fonts import FontManager
+from mahanavi.video.watermark import bake_watermark
 from mahanavi.images.layout import vertical_gradient
 
 from mahanavi.images.opinion_line import OPINION_TE
@@ -361,13 +362,13 @@ class GitaSlokaCardRenderer:
                     fitted = ImageOps.fit(raw.convert("RGB"), (width, height), method=Image.Resampling.LANCZOS)
                 canvas = fitted.convert("RGBA")
                 overlay = Image.new("RGBA", (width, height), (0, 0, 0, GITA_BG_OVERLAY_ALPHA))
-                return Image.alpha_composite(canvas, overlay)
+                return bake_watermark(Image.alpha_composite(canvas, overlay))
             except (OSError, UnidentifiedImageError) as exc:
                 logger.warning(
                     "Could not load Gita background image at %s (%s) -- falling back to plain gradient.",
                     bg_path, exc,
                 )
-        return vertical_gradient(width, height, COLOR_GITA_TOP, COLOR_GITA_BOTTOM).convert("RGBA")
+        return bake_watermark(vertical_gradient(width, height, COLOR_GITA_TOP, COLOR_GITA_BOTTOM).convert("RGBA"))
 
     def _fit_block_to_box(
         self, draw: ImageDraw.ImageDraw, text: str, max_width: int, max_height: int,

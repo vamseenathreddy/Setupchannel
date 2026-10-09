@@ -308,9 +308,9 @@ def _logo(text_layer, cfg: ChannelConfig):
     return Image.alpha_composite(text_layer, layer)
 
 
-def _watermark(text_layer, handle, font_path, size=76, alpha=38):
+def _watermark(text_layer, handle, font_path, size=76, alpha=40):
     """Large, dim channel-handle watermark at the vertical middle of the frame
-    (2026-10-07 request: overlaps the text on purpose, ~15% opacity)."""
+    (2026-10-09: now baked into the BACKGROUND image, behind the text, locked to the picture)."""
     wm = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(wm)
     f = ImageFont.truetype(str(font_path), size, layout_engine=ImageFont.Layout.RAQM)
@@ -338,21 +338,18 @@ def render(row, out_mp4, date_key, cfg: ChannelConfig, special=None, workdir="ou
     work = Path(workdir)
     work.mkdir(parents=True, exist_ok=True)
     bg_path, tx_path = work / "bg.png", work / "text.png"
-    make_background(rng, date_key, cfg).save(bg_path)
+    _watermark(make_background(rng, date_key, cfg).convert("RGBA"), cfg.watermark_handle or cfg.channel_name, cfg.font_channel_label).convert("RGB").save(bg_path)
     max_h, bottom, channel = None, None, True
     if cfg.text_anchor:
         layout = dict(layout, anchor=cfg.text_anchor)
     elif photo_for(date_key, cfg):  # keep faces clear: text sits at the bottom, below the photo
         layout = dict(layout, anchor=0.78)
         max_h, bottom, channel = cfg.photo_text_h, cfg.photo_text_bottom, False
-    _watermark(
-        _logo(make_text_layer(
-            row, layout, cfg,
-            (special or {}).get("label_primary", ""), (special or {}).get("label_secondary", ""),
-            max_h, bottom, channel,
-        ), cfg),
-        cfg.watermark_handle or cfg.channel_name, cfg.font_channel_label,
-    ).save(tx_path)
+    _logo(make_text_layer(
+        row, layout, cfg,
+        (special or {}).get("label_primary", ""), (special or {}).get("label_secondary", ""),
+        max_h, bottom, channel,
+    ), cfg).save(tx_path)
     music = pick_music(rng, cfg, date_key)
     if cfg.zoom > 0:
         bg_f = (f"[0:v]scale=2160:3840,zoompan=z='1+{cfg.zoom}*sin(PI*on/150)':x='iw/2-(iw/zoom/2)':"

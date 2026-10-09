@@ -62,6 +62,7 @@ from mahanavi.config import Settings
 from mahanavi.content.purana_concept_shorts import CONCEPT_LABEL_TE, PuranaConceptShort
 from mahanavi.exceptions import ImageRenderError
 from mahanavi.images.fonts import FontManager
+from mahanavi.video.watermark import bake_watermark
 from mahanavi.images.layout import vertical_gradient
 from mahanavi.images.sri_chakra import draw_sri_chakra_roundel
 
@@ -203,6 +204,7 @@ class PuranaConceptCardRenderer:
         try:
             background = vertical_gradient(width, height, COLOR_CONCEPT_TOP, COLOR_CONCEPT_BOTTOM).convert("RGBA")
             self._draw_border(background)
+            background = bake_watermark(background)
 
             chakra_img, chakra_cx, chakra_cy = self._build_chakra_layer(width, height)
 

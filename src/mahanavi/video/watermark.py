@@ -37,12 +37,37 @@ POSITIONS_Y = (960,)
 SECONDS_PER_POSITION = 4
 TEXT_ALPHA = 38       # ~15% -- dim: overlaps the text on purpose but never competes with it
 SHADOW_ALPHA = 0
+BAKED_ALPHA = 40      # sits BEHIND the text now, so a little dimmer keeps text richer than the background
 
 
 # Kept for call-site compatibility: the watermark is now one dim, large mark at
 # the exact vertical middle of EVERY card (2026-10-07 request), so Gita no longer
 # needs its own position.
 GITA_POSITIONS_Y = POSITIONS_Y
+
+
+def bake_watermark(canvas: Image.Image, handle: str = WATERMARK_TEXT, alpha: int = BAKED_ALPHA) -> Image.Image:
+    """Lock the channel handle INTO the background (2026-10-09 request: "stick the watermark with the
+    background, lock it"). Call on the card background BEFORE any text is drawn: the handle then sits
+    behind the text (never over it), is identical on every frame, and cannot be separated from the picture.
+    Fixed at the exact vertical middle, centered, dim."""
+    w, h = canvas.size
+    font = FontManager(_default_font_path()).get_font(size=FONT_SIZE, weight="Bold")
+    probe = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+    pb = probe.textbbox((0, 0), handle, font=font)
+    if pb[2] - pb[0] > w - 160:
+        font = FontManager(_default_font_path()).get_font(size=int(FONT_SIZE * (w - 160) / (pb[2] - pb[0])), weight="Bold")
+    layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    bb = d.textbbox((0, 0), handle, font=font)
+    x, y = (w - (bb[2] - bb[0])) // 2 - bb[0], h // 2 - (bb[3] - bb[1]) // 2 - bb[1]
+    d.text((x, y), handle, font=font, fill=(255, 255, 255, alpha))
+    return Image.alpha_composite(canvas.convert("RGBA"), layer)
+
+
+def _default_font_path() -> Path:
+    from mahanavi.config import get_settings
+    return get_settings().telugu_font_path
 
 
 def build_watermark_layers(

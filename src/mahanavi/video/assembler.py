@@ -82,7 +82,7 @@ def assemble_short(
     fps: int = DEFAULT_FPS,
     fade_in_seconds: float = VIDEO_FADE_IN_SECONDS,
     fade_out_seconds: float = AUDIO_FADE_OUT_SECONDS,
-    watermark: bool = True,
+    watermark: bool = False,  # the handle is now baked into each card's background (bake_watermark)
     watermark_positions_y: tuple[int, ...] | None = None,
 ) -> Path:
     """Assemble a static image (+ optional looped audio) into a .mp4.
@@ -190,7 +190,7 @@ def assemble_purana_short_with_rotating_chakra(
     audio_path: Path | None = None,
     fps: int = DEFAULT_FPS,
     revolutions_per_loop: float = CHAKRA_REVOLUTIONS_PER_LOOP,
-    watermark: bool = True,
+    watermark: bool = False,  # the handle is now baked into each card's background (bake_watermark)
 ) -> Path:
     """Assembles the Purana Story Short's three separate layers
     (PuranaShortCardRenderer.render_layers()) into one .mp4 with the Sri

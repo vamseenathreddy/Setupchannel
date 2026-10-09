@@ -44,6 +44,7 @@ from mahanavi.content.rashi_current_transits import AFFECTED_RASHIS, SHANI_REMED
 from mahanavi.content.rashi_mantra_content import RashiMantraContent
 from mahanavi.exceptions import ImageRenderError
 from mahanavi.images.fonts import FontManager
+from mahanavi.video.watermark import bake_watermark
 
 from mahanavi.images.opinion_line import OPINION_TE
 logger = logging.getLogger(__name__)
@@ -142,7 +143,7 @@ class RashiCardRenderer:
         content_width = width - 2 * margin_x
 
         try:
-            canvas = self._load_background(card.rashi_index).convert("RGBA")
+            canvas = bake_watermark(self._load_background(card.rashi_index).convert("RGBA"))
             draw = ImageDraw.Draw(canvas)
 
             # Content starts just below the muggu roundel (drawn by the
