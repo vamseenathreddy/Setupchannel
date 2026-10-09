@@ -1,4 +1,4 @@
-name: Reschedule cron-job.org gated-series pings
+name: System | Reschedule cron-job.org pings (daily)
 
 # Runs once a day, early (00:05 IST = 18:35 UTC), before any
 # cron-job.org-driven gated series' window opens (earliest is 5 AM IST,
@@ -83,4 +83,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Reschedule cron-job.org jobs"
+        run: python scripts/ci/notify_failure.py "System | Reschedule cron-job.org pings (daily)"

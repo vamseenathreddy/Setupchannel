@@ -1,4 +1,4 @@
-name: Read Video Details (One-Off Utility)
+name: Tools | Read Video Details
 
 # Read-only: prints title, description (lyrics), tags and duration of the
 # channel's own videos matching a title substring. Output goes to the

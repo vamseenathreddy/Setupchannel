@@ -1,4 +1,4 @@
-name: Reset Divine Mantra Sangam Series State (One-Off)
+name: Tools | Reset Divine Mantra Sangam Series State
 
 # One-off: clears the posted/used markers of the five Divine Mantra Sangam series (fresh start). Does not touch the token.
 on:

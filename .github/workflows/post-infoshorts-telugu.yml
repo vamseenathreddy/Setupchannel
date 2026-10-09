@@ -1,4 +1,4 @@
-name: Post InfoShorts Telugu Short
+name: InfoShorts | Telugu Short (7 AM IST)
 
 # Part of the 7-channel expansion (channels/, added 2026-10) -- Pattern A (static content
 # bank). Same cron-job.org + daily-reschedule pattern as post-ramana-short.yml: a cron-job.org
@@ -138,4 +138,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Post InfoShorts Telugu Short"
+        run: python scripts/ci/notify_failure.py "InfoShorts | Telugu Short (7 AM IST)"

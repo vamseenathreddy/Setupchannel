@@ -1,4 +1,4 @@
-name: Post Purana Story Short
+name: Mahanavi | Purana Story Short (5 PM IST)
 
 # Manual-trigger-only (no schedule: trigger -- GitHub's own scheduler
 # has a confirmed, ongoing reliability bug, see daily-shorts.yml's
@@ -151,4 +151,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Post Purana Story Short"
+        run: python scripts/ci/notify_failure.py "Mahanavi | Purana Story Short (5 PM IST)"

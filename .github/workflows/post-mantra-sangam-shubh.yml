@@ -1,4 +1,4 @@
-name: Post Divine Mantra Sangam Shubh Muhurat Short
+name: Mantra Sangam | Shubh Muhurat Short (1 AM IST)
 
 # Hindi daily timing Short (shubh) for Divine Mantra Sangam; times computed locally (Swiss Ephemeris, no API).
 # Posts UNLISTED by default until the channel owner approves. Needs data/youtube_token_mantra_sangam.json
@@ -122,4 +122,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Post Divine Mantra Sangam Shubh Muhurat Short"
+        run: python scripts/ci/notify_failure.py "Mantra Sangam | Shubh Muhurat Short (1 AM IST)"

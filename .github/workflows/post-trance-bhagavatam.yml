@@ -1,4 +1,4 @@
-name: Post Trance Bhagavatam Short
+name: Trance Beats | Bhagavatam Short (7 AM IST)
 
 # Part of the 7-channel expansion (channels/, added 2026-10) -- Pattern A (static content
 # bank, Hindi-only, Krishna/Radha bhajan-kirtan focus -- distinct from Divine Mantra Sangam's
@@ -143,4 +143,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Post Trance Bhagavatam Short"
+        run: python scripts/ci/notify_failure.py "Trance Beats | Bhagavatam Short (7 AM IST)"

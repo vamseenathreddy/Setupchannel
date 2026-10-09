@@ -1,4 +1,4 @@
-name: Delete Unlisted Test Videos (One-Off Utility)
+name: Tools | Delete Unlisted Test Videos
 
 # Finds every non-public (private/unlisted) video on the channel --
 # draft/test artifacts left over from manual review dispatches -- and,

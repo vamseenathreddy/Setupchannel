@@ -1,4 +1,4 @@
-name: Post Pulse Boosting Short
+name: Pulse | Boosting Short (12 PM IST)
 
 # Part of the 7-channel expansion (channels/, added 2026-10) -- Pattern B (one real, trending
 # India headline fetched from Google News RSS each run, no static content bank -- see
@@ -137,4 +137,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Post Pulse Boosting Short"
+        run: python scripts/ci/notify_failure.py "Pulse | Boosting Short (12 PM IST)"

@@ -1,4 +1,4 @@
-name: Post Tollywood News Short
+name: Tollywood News | Short (1 PM IST)
 
 # Part of the 7-channel expansion (channels/, added 2026-10) -- Pattern B (one real, trending
 # Telugu-film-industry headline fetched from Google News RSS each run, no static content bank
@@ -135,4 +135,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Post Tollywood News Short"
+        run: python scripts/ci/notify_failure.py "Tollywood News | Short (1 PM IST)"

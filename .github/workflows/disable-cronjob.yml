@@ -1,4 +1,4 @@
-name: Disable cron-job.org job (One-Off Utility)
+name: Tools | Disable cron-job.org job
 on:
   workflow_dispatch:
     inputs:

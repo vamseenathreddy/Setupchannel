@@ -1,4 +1,4 @@
-name: Channel Performance Report
+name: System | Channel performance report
 
 # Read-only. Weekly (Sunday 23:30 IST) and on demand: one report per channel (views, likes and comments
 # by series and by publish hour, top and bottom videos, drafts waiting). Output goes to Drive log files

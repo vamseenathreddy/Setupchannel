@@ -1,4 +1,4 @@
-name: Channel About / Pulse Playlist (One-Off Utility)
+name: Tools | Channel About / Pulse Playlist
 
 # mode=read prints each channel's current About settings; mode=apply writes the new description, keywords,
 # country and default language (only those fields); mode=pulse-playlist creates the Pulse Boosting playlist.

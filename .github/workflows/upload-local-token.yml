@@ -1,4 +1,4 @@
-name: Upload Refreshed YouTube Token to Drive
+name: Setup | Upload Refreshed YouTube Token to Drive
 
 # Utility workflow for getting a freshly re-authed
 # data/youtube_token.json (produced by running

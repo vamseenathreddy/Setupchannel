@@ -1,4 +1,4 @@
-name: Post Jesus Worship Waves Short (morning Bible Quote)
+name: Jesus | Bible Quote Short (6 AM IST)
 
 # MORNING Bible Quote Short (the evening quiz is post-jesus-bible-quiz.yml). Needs approved BGM
 # clips in channels/jesus/assets/music/approved/ -- with none it posts nothing.
@@ -144,4 +144,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Post Jesus Worship Waves Short"
+        run: python scripts/ci/notify_failure.py "Jesus | Bible Quote Short (6 AM IST)"

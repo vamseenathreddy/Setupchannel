@@ -1,4 +1,4 @@
-name: Weekly Performance Report
+name: System | Weekly performance report
 
 # Weekly summary of views/likes/retention per series over the last 7
 # days, sent via Telegram -- added 2026-10-03 (pipeline health review
@@ -68,4 +68,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Weekly Performance Report"
+        run: python scripts/ci/notify_failure.py "System | Weekly performance report"

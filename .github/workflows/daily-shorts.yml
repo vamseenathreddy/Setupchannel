@@ -1,4 +1,4 @@
-name: Daily Shorts Post
+name: Mahanavi | Timing Shorts - Rahu, Shubh, Durm (12-3 AM IST)
 
 on:
   schedule:
@@ -178,4 +178,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Daily Shorts Post"
+        run: python scripts/ci/notify_failure.py "Mahanavi | Timing Shorts - Rahu, Shubh, Durm (12-3 AM IST)"

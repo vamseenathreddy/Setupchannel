@@ -1,4 +1,4 @@
-name: Set Video Privacy (One-Off Utility)
+name: Tools | Set Video Privacy
 on:
   workflow_dispatch:
     inputs:

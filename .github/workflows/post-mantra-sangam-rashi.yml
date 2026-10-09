@@ -1,4 +1,4 @@
-name: Post Divine Mantra Sangam Rashi Mantra Short
+name: Mantra Sangam | Rashi Mantra Short (8 AM IST)
 
 # Hindi Rashi Mantra Short for Divine Mantra Sangam (content from channels/mantra_sangam/data).
 # Posts UNLISTED by default until the channel owner approves. Needs data/youtube_token_mantra_sangam.json
@@ -122,4 +122,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Post Divine Mantra Sangam Rashi Mantra Short"
+        run: python scripts/ci/notify_failure.py "Mantra Sangam | Rashi Mantra Short (8 AM IST)"

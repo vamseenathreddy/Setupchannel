@@ -1,4 +1,4 @@
-name: Delete Video (One-Off Utility)
+name: Tools | Delete Video
 on:
   workflow_dispatch:
     inputs:

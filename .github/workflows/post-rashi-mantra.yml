@@ -1,4 +1,4 @@
-name: Post Rashi Mantra Short
+name: Mahanavi | Rashi Mantra Short (8 AM IST)
 
 # Moved 2026-10-03 from manual-only to a recurring daily post, once a
 # day, at a TIME THAT VARIES DAY TO DAY within an 8:00-9:00 AM IST
@@ -160,4 +160,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Post Rashi Mantra Short"
+        run: python scripts/ci/notify_failure.py "Mahanavi | Rashi Mantra Short (8 AM IST)"

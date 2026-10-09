@@ -1,4 +1,4 @@
-name: Set Up Jesus Worship Waves Playlists (One-Time)
+name: Setup | Set Up Jesus Worship Waves Playlists
 
 # Creates (or finds) the two playlists for the Jesus Worship Waves channel -- Bible Quotes and
 # Bible Quiz -- and writes their IDs to the Drive file jesus_playlist_ids.json (must be

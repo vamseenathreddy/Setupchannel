@@ -1,4 +1,4 @@
-name: YouTube Token Health Check
+name: System | YouTube token health check
 
 # Daily, cheap, dependency-light health check (pipeline health review,
 # 2026-10-03, suggestion #4) -- confirms the ONE shared YouTube token
@@ -64,4 +64,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "YouTube Token Health Check"
+        run: python scripts/ci/notify_failure.py "System | YouTube token health check"

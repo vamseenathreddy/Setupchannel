@@ -1,4 +1,4 @@
-name: Post Jesus Bible Quiz Short
+name: Jesus | Bible Quiz Short (6 PM IST)
 
 # EVENING Bible Quiz Short for Jesus Worship Waves: asks about the SAME verse the morning Quote
 # Short posted (post-jesus-worship-waves.yml). Own state file (jesus_quiz_state.json), own
@@ -147,4 +147,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Post Jesus Bible Quiz Short"
+        run: python scripts/ci/notify_failure.py "Jesus | Bible Quiz Short (6 PM IST)"

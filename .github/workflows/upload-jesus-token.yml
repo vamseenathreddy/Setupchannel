@@ -1,4 +1,4 @@
-name: Upload Jesus YouTube Token to Drive
+name: Setup | Upload Jesus YouTube Token to Drive
 
 # Same idea as upload-local-token.yml but ONLY touches data/youtube_token_jesus.json (Jesus Worship Waves).
 # 1. Run `python -m mahanavi.scripts.youtube_shorts_auth_setup --token-file data/youtube_token_jesus.json` locally.

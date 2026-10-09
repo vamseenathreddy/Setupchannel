@@ -1,4 +1,4 @@
-name: Video Status (One-Off Utility)
+name: Tools | Video Status
 
 # Read-only. Prints upload/processing status, rejection reasons and view counts for the given video ids.
 on:

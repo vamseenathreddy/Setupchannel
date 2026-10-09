@@ -1,4 +1,4 @@
-name: Post Ramana Short
+name: Ramana TV | Quote Short (12 AM IST)
 
 # Second YouTube channel in this repo (Ramana Maharshi TV), added 2026-10.
 # Same pattern as post-rashi-mantra.yml / post-purana-short.yml / etc: a
@@ -174,4 +174,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Post Ramana Short"
+        run: python scripts/ci/notify_failure.py "Ramana TV | Quote Short (12 AM IST)"

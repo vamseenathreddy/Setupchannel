@@ -54,7 +54,7 @@ Create a GitHub fine-grained token for this repository only with **Actions: Read
 - Schedule: time zone Asia/Kolkata, hour 5, minutes 0,5,10,15,20,25,30,35,40,45,50,55 (12 pings, about 6 Actions minutes a day).
 
 ### 6. First run
-Actions > Post Ramana Short > Run workflow with **force** and **dry_run** ticked. Download the artifact and watch the video. Then run it once with only **force** ticked to post for real.
+Actions > Ramana TV | Quote Short (12 AM IST) > Run workflow with **force** and **dry_run** ticked. Download the artifact and watch the video. Then run it once with only **force** ticked to post for real.
 
 ## Verifying a post is real (do not trust a green run)
 A green run only means the workflow finished. Most pings are legitimate no-ops.
