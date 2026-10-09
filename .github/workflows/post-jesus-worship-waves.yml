@@ -1,6 +1,7 @@
-name: Jesus | Bible Quote Short (6 AM IST)
+name: Jesus | Bible Quote Short (12 AM IST)
 
-# MORNING Bible Quote Short (the evening quiz is post-jesus-bible-quiz.yml). Needs approved BGM
+# 12 AM Bible Quote Short (2026-10-10: Jesus posts 3 public Shorts a day: this at 12-1 AM, the Bible Quiz at 9-10 AM,
+# the second Bible Quote at 5-6 PM = post-jesus-bible-quote-pm.yml). Needs approved BGM
 # clips in channels/jesus/assets/music/approved/ -- with none it posts nothing.
 #
 # Part of the 7-channel expansion (channels/, added 2026-10) -- Pattern A (static content
@@ -12,7 +13,7 @@ name: Jesus | Bible Quote Short (6 AM IST)
 # [target, 07:55 safety-net] each day instead of ticking every few minutes through the whole
 # window -- see that script's "jesus" SERIES entry.
 #
-# Posts UNLISTED by default (--public is NOT passed) until reviewed.
+# Posts PUBLIC by default (2026-10-09 owner request).
 #
 # *** DRIVE SETUP REQUIRED BEFORE THE FIRST GATED RUN *** -- see
 # scripts/ci/drive_state_sync.py's module docstring: create two files by hand in the same
@@ -34,10 +35,10 @@ on:
         description: "Upload as public. Uncheck for an unlisted test/review run."
         required: false
         type: boolean
-        default: false
+        default: true
       bypass_gate:
         description: >-
-          Post immediately, ignoring the 06:00-06:40 IST window and today's already-posted
+          Post immediately, ignoring the 00:00-00:40 IST window and today's already-posted
           marker. For manual testing/review runs only.
         required: false
         type: boolean
@@ -47,11 +48,9 @@ on:
         required: false
         default: ''
   schedule:
-    - cron: "30 0 * * *"  # 06:00 IST
-    - cron: "0 1 * * *"  # extra ping (gate posts on the first one past the target minute)
-    - cron: "30 1 * * *"  # extra ping (gate posts on the first one past the target minute)
-    - cron: "0 2 * * *"  # extra ping (gate posts on the first one past the target minute)
-    - cron: "25 2 * * *"  # 07:55 IST, late safety net
+    - cron: "30 18 * * *"  # 00:00 IST (cron-job.org pings every 10 min 00:00-00:50 are the reliable trigger)
+    - cron: "0 19 * * *"
+    - cron: "25 19 * * *"  # 00:55 IST, late safety net
 
 concurrency:
   group: post-jesus-worship-waves
@@ -144,4 +143,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Jesus | Bible Quote Short (6 AM IST)"
+        run: python scripts/ci/notify_failure.py "Jesus | Bible Quote Short (12 AM IST)"

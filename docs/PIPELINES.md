@@ -14,7 +14,7 @@ Reliable trigger = cron-job.org (GitHub `schedule:` pings are best-effort and so
 | Mantra Sangam | Rashi (daily slot RETIRED; Hindi weekly table to come) | post-mantra-sangam-rashi.yml | not posting | same |
 | Mantra Sangam | Purana Story | post-mantra-sangam-purana.yml | 5:00-5:50 PM | same |
 | Ramana TV | Quote / Q&A / Life | post-ramana-short / -qa / -life.yml | 12 AM / 10 AM / 5 PM | youtube_token_ramana.json |
-| Jesus | Bible Quote / Bible Quiz | post-jesus-worship-waves.yml / post-jesus-bible-quiz.yml | 6 AM / 6 PM | youtube_token_jesus.json |
+| Jesus | Bible Quote / Bible Quiz / Bible Quote 2 (all PUBLIC) | post-jesus-worship-waves.yml / post-jesus-bible-quiz.yml / post-jesus-bible-quote-pm.yml | 12-1 AM / 9-10 AM / 5-6 PM (from 10 Oct 2026; cron-job.org pings every 10 min) | youtube_token_jesus.json |
 | Trance Beats | Bhagavatam / Mantra / Gita | post-trance-bhagavatam / -mantra / post-devotional-trance-beats.yml | 7 AM / 1 PM / 7 PM | youtube_token_trance_beats.json |
 | InfoShorts | Telugu Short | post-infoshorts-telugu.yml | 7 AM | youtube_token_infoshorts.json |
 | Pulse | Boosting Short | post-pulse-boosting.yml | 12 PM | youtube_token_pulse_boosting.json |

@@ -37,7 +37,15 @@ def save(state, path=None):
     os.replace(tmp, path)
 
 
+def slot_key(date_iso):
+    """Marker key for today's post. A second daily post from the same channel/state file sets POST_SLOT
+    (e.g. "pm") so it gets its own marker ("2026-10-10#pm") and the first post does not block it."""
+    slot = os.environ.get("POST_SLOT", "")
+    return f"{date_iso}#{slot}" if slot else date_iso
+
+
 def mark_posted(state, date_iso, row_id, video_id, special_row, at_iso):
+    date_iso = slot_key(date_iso)
     state["posted"][date_iso] = {"row": row_id, "video_id": video_id, "at": at_iso}
     if not special_row and row_id not in state["used_ids"]:
         state["used_ids"].append(row_id)

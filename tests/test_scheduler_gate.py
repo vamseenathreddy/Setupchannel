@@ -146,3 +146,23 @@ def test_weekly_rashi_gate_sundays_only():
     assert m._decide(sat, False)[0] == "none"
     assert m._decide(sun, False)[0] == "post"
     assert m._decide(sat, True)[0] == "post"  # manual bypass still works
+
+
+def test_post_slot_gives_second_daily_post_its_own_marker(monkeypatch):
+    import datetime as dt
+    from zoneinfo import ZoneInfo
+
+    from channels.engine import gate
+    from channels.engine import state as state_mod
+
+    ist = ZoneInfo("Asia/Kolkata")
+    now = dt.datetime(2026, 10, 10, 18, 30, tzinfo=ist)
+    state = {"posted": {"2026-10-10": {"row": "v1", "video_id": "a", "at": "x"}}, "used_ids": []}
+    args = (dt.time(17, 0), 40, dt.time(19, 0))
+    monkeypatch.delenv("POST_SLOT", raising=False)
+    assert gate.decide("jesus", now, state, *args)[0] is False   # first post already done today
+    monkeypatch.setenv("POST_SLOT", "pm")
+    assert gate.decide("jesus_pm", now, state, *args)[0] is True  # the pm slot has its own marker
+    state_mod.mark_posted(state, "2026-10-10", "v2", "b", False, "y")
+    assert "2026-10-10#pm" in state["posted"] and "2026-10-10" in state["posted"]
+    assert gate.decide("jesus_pm", now, state, *args)[0] is False

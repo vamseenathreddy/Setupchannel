@@ -38,7 +38,11 @@ TARGETS = [
     ("post-ramana-short.yml", "Ramana Maharshi TV - quote Short (12-1 AM)", *_every_10(0, 0, 10)),
     ("post-ramana-qa.yml", "Ramana Maharshi TV - Q&A Short (10-11 AM)", *_every_10(10, 0, 10)),
     ("post-ramana-life.yml", "Ramana Maharshi TV - Life Short (5-6 PM)", *_every_10(17, 0, 10)),
-    ("post-jesus-bible-quiz.yml", "Jesus - Bible Quiz Short (evening)", *_every_10(18, 0, 12)),
+    # Jesus posts 3 public Shorts a day (2026-10-10): static 10-minute pings through each window; the gates
+    # (channels/jesus/scripts/ci/gate*.py) pick the day's random minute inside it.
+    ("post-jesus-worship-waves.yml", "Jesus - Bible Quote Short (12-1 AM)", *_every_10(0, 0, 6)),
+    ("post-jesus-bible-quiz.yml", "Jesus - Bible Quiz Short (9-10 AM)", *_every_10(9, 0, 6)),
+    ("post-jesus-bible-quote-pm.yml", "Jesus - Bible Quote Short 2 (5-6 PM)", *_every_10(17, 0, 6)),
 ]
 
 
