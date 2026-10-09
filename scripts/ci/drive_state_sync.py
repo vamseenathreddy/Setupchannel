@@ -206,6 +206,7 @@ STATE_FILES = [
     "mantra_sangam_durm_state.json",
     "mantra_sangam_purana_state.json",
     "mantra_sangam_rashi_state.json",
+    "beej_state.json",  # daily 6 AM beej mantra Shorts (3 channels, one POST_SLOT each); MUST be pre-created containing {}
     "jesus_quiz_state.json",  # evening Bible Quiz Short (shares youtube_token_jesus.json); MUST be pre-created containing {}
     "youtube_token_infoshorts.json",
     "infoshorts_state.json",

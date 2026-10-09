@@ -1,0 +1,103 @@
+name: Trance Beats | Beej Mantra Short (6 AM IST)
+
+# Daily 6 AM beej (seed) mantra Short, deity chosen by festival / tithi / weekday
+# (src/mahanavi/content/beej_mantras.py). Shares data/beej_state.json with the other two channels (one
+# POST_SLOT each, serialised by the shared concurrency group). cron-job.org pings every 10 min 6:00-6:50 IST.
+# Posts PUBLIC by default.
+on:
+  workflow_dispatch:
+    inputs:
+      public:
+        description: "Upload as public. Uncheck for an unlisted test run."
+        required: false
+        type: boolean
+        default: true
+      bypass_gate:
+        description: "Post immediately, ignoring the window and today's already-posted marker (testing)."
+        required: false
+        type: boolean
+        default: false
+      date:
+        description: "Optional ISO date to build the Short for (testing). Blank = today."
+        required: false
+        default: ''
+
+concurrency:
+  group: post-beej-mantra
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  post-beej:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync + gate
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Decide whether this call should post today
+        id: gate
+        env:
+          STATE_FILE: data/beej_state.json
+          BEEJ_CHANNEL: trance_beats
+          POST_SLOT: trance_beats
+          FORCE_POST: ${{ inputs.bypass_gate && 'true' || 'false' }}
+        run: python -m channels.beej.gate
+
+      - name: Install ffmpeg + text shaping libs
+        if: steps.gate.outputs.post == 'true'
+        run: bash scripts/ci/apt_install.sh ffmpeg libraqm0 libfribidi0 libharfbuzz0b
+
+      - name: Install full Python dependencies
+        if: steps.gate.outputs.post == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Build and upload the beej mantra Short
+        if: steps.gate.outputs.post == 'true'
+        env:
+          STATE_FILE: data/beej_state.json
+          POST_SLOT: trance_beats
+          MAHANAVI_IMAGES_ROOT: ./Images
+          MAHANAVI_ASSETS_DIR: ./assets
+          MAHANAVI_OUTPUT_DIR: ./data/generated
+          MAHANAVI_DATABASE_PATH: ./data/mahanavi.db
+          MAHANAVI_LOG_DIR: ./data/logs
+          MAHANAVI_TIMEZONE: Asia/Kolkata
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token_trance_beats.json
+        run: |
+          ARGS="--channel trance_beats"
+          if [ "${{ inputs.public }}" != "false" ]; then ARGS="$ARGS --public"; fi
+          if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
+          python3 -m mahanavi.scripts.post_beej_mantra $ARGS
+
+      - name: Push state to Drive
+        if: always() && steps.gate.outputs.post == 'true'
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py push
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/ci/notify_failure.py "Trance Beats | Beej Mantra Short (6 AM IST)"

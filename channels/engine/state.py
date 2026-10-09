@@ -12,23 +12,24 @@ import json
 import os
 import tempfile
 from pathlib import Path
+from typing import Any
 
 
-def _default_path():
+def _default_path() -> Path:
     return Path(os.environ.get("STATE_FILE", "state.json"))
 
 
-def load(path=None):
+def load(path: str | Path | None = None) -> dict[str, Any]:
     path = Path(path) if path else _default_path()
     if not path.exists():
         return {"posted": {}, "used_ids": []}
-    data = json.loads(path.read_text(encoding="utf-8") or "{}")
+    data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8") or "{}")
     data.setdefault("posted", {})
     data.setdefault("used_ids", [])
     return data
 
 
-def save(state, path=None):
+def save(state: dict[str, Any], path: str | Path | None = None) -> None:
     path = Path(path) if path else _default_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
@@ -37,14 +38,14 @@ def save(state, path=None):
     os.replace(tmp, path)
 
 
-def slot_key(date_iso):
+def slot_key(date_iso: str) -> str:
     """Marker key for today's post. A second daily post from the same channel/state file sets POST_SLOT
     (e.g. "pm") so it gets its own marker ("2026-10-10#pm") and the first post does not block it."""
     slot = os.environ.get("POST_SLOT", "")
     return f"{date_iso}#{slot}" if slot else date_iso
 
 
-def mark_posted(state, date_iso, row_id, video_id, special_row, at_iso):
+def mark_posted(state: dict[str, Any], date_iso: str, row_id: str, video_id: str, special_row: bool, at_iso: str) -> dict[str, Any]:
     date_iso = slot_key(date_iso)
     state["posted"][date_iso] = {"row": row_id, "video_id": video_id, "at": at_iso}
     if not special_row and row_id not in state["used_ids"]:

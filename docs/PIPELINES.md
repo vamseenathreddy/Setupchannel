@@ -27,3 +27,11 @@ Name prefixes: `Tools |` one-off utilities, `Setup |` one-time setup/token uploa
 One-off tools (manual, never scheduled):
 - `Tools | Viewer Request Short (private draft)` (post-request-short.yml): builds a Short a viewer asked for in the comments from a spec in `src/mahanavi/content/request_shorts.py` (first: Narasimha mantras, 2026-10-09), uploads PRIVATE. After you publish it, run again with `after_publish_video_id` to reply to the viewer and post the mantras as the first comment.
 - `Tools | Find Comments` (find-comments.yml): searches recent comments on one or more channels for a text fragment (shows author, video, time).
+
+
+## Daily beej mantra Shorts (6 AM IST, added 2026-10-09)
+One Short per channel per day at 6:00-6:40 IST: Mahanavi (Telugu), Divine Mantra Sangam (Hindi), Devotional Trance Beats (Hindi).
+Deity = festival override (2026 dates, refresh yearly) > tithi at sunrise (Hyderabad) > weekday. Code: `content/beej_mantras.py`,
+`scripts/post_beej_mantra.py`, gate `channels/beej/gate.py`, workflows `post-beej-{mahanavi,mantra-sangam,trance-beats}.yml`,
+state `beej_state.json` (one POST_SLOT per channel), cron-job.org pings every 10 min 6:00-6:50.
+Seed mantras are labelled beej; Shiva/Vishnu/Subrahmanya are labelled moola.
