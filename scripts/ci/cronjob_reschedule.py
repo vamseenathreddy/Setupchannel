@@ -150,7 +150,6 @@ SERIES = {
     "jesus": _engine_series("jesus", "post-jesus-worship-waves.yml", 6, 0, 40, 7, 55),
     "jesus_quiz": _engine_series("jesus_quiz", "post-jesus-bible-quiz.yml", 18, 0, 40, 19, 55),
     "infoshorts": _engine_series("infoshorts", "post-infoshorts-telugu.yml", 7, 0, 40, 8, 55),
-    "mantra_sangam": _engine_series("mantra_sangam", "post-divine-mantra-sangam.yml", 9, 0, 40, 10, 55),
     "trance_beats": _engine_series("trance_beats", "post-devotional-trance-beats.yml", 19, 0, 40, 20, 55),
     "pulse_boosting": _engine_series("pulse_boosting", "post-pulse-boosting.yml", 12, 0, 40, 14, 25),
     "tollywood_news": _engine_series("tollywood_news", "post-tollywood-news.yml", 13, 0, 40, 15, 25),

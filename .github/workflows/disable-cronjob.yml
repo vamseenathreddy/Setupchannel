@@ -1,0 +1,25 @@
+name: Disable cron-job.org job (One-Off Utility)
+on:
+  workflow_dispatch:
+    inputs:
+      workflow_file:
+        description: "Workflow file name in the job URL, e.g. post-divine-mantra-sangam.yml"
+        required: true
+permissions:
+  contents: read
+jobs:
+  disable:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Disable matching jobs
+        env:
+          CRONJOB_ORG_API_KEY: ${{ secrets.CRONJOB_ORG_API_KEY }}
+        run: |
+          set -o pipefail
+          python3 scripts/ci/cronjob_disable.py "${{ inputs.workflow_file }}" 2>&1 | tee run.log
+          echo "::notice::$(tail -c 800 run.log | tr '\n' ' ')"
