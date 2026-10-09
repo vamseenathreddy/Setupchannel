@@ -10,7 +10,7 @@ on:
         description: "Upload as public. Uncheck for an unlisted test/review run."
         required: false
         type: boolean
-        default: false
+        default: true
       bypass_gate:
         description: >-
           Post immediately, ignoring the posting window and today's already-posted
