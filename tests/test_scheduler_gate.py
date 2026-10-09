@@ -129,3 +129,20 @@ def test_no_early_posting_of_later_shorts(tmp_path, monkeypatch):
     assert scheduler_gate._decide(t(0, 26), "") == "none"
     assert scheduler_gate._decide(t(0, 46), "") == "none"
     assert scheduler_gate._decide(t(1, 5), "") == "shubha_ghadiyalu"
+
+
+def test_weekly_rashi_gate_sundays_only():
+    import importlib.util, sys
+    from datetime import datetime
+    from pathlib import Path
+    p = Path(__file__).resolve().parents[1] / "scripts" / "ci" / "rashi_mantra_gate.py"
+    spec = importlib.util.spec_from_file_location("rashi_gate", p)
+    m = importlib.util.module_from_spec(spec)
+    sys.modules["rashi_gate"] = m
+    spec.loader.exec_module(m)
+    ist = scheduler_gate.IST
+    sat = datetime(2026, 10, 10, 8, 55, tzinfo=ist)
+    sun = datetime(2026, 10, 11, 8, 55, tzinfo=ist)
+    assert m._decide(sat, False)[0] == "none"
+    assert m._decide(sun, False)[0] == "post"
+    assert m._decide(sat, True)[0] == "post"  # manual bypass still works

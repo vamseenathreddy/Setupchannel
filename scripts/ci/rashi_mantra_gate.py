@@ -79,6 +79,10 @@ def _decide(now: datetime, bypass_gate: bool) -> tuple[str, dt_time]:
     if bypass_gate:
         return "post", target
 
+    # Weekly Rashi table (2026-10-09): Sundays only. Monday to Saturday never post.
+    if now.weekday() != 6:
+        return "none", target
+
     if _already_posted_today(today):
         return "none", target
 

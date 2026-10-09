@@ -18,13 +18,17 @@ SLOTS = {  # same windows as Mahanavi Spirituals (IST); the day's target minute 
     "purana": ("mantra_purana", dt.time(17, 0), 50, dt.time(18, 0)),
 }
 
+# Daily Rashi is retired (2026-10-09): the Hindi version becomes a WEEKLY Sunday table like Mahanavi's.
+# Until that is built the rashi slot never posts (manual FORCE_POST still works).
+DISABLED = {"rashi"}
+
 START_DATE = dt.date(2026, 10, 10)  # first day of regular posting (Saturday, from 12:05 AM IST)
 
 if __name__ == "__main__":
     key, start, minutes, latest = SLOTS[os.environ["TIMING_KIND"]]
     today = dt.datetime.now(gate.IST).date()
-    if today < START_DATE and os.environ.get("FORCE_POST") != "true":
-        print(f"DECISION: skip, regular posting starts {START_DATE}")
+    if (today < START_DATE or os.environ["TIMING_KIND"] in DISABLED) and os.environ.get("FORCE_POST") != "true":
+        print(f"DECISION: skip (before {START_DATE} or this slot is retired)")
         out = os.environ.get("GITHUB_OUTPUT")
         if out:
             with open(out, "a") as f:

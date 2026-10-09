@@ -112,6 +112,7 @@ SERIES = {
         "seed_fn": lambda o: o,
         "safety_hour": 8,
         "safety_minute": 55,
+        "wdays": [0],  # weekly Rashi table: Sundays only (cron-job.org: 0 = Sunday)
     },
     "purana_concept": {
         "url_fragment": "post-concept-short.yml",
@@ -253,7 +254,7 @@ def main() -> int:
             "minutes": minutes,
             "mdays": [-1],
             "months": [-1],
-            "wdays": [-1],
+            "wdays": cfg.get("wdays", [-1]),
         }
         try:
             _api_request("PATCH", f"/jobs/{job_id}", api_key, {"job": {"schedule": schedule}})

@@ -1,4 +1,7 @@
-name: Mahanavi | Rashi Mantra Short (8 AM IST)
+name: Mahanavi | Weekly Rashi Mantra Table (Sunday 8 AM IST)
+
+# 2026-10-09: replaced the daily one-rashi Short with ONE weekly table of all 12 rashis, Sundays only
+# (gate blocks Mon-Sat; cron-job.org job runs Sundays only). Script: mahanavi.scripts.post_rashi_weekly.
 
 # Moved 2026-10-03 from manual-only to a recurring daily post, once a
 # day, at a TIME THAT VARIES DAY TO DAY within an 8:00-9:00 AM IST
@@ -45,14 +48,6 @@ on:
         required: false
         type: boolean
         default: false
-      force_rashi:
-        description: >-
-          Force a specific rashi instead of the next one in rotation --
-          index 0-11 (0=Mesha), or a name like "Simha". Leave blank for
-          normal rotation behavior. A forced run does NOT advance the
-          stored rotation state (it's a one-off re-post/test).
-        required: false
-        default: ''
 
 # Serializes runs so two near-simultaneous cron-job.org calls can never
 # execute the pipeline in parallel -- same reasoning as the other
@@ -119,10 +114,7 @@ jobs:
           if [ "${{ inputs.public }}" = "true" ]; then
             ARGS="$ARGS --public"
           fi
-          if [ -n "${{ inputs.force_rashi }}" ]; then
-            ARGS="$ARGS --rashi ${{ inputs.force_rashi }}"
-          fi
-          python3 -m mahanavi.scripts.post_rashi_mantra_short $ARGS
+          python3 -m mahanavi.scripts.post_rashi_weekly $ARGS
 
       # Marks today's post done -- deliberately NO `if: always()` here:
       # this step only runs if the pipeline step above actually
@@ -160,4 +152,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Mahanavi | Rashi Mantra Short (8 AM IST)"
+        run: python scripts/ci/notify_failure.py "Mahanavi | Weekly Rashi Mantra Table (Sunday 8 AM IST)"

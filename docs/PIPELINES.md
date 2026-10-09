@@ -6,12 +6,12 @@ Reliable trigger = cron-job.org (GitHub `schedule:` pings are best-effort and so
 | Channel | Short | Workflow file | Window (IST) | Token file |
 |---|---|---|---|---|
 | Mahanavi | Rahu / Shubh / Durm | daily-shorts.yml | 12-1 / 1-2 / 2-3 AM (one hour each) | youtube_token.json |
-| Mahanavi | Rashi Mantra | post-rashi-mantra.yml | 8:00-8:50 AM | youtube_token.json |
+| Mahanavi | Weekly Rashi Table (all 12, Sun-Sat dates) | post-rashi-mantra.yml | SUNDAYS ONLY, 8:00-8:50 AM | youtube_token.json |
 | Mahanavi | Purana Concept | post-concept-short.yml | 11:00-12:50 | youtube_token.json |
 | Mahanavi | Gita Sloka | post-gita-sloka.yml | 3:00-3:50 PM | youtube_token.json |
 | Mahanavi | Purana Story | post-purana-short.yml | 5:00-5:50 PM | youtube_token.json |
 | Mantra Sangam | Rahu / Shubh / Durm | post-mantra-sangam-rahu / -shubh / -durm.yml | 12:05 / 1:05 / 2:05 AM (from 10 Oct 2026) | youtube_token_mantra_sangam.json |
-| Mantra Sangam | Rashi Mantra | post-mantra-sangam-rashi.yml | 8:00-8:50 AM | same |
+| Mantra Sangam | Rashi (daily slot RETIRED; Hindi weekly table to come) | post-mantra-sangam-rashi.yml | not posting | same |
 | Mantra Sangam | Purana Story | post-mantra-sangam-purana.yml | 5:00-5:50 PM | same |
 | Ramana TV | Quote / Q&A / Life | post-ramana-short / -qa / -life.yml | 12 AM / 10 AM / 5 PM | youtube_token_ramana.json |
 | Jesus | Bible Quote / Bible Quiz | post-jesus-worship-waves.yml / post-jesus-bible-quiz.yml | 6 AM / 6 PM | youtube_token_jesus.json |
