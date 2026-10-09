@@ -32,5 +32,5 @@ jobs:
           set -o pipefail
           python3 scripts/ci/cronjob_create.py $ARGS 2>&1 | tee run.log
           rc=${PIPESTATUS[0]}
-          echo "::notice::$(tail -c 1500 run.log | tr '\n' ' ')"
+          grep -E "FAILED|created|update job|: create" run.log | while read -r l; do echo "::warning::${l:0:300}"; done
           exit $rc
