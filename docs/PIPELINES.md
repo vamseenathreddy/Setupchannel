@@ -23,3 +23,7 @@ Reliable trigger = cron-job.org (GitHub `schedule:` pings are best-effort and so
 
 Retired: post-divine-mantra-sangam.yml (old single 9 AM post, deleted; its cron-job.org job 8595443 is disabled).
 Name prefixes: `Tools |` one-off utilities, `Setup |` one-time setup/token uploads, `System |` scheduled housekeeping.
+
+One-off tools (manual, never scheduled):
+- `Tools | Viewer Request Short (private draft)` (post-request-short.yml): builds a Short a viewer asked for in the comments from a spec in `src/mahanavi/content/request_shorts.py` (first: Narasimha mantras, 2026-10-09), uploads PRIVATE. After you publish it, run again with `after_publish_video_id` to reply to the viewer and post the mantras as the first comment.
+- `Tools | Find Comments` (find-comments.yml): searches recent comments on one or more channels for a text fragment (shows author, video, time).
