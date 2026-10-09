@@ -1,0 +1,55 @@
+name: Audit YouTube Token Projects (One-Off Utility)
+
+# Manual audit utility -- lists the channel's most recent uploads with
+# their privacy status. Added 2026-10-03 to check how many Rashi Mantra
+# test videos ended up unlisted/public after repeated manual test
+# dispatches. Runs in CI because it needs the REAL saved YouTube token,
+# restored from Drive, same reason every other posting/utility workflow
+# works this way.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Install full Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Audit token projects
+        run: python3 scripts/ci/token_projects.py 2>&1 | tee data/recent_uploads_log.txt
+
+      # Same Drive hand-off pattern as every other CI step here -- this
+      # environment can't fetch GitHub Actions job logs directly, so
+      # push the output to Drive (file pre-created by hand since
+      # service-account create() has no storage quota) and read it back
+      # from there.
+      - name: Push output log to Drive
+        if: always()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/push_drive_asset.py data/recent_uploads_log.txt recent_uploads_log.txt
