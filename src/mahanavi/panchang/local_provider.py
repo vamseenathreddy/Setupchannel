@@ -9,7 +9,9 @@ Amrit Kaal is intentionally left empty (its per-nakshatra table is not used here
 """
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import date, datetime, time, timedelta
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import swisseph as swe
@@ -58,7 +60,7 @@ class LocalPanchangProvider(PanchangProvider):
     # ---- astronomy helpers -------------------------------------------------
     def _jd(self, dt_local: datetime) -> float:
         u = dt_local.astimezone(ZoneInfo("UTC"))
-        return swe.julday(u.year, u.month, u.day, u.hour + u.minute / 60 + u.second / 3600)
+        return float(swe.julday(u.year, u.month, u.day, u.hour + u.minute / 60 + u.second / 3600))
 
     def _from_jd(self, jd: float) -> datetime:
         y, m, d, h = swe.revjul(jd)
@@ -84,7 +86,7 @@ class LocalPanchangProvider(PanchangProvider):
     def _moon_nak_pos(self, dt: datetime) -> float:
         return self._longitudes(dt)[1] / (360 / 27)
 
-    def _find_boundary(self, t0: datetime, target_fn, direction: int, step_min: int = 20) -> datetime:
+    def _find_boundary(self, t0: datetime, target_fn: Callable[[datetime], Any], direction: int, step_min: int = 20) -> datetime:
         """Walk from t0 in `direction` until target_fn() changes value, then bisect to the minute."""
         base = target_fn(t0)
         lo, t = t0, t0
@@ -118,7 +120,7 @@ class LocalPanchangProvider(PanchangProvider):
         seg = day / 8
         mu = day / 15
 
-        def seg_range(n):
+        def seg_range(n: int) -> str:
             return _rng(sunrise + seg * (n - 1), sunrise + seg * n)
 
         durm = ", ".join(_rng(sunrise + mu * (n - 1), sunrise + mu * n) for n in DURM[wd])
@@ -132,11 +134,11 @@ class LocalPanchangProvider(PanchangProvider):
         nak_idx = int(moon // (360 / 27)) % 27
         yoga = YOGAS[int(((sun + moon) % 360) // (360 / 27)) % 27]
         karana_no = int(((moon - sun) % 360) // 6)
-        karana = (KARANAS_FIXED.get(karana_no) if karana_no in KARANAS_FIXED
-                  else KARANAS_MOVABLE[(karana_no - 1) % 7])
+        karana: str = (KARANAS_FIXED[karana_no] if karana_no in KARANAS_FIXED
+                       else KARANAS_MOVABLE[(karana_no - 1) % 7])
 
         # Varjyam: nakshatra running at sunrise, plus the next one if its Varjyam falls before next sunrise.
-        def nak_of(t):
+        def nak_of(t: datetime) -> int:
             return int(self._moon_nak_pos(t)) % 27
 
         varjyam = []

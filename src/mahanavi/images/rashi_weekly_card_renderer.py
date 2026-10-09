@@ -65,7 +65,7 @@ class RashiWeeklyCardRenderer:
         im = Image.alpha_composite(im, shade)
         d = ImageDraw.Draw(im)
 
-        def ctr(text, font, cx, y, color):
+        def ctr(text: str, font: ImageFont.FreeTypeFont, cx: int, y: int, color: tuple[int, ...]) -> None:
             b = d.textbbox((0, 0), text, font=font)
             d.text((cx - (b[2] - b[0]) // 2 - b[0], y - b[1]), text, font=font, fill=color)
 

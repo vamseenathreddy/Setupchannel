@@ -56,7 +56,7 @@ def build_comment(date_text: str, rows: list[dict]) -> str:
     return f"{date_text} రాశి మంత్రాలు:\n" + "\n".join(f"{r['name']}: {r['mantra']}" for r in rows)
 
 
-def main(argv=None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--public", action="store_true")
     parser.add_argument("--dry-run", action="store_true", help="Render card + video only; no upload.")

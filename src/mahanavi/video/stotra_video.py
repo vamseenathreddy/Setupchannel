@@ -25,7 +25,7 @@ import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 from mahanavi.exceptions import VideoAssemblyError
 from mahanavi.images.fonts import FontManager
@@ -77,7 +77,7 @@ class StotraSpec:
 def _cover(img: Image.Image, w: int, h: int) -> Image.Image:
     img = img.convert("RGB")
     scale = max(w / img.width, h / img.height)
-    img = img.resize((int(img.width * scale) + 1, int(img.height * scale) + 1), Image.LANCZOS)
+    img = img.resize((int(img.width * scale) + 1, int(img.height * scale) + 1), Image.Resampling.LANCZOS)
     left, top = (img.width - w) // 2, (img.height - h) // 2
     return img.crop((left, top, left + w, top + h))
 
@@ -85,6 +85,7 @@ def _cover(img: Image.Image, w: int, h: int) -> Image.Image:
 def _fallback_bg(w: int, h: int) -> Image.Image:
     img = Image.new("RGB", (w, h))
     px = img.load()
+    assert px is not None
     for y in range(h):
         for x in range(0, w, 4):
             t = y / h
@@ -101,7 +102,7 @@ def _background(path: Path | None, w: int, h: int, brightness: float) -> Image.I
     return Image.eval(img, lambda v: int(v * brightness))
 
 
-def _wrap_plain(draw: ImageDraw.ImageDraw, text: str, font, max_w: int) -> list[str]:
+def _wrap_plain(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont, max_w: int) -> list[str]:
     lines: list[str] = []
     cur = ""
     words: list[str] = []
@@ -123,8 +124,8 @@ def _wrap_plain(draw: ImageDraw.ImageDraw, text: str, font, max_w: int) -> list[
     return lines
 
 
-def _fit_block(draw, fonts: FontManager, lines: list[str], max_w: int, max_h: int,
-               start: int, floor: int, spacing: float = 1.5) -> tuple[list[str], object, int]:
+def _fit_block(draw: ImageDraw.ImageDraw, fonts: FontManager, lines: list[str], max_w: int, max_h: int,
+               start: int, floor: int, spacing: float = 1.5) -> tuple[list[str], ImageFont.FreeTypeFont, int]:
     """Largest font size at which every (wrapped) line fits max_w and the
     block fits max_h. Returns (lines, font, line_height). Sizes at which
     every given line fits on ONE row are preferred (verse lines stay
@@ -148,7 +149,8 @@ def _fit_block(draw, fonts: FontManager, lines: list[str], max_w: int, max_h: in
     return wrapped, font, int(floor * spacing)
 
 
-def _centered(draw, lines, font, lh, y, fill, canvas_w) -> int:
+def _centered(draw: ImageDraw.ImageDraw, lines: list[str], font: ImageFont.FreeTypeFont, lh: int, y: int,
+              fill: tuple[int, ...], canvas_w: int) -> int:
     for ln in lines:
         w = draw.textlength(ln, font=font)
         draw.text(((canvas_w - w) / 2, y), ln, font=font, fill=fill)
@@ -190,7 +192,7 @@ def render_page(fonts: FontManager, bg: Image.Image, header: str, body_te: list[
     block_h = te_lh * len(te_lines) + en_h
     y = 160 + pad_top + max(0, (inner_h - block_h) // 2)
     y = _centered(draw, te_lines, te_font, te_lh, y, WHITE if kind == "lyrics" else GOLD, W)
-    if en_lines:
+    if en_lines and en_font is not None:
         y += 24
         _centered(draw, en_lines, en_font, en_lh, y, SOFT, W)
     if sub_en:

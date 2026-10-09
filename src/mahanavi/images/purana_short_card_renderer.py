@@ -325,6 +325,7 @@ class PuranaShortCardRenderer:
                     break
                 if best is None or (fits, fit[0].size) > (best[0][2] <= best[1], best[0][0].size):
                     best = cand
+            assert best is not None
             (story_font, story_lines, story_block_height), story_box_height, show_icons, show_source, \
                 icon_row_top, source_top, moral_top = best
             if story_block_height > story_box_height:
@@ -351,7 +352,7 @@ class PuranaShortCardRenderer:
             self._draw_paragraph(draw, story_lines, story_font, width, story_top, COLOR_TEXT_LIGHT)
 
             self._draw_centered_line(draw, card.story.moral_te, moral_font, width, moral_top, COLOR_GOLD)
-            if show_source:
+            if show_source and source_top is not None:
                 self._draw_centered_line(draw, source_line, source_font, width, source_top, COLOR_TEXT_LIGHT)
 
             if show_icons:

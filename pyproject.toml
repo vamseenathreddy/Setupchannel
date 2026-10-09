@@ -12,7 +12,7 @@ requires-python = ">=3.13"
 where = ["src"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 testpaths = ["tests"]
 addopts = "-v --cov=mahanavi --cov-report=term-missing"
 
@@ -21,3 +21,11 @@ python_version = "3.13"
 disallow_untyped_defs = true
 warn_return_any = true
 ignore_missing_imports = true
+
+# fonts.py deliberately monkey-patches Pillow (ImageDraw.text/textbbox/textlength and
+# per-font _mv_* attributes) so mixed Telugu/Latin text renders in one call; that is
+# inherently dynamic and cannot be expressed in Pillow's type stubs.
+[[tool.mypy.overrides]]
+module = "mahanavi.images.fonts"
+disallow_untyped_defs = false
+disable_error_code = ["attr-defined", "method-assign"]

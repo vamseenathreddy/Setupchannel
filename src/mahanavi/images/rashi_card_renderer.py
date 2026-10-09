@@ -306,7 +306,7 @@ class RashiCardRenderer:
             head_h = sum(int(f.size * 1.15) + gap for _t, f, _c in lines) + mantra_block_gap \
                 + int(mantra_font.size * 1.15) + int(gap * 0.4)
 
-            def _fits(font, limit):
+            def _fits(font: ImageFont.FreeTypeFont, limit: int) -> bool:
                 n = len(self._wrap_text(draw, combined_text, font, content_width))
                 return content_top + head_h + n * int(font.size * 1.15) <= limit
 
@@ -314,7 +314,7 @@ class RashiCardRenderer:
                 card = replace(card, icon_paths=[])
                 icon_row_top = comment_top
                 content_bottom_limit = comment_top - gap
-            size = chant_font.size
+            size = int(chant_font.size)
             while not _fits(chant_font, content_bottom_limit) and size > 32:
                 size -= 4
                 chant_font = self._fonts.get_font(size=size, weight="Regular")
