@@ -8,7 +8,7 @@ reply text for the viewer's comment. Add a new spec to SPECS to make the next on
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 from typing import Any
 
 from mahanavi.content.alert_seo import _CHANNEL_FOOTER_EN, _CHANNEL_FOOTER_TE
@@ -245,17 +245,4 @@ Shani beeja mantra: Om Pram Preem Proum Sah Shanaye Namah - chant 108 times (at 
     footer_en="Divine Mantra Sangam is a Hindi devotional channel: daily Rahu Kaal, Shubh Muhurat, mantras and Purana stories.",
 )
 
-_HI_FOOTER_MAHANAVI = """🎬 और भक्ति वीडियो: https://www.youtube.com/@MahanaviSpirituals/videos
-📱 Shorts: https://www.youtube.com/@MahanaviSpirituals/shorts
-
-महानवि स्पिरिचुअल्स - भक्ति चैनल। रोज़ पंचांग, राहु काल, शुभ मुहूर्त, मंत्र और पौराणिक कथाएं।"""
-
-# Same Hindi Short, posted on the Mahanavi Spirituals channel too (owner request, 2026-10-09).
-SHANI_HI_MAHANAVI = replace(
-    SHANI_HI, slug="shani_amavasya_hi_mahanavi", token_file="youtube_token.json", expected_channel="Mahanavi",
-    watermark="@MahanaviSpirituals", footer_main=_HI_FOOTER_MAHANAVI,
-    footer_en="Mahanavi Spirituals: daily Panchangam, Rahu Kalam, muhurtams, mantras and Purana stories.",
-    tags=[t for t in SHANI_HI.tags if t != "divine mantra sangam"] + ["mahanavi spirituals"],
-)
-
-SPECS: dict[str, RequestShort] = {s.slug: s for s in (NARASIMHA, SHANI_TE, SHANI_HI, SHANI_HI_MAHANAVI)}
+SPECS: dict[str, RequestShort] = {s.slug: s for s in (NARASIMHA, SHANI_TE, SHANI_HI)}

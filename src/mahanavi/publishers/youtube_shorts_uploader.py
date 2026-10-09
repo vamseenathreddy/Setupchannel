@@ -21,6 +21,7 @@ import logging
 from pathlib import Path
 from typing import Any, Protocol
 
+from mahanavi.content.branding import brand_tags, brand_title
 from mahanavi.config import Settings
 from mahanavi.core.models import PublishTarget, UploadResult
 from mahanavi.exceptions import YouTubeUploadError
@@ -90,9 +91,9 @@ class YouTubeShortsUploader:
         try:
             body = {
                 "snippet": {
-                    "title": seo.title,
+                    "title": brand_title(seo.title),
                     "description": seo.full_caption(),
-                    "tags": [tag.lstrip("#") for tag in seo.hashtags],
+                    "tags": brand_tags([tag.lstrip("#") for tag in seo.hashtags]),
                     "categoryId": self._category_id,
                 },
                 "status": {

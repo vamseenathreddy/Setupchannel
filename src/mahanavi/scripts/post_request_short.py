@@ -18,6 +18,7 @@ from typing import Any
 
 from mahanavi.config import get_settings
 from mahanavi.content.alert_seo import _CHANNEL_FOOTER_EN
+from mahanavi.content.branding import brand_tags, brand_title
 from mahanavi.content.request_shorts import SPECS, RequestShort
 from mahanavi.exceptions import MahanaviError, YouTubeUploadError
 from mahanavi.images.request_card_renderer import RequestCardRenderer
@@ -54,9 +55,11 @@ def assemble(spec: RequestShort, images: list[Path], music: Path, out: Path) -> 
 def upload(youtube: Any, spec: RequestShort, video: Path, privacy: str, publish_at: str = "") -> str:
     from googleapiclient.http import MediaFileUpload
 
+    mahanavi = "mahanavi" in spec.expected_channel.lower()
     body = {
         "snippet": {
-            "title": spec.title, "description": spec.description(), "tags": spec.tags,
+            "title": brand_title(spec.title) if mahanavi else spec.title, "description": spec.description(),
+            "tags": brand_tags(spec.tags) if mahanavi else spec.tags,
             "categoryId": DEFAULT_CATEGORY_ID, "defaultLanguage": spec.lang, "defaultAudioLanguage": spec.lang,
         },
         "status": {"privacyStatus": privacy, "selfDeclaredMadeForKids": False},

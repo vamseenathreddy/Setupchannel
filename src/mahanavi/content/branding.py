@@ -43,3 +43,25 @@ def brand_tagline(series_key: str) -> str:
     """e.g. brand_tagline("purana_short") -> "Purana Kathalu by Mahanavi Spirituals"."""
     name = SERIES_TAGLINE_NAME[series_key]
     return f"{name} by {BRAND_NAME}"
+
+
+BRAND_TITLE_SUFFIX = f" | {BRAND_NAME}"
+BRAND_TAGS = [BRAND_NAME.lower(), "mahanavi", "mahanavispirituals", "mahanavi spirituals telugu"]
+
+
+def brand_title(title: str, limit: int = 100) -> str:
+    """Put the channel name in the title of every Mahanavi Short (2026-10-09 request: Google searches for
+    "mahanavi spirituals" were being corrected to "mahanavami"; the exact name in every title/tag/description
+    teaches Google that it is a real brand). Already-branded titles are untouched; a long title is cut
+    (with an ellipsis) so the name always fits."""
+    if "mahanavi" in title.lower():
+        return title
+    room = limit - len(BRAND_TITLE_SUFFIX)
+    base = title if len(title) <= room else title[: room - 1].rstrip() + "\u2026"
+    return base + BRAND_TITLE_SUFFIX
+
+
+def brand_tags(tags: list[str]) -> list[str]:
+    """Append the brand tags that are not already there (case-insensitive)."""
+    have = {t.lower() for t in tags}
+    return tags + [t for t in BRAND_TAGS if t.lower() not in have]

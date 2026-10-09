@@ -77,7 +77,7 @@ def test_upload_succeeds_with_mocked_api(settings: Settings, tmp_path: Path) -> 
     assert result.post_url == "https://www.youtube.com/watch?v=abc123"
     # Confirm the actual request body shape sent to the API.
     _, kwargs = mock_videos.insert.call_args
-    assert kwargs["body"]["snippet"]["title"] == _seo().title
+    assert kwargs["body"]["snippet"]["title"].startswith(_seo().title) and kwargs["body"]["snippet"]["title"].endswith("Mahanavi Spirituals")
     assert kwargs["body"]["status"]["selfDeclaredMadeForKids"] is False
     assert kwargs["body"]["snippet"]["tags"] == ["Shorts", "రాహుకాలం", "పంచాంగం"]
 
