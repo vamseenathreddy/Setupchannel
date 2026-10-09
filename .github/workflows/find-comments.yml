@@ -1,0 +1,61 @@
+name: Tools | Find Comments
+
+# Read-only: searches recent comments of one or more channels for a text
+# fragment. Output goes to the Drive log file like the other utilities.
+on:
+  workflow_dispatch:
+    inputs:
+      text_filter:
+        description: "Text to look for in comments (case-insensitive)"
+        required: true
+        default: "narsimha"
+      token_files:
+        description: "Comma-separated saved tokens to search"
+        required: false
+        default: "youtube_token.json,youtube_token_trance_beats.json,youtube_token_mantra_sangam.json,youtube_token_ramana.json,youtube_token_jesus.json"
+
+permissions:
+  contents: read
+
+jobs:
+  find-comments:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Install full Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Search comments
+        run: |
+          : > data/recent_uploads_log.txt
+          IFS=',' read -ra TOKENS <<< "${{ inputs.token_files }}"
+          for t in "${TOKENS[@]}"; do
+            echo "=== $t" | tee -a data/recent_uploads_log.txt
+            MAHANAVI_YOUTUBE_TOKEN_FILE="./data/$t" python3 scripts/ci/find_comments.py "${{ inputs.text_filter }}" 2>&1 | tee -a data/recent_uploads_log.txt || true
+          done
+
+      - name: Push output log to Drive
+        if: always()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/push_drive_asset.py data/recent_uploads_log.txt recent_uploads_log.txt
