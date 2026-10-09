@@ -65,7 +65,7 @@ def main() -> int:
         items_all: list[dict] = []
         for i in range(0, len(video_ids), 50):
             chunk = youtube.videos().list(
-                part="snippet,status", id=",".join(video_ids[i:i + 50])
+                part="snippet,status,statistics", id=",".join(video_ids[i:i + 50])
             ).execute()
             items_all.extend(chunk.get("items", []))
         videos_resp = {"items": items_all}
@@ -79,7 +79,7 @@ def main() -> int:
                 continue
             print(
                 f"{item['id']:<13} {item['status']['privacyStatus']:<10} "
-                f"{item['snippet']['publishedAt']:<21} {title}"
+                f"{item['snippet']['publishedAt']:<21} views={item.get('statistics', {}).get('viewCount', '?')} {title}"
             )
             shown += 1
         print("-" * 100)
