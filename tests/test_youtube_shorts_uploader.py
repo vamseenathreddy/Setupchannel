@@ -79,7 +79,7 @@ def test_upload_succeeds_with_mocked_api(settings: Settings, tmp_path: Path) -> 
     _, kwargs = mock_videos.insert.call_args
     assert kwargs["body"]["snippet"]["title"].startswith(_seo().title) and kwargs["body"]["snippet"]["title"].endswith("Mahanavi Spirituals")
     assert kwargs["body"]["status"]["selfDeclaredMadeForKids"] is False
-    assert kwargs["body"]["snippet"]["tags"] == ["Shorts", "రాహుకాలం", "పంచాంగం"]
+    assert kwargs["body"]["snippet"]["tags"][:3] == ["Shorts", "రాహుకాలం", "పంచాంగం"] and "mahanavi spirituals" in kwargs["body"]["snippet"]["tags"]
 
 
 def test_upload_handles_api_error_gracefully(settings: Settings, tmp_path: Path) -> None:
