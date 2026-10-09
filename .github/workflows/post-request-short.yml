@@ -1,0 +1,100 @@
+name: Tools | Viewer Request Short (private draft)
+
+# Builds a one-off Short a viewer asked for in the comments (specs live in
+# src/mahanavi/content/request_shorts.py) and uploads it PRIVATE so the owner can verify it in
+# YouTube Studio and publish it by hand. After publishing, run again with `after_publish_video_id`
+# to reply to the viewer's comment and post the mantras as the first comment.
+on:
+  workflow_dispatch:
+    inputs:
+      spec:
+        description: "Request spec name"
+        required: true
+        default: "narasimha_mantras"
+      privacy:
+        description: "private (default), unlisted or public"
+        required: false
+        default: "private"
+      after_publish_video_id:
+        description: "Only after publishing: video id to reply to the viewer on (skips building/uploading)"
+        required: false
+        default: ""
+
+concurrency:
+  group: post-request-short
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  post-request-short:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Install ffmpeg
+        run: bash scripts/ci/apt_install.sh ffmpeg
+
+      - name: Install full Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Build and upload the request Short
+        env:
+          MAHANAVI_IMAGES_ROOT: ./Images
+          MAHANAVI_ASSETS_DIR: ./assets
+          MAHANAVI_OUTPUT_DIR: ./data/generated
+          MAHANAVI_DATABASE_PATH: ./data/mahanavi.db
+          MAHANAVI_LOG_DIR: ./data/logs
+          MAHANAVI_TIMEZONE: Asia/Kolkata
+          MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
+        run: |
+          set -o pipefail
+          ARGS="--spec ${{ inputs.spec }}"
+          if [ -n "${{ inputs.after_publish_video_id }}" ]; then
+            ARGS="$ARGS --after-publish ${{ inputs.after_publish_video_id }}"
+          else
+            ARGS="$ARGS --privacy ${{ inputs.privacy }}"
+          fi
+          python3 -m mahanavi.scripts.post_request_short $ARGS 2>&1 | tee data/recent_uploads_log.txt
+
+      - name: Push state to Drive
+        if: always()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py push
+
+      - name: Push output log to Drive
+        if: always()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/push_drive_asset.py data/recent_uploads_log.txt recent_uploads_log.txt
+
+      - name: Upload run output as artifact (debugging)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: request-short-${{ github.run_id }}
+          path: data/generated/request_shorts/
+          if-no-files-found: ignore
+          retention-days: 7
