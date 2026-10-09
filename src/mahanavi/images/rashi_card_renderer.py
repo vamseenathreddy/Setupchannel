@@ -34,7 +34,7 @@ footer boundary.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
@@ -152,7 +152,7 @@ class RashiCardRenderer:
             # as the alert cards, which share this channel's Shorts UI
             # overlay.
             content_top = int(height * 0.25)
-            footer_bottom = int(height * 0.68)
+            footer_bottom = int(height * 0.74)  # YouTube's channel/caption block starts near 0.77; was 0.68
 
             # Transit-aware mantra selection ("this mantra should change
             # for them according [to] sani and other situation" --
@@ -293,6 +293,31 @@ class RashiCardRenderer:
             # name, ruling planet, mantra, chant count, and the benefit
             # line -- all finishing at or above content_bottom_limit,
             # with the icon row and footer below it.
+            if "సార్లు" in chant_count_text:
+                chant_with_prompt = chant_count_text.replace("సార్లు", "సార్లు చదువుకోండి", 1)
+            else:
+                chant_with_prompt = f"{chant_count_text} చదువుకోండి"
+            combined_text = f"{benefit_text} {chant_with_prompt}" if benefit_text else chant_with_prompt
+
+            # STAGED FIT (a long Shani-affected benefit wrapped to 3 lines and ran over the deity icons):
+            # measure first; if the text does not fit above the icon row, drop the icon row, and if it
+            # still does not fit, shrink the benefit/chant font step by step until it does.
+            head_h = sum(int(f.size * 1.15) + gap for _t, f, _c in lines) + mantra_block_gap \
+                + int(mantra_font.size * 1.15) + int(gap * 0.4)
+
+            def _fits(font, limit):
+                n = len(self._wrap_text(draw, combined_text, font, content_width))
+                return content_top + head_h + n * int(font.size * 1.15) <= limit
+
+            if not _fits(chant_font, content_bottom_limit) and card.icon_paths:
+                card = replace(card, icon_paths=[])
+                icon_row_top = comment_top
+                content_bottom_limit = comment_top - gap
+            size = chant_font.size
+            while not _fits(chant_font, content_bottom_limit) and size > 32:
+                size -= 4
+                chant_font = self._fonts.get_font(size=size, weight="Regular")
+
             cursor_y = content_top
             for text, font, color in lines:
                 cursor_y = self._draw_centered_line(draw, text, font, width, cursor_y, color)
@@ -301,18 +326,6 @@ class RashiCardRenderer:
             cursor_y += mantra_block_gap
             cursor_y = self._draw_centered_line(draw, mantra_text, mantra_font, width, cursor_y, COLOR_TEXT_LIGHT)
             cursor_y += int(gap * 0.4)
-
-            # Benefit + chant-count merged into one sentence (explicit
-            # request 2026-10-04), e.g. "మనశ్శాంతి, కుటుంబ సౌఖ్యం కోసం 108
-            # సార్లు చదువుకోండి" -- "చదువుకోండి" (recite/read) is inserted
-            # right after "సార్లు" so a chant_count_text with a trailing
-            # clause (the Shani remedy's "..., శనివారం ఉత్తమం") still
-            # reads naturally: "...108 సార్లు చదువుకోండి, శనివారం ఉత్తమం".
-            if "సార్లు" in chant_count_text:
-                chant_with_prompt = chant_count_text.replace("సార్లు", "సార్లు చదువుకోండి", 1)
-            else:
-                chant_with_prompt = f"{chant_count_text} చదువుకోండి"
-            combined_text = f"{benefit_text} {chant_with_prompt}" if benefit_text else chant_with_prompt
 
             for combined_line in self._wrap_text(draw, combined_text, chant_font, content_width):
                 cursor_y = self._draw_centered_line(draw, combined_line, chant_font, width, cursor_y, COLOR_GOLD)
