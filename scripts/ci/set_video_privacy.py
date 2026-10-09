@@ -25,6 +25,7 @@ def main() -> int:
     status = item[0]["status"]
     print(f"{video_id} '{item[0]['snippet']['title']}' was {status['privacyStatus']}")
     status["privacyStatus"] = privacy
+    status.pop("publishAt", None)  # drop any scheduled release so the change is immediate
     yt.videos().update(part="status", body={"id": video_id, "status": status}).execute()
     print(f"{video_id} is now {privacy}")
     return 0
