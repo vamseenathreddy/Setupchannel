@@ -16,8 +16,11 @@ PHOTO_BOX_OVERRIDE = {"photo_04.jpg": 1020, "photo_09.jpg": 1220}  # face-heavy 
 SHOW_SOURCE_ON_VIDEO = False        # the source is always in the YouTube description
 PHOTO_TEXT_BOTTOM = 1600            # keep clear of the Shorts UI overlays
 PHOTO_TEXT_H = 800
-TEXT_TOP_START = 230                # first text line sits just below the Shorts top bar
-TEXT_TOP_H = 1230                  # room for the whole block (down to ~1460, above the caption)
+ICON_FILES = ("ramana.png", "arunachala.png", "dakshinamurthy.png")  # small icon row on every Short (2026-10-11 request)
+ICON_H, ICON_GAP, ICON_TOP = 150, 44, 185   # row sits between the Shorts top bar and the text block
+ICON_ROW_BOTTOM = ICON_TOP + ICON_H
+TEXT_TOP_START = ICON_ROW_BOTTOM + 25  # first text line sits just below the icon row
+TEXT_TOP_H = 1460 - TEXT_TOP_START    # room for the whole block (down to ~1460, above the caption)
 MAX_TEXT_W = 780
 ZOOM = 0.0                          # 0 = completely still picture. Try 0.03 for a slow breathing zoom (loops seamlessly)
 FONT_TE = ROOT / "assets/fonts/Ponnala-Regular.ttf"  # only one weight exists; plain Regular is used (no synthetic bold, owner request 2026-10-07)
@@ -218,7 +221,7 @@ def make_text_layer(row, layout, label_en="", label_te="", max_h=None, bottom=No
 
     if label_en:  # special day header
         tf, ef = _font(FONT_TE, 64), _font(FONT_EN, 34)
-        for txt, f, yy, col in ((label_te, tf, 250, GOLD), (f"Today: {label_en}", ef, 340, WHITE)):
+        for txt, f, yy, col in ((label_te, tf, ICON_ROW_BOTTOM + 25, GOLD), (f"Today: {label_en}", ef, ICON_ROW_BOTTOM + 115, WHITE)):
             if txt:
                 xy = ((W - d.textlength(txt, font=f)) / 2, yy)
                 sd.text(xy, txt, font=f, fill=255, stroke_width=3)
@@ -232,6 +235,28 @@ def make_text_layer(row, layout, label_en="", label_te="", max_h=None, bottom=No
     shade = Image.new("RGBA", (W, H), (0, 0, 0, 255))
     shade.putalpha(blur)
     return Image.alpha_composite(shade, text_l)
+
+
+def add_icons(layer):
+    """Paste the small icon row (Ramana Maharshi, Arunachaleswara, Dakshinamurthy; background-free PNGs in
+    assets/icons) centred under the Shorts top bar, with a soft shadow so they read on any photo."""
+    icons = []
+    for name in ICON_FILES:
+        f = ROOT / "assets" / "icons" / name
+        if f.exists():
+            im = Image.open(f).convert("RGBA")
+            icons.append(im.resize((max(1, int(im.width * ICON_H / im.height)), ICON_H), Image.LANCZOS))
+    if not icons:
+        return layer
+    x = (W - (sum(i.width for i in icons) + ICON_GAP * (len(icons) - 1))) // 2
+    shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    row = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    for im in icons:
+        row.alpha_composite(im, (x, ICON_TOP))
+        x += im.width + ICON_GAP
+    sh = row.getchannel("A").filter(ImageFilter.GaussianBlur(9)).point(lambda v: int(v * 0.7))
+    shadow.putalpha(sh)
+    return Image.alpha_composite(Image.alpha_composite(layer, shadow), row)
 
 
 def _watermark(text_layer, handle, font_path, size=76, alpha=40):
@@ -271,8 +296,11 @@ def render(row, out_mp4, date_key, special=None, workdir="out"):
         layout = dict(layout, anchor=0.30)
         max_h, bottom, channel = TEXT_TOP_H, PHOTO_TEXT_BOTTOM, False
         top_start = TEXT_TOP_START
-    make_text_layer(row, layout, (special or {}).get("label_en", ""), (special or {}).get("label_te", ""),
-                    max_h, bottom, channel, top_start).save(tx_path)
+        if special and special.get("label_en"):  # special-day header (two lines) goes between the icons and the text
+            top_start += 160
+            max_h = 1460 - top_start
+    add_icons(make_text_layer(row, layout, (special or {}).get("label_en", ""), (special or {}).get("label_te", ""),
+                              max_h, bottom, channel, top_start)).save(tx_path)
     music = pick_music(rng)
     if ZOOM > 0:
         bg_f = (f"[0:v]scale=2160:3840,zoompan=z='1+{ZOOM}*sin(PI*on/150)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
