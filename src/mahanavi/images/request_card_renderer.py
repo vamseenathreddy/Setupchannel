@@ -158,7 +158,11 @@ class RequestCardRenderer:
             mantra_idx = sum(1 for x in spec.slides[:index] if x.kind == "mantra")
             total = sum(1 for x in spec.slides if x.kind == "mantra")
             if spec.header:
-                self._line(layer, boxes, spec.header, self._font(40), 262, SOFT)
+                if self._probe.textlength(spec.header, font=self._font(40)) <= TEXT_W:
+                    self._line(layer, boxes, spec.header, self._font(40), 262, SOFT)
+                else:  # long header (festival name): wrap onto two lines instead of overflowing the safe zone
+                    lines, font, lh = self._fit(spec.header, 38, 26, 90)
+                    self._block(layer, boxes, lines, font, lh, 250, SOFT)
             if total > 1:
                 self._dots(layer, mantra_idx, total, 345)
             lines, font, lh = self._fit(slide.label, 76, 52, 110)

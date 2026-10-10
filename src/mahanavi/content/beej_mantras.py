@@ -164,16 +164,12 @@ def build(channel: str, d: date, tithi: str) -> RequestShort:
     count = "108 बार जपें (कम से कम 11 बार)" if hi else "108 సార్లు జపించండి (కనీసం 11 సార్లు)"
     if hi:
         title = f"{name} {kind} | {why} {d.day} {MONTH_NAME[d.month - 1][1]} | Beej Mantra"
-        outro = ("जप से पहले शांत मन से बैठें\nमाला पर 108 बार जपें",)
         ctas = ("इस वीडियो पर अपनी राय कमेंट करें", "रोज़ सुबह 6 बजे नया मंत्र - सब्सक्राइब करें")
-        sub = f"आज: {why}"
-        cta_head = "आज का मंत्र"
+        footer_line = "रोज़ सुबह 6 बजे नया मंत्र · सब्सक्राइब करें"
     else:
         title = f"{name} {kind} | {why} {d.day} {MONTH_NAME[d.month - 1][0]} | Beeja Mantra"
-        outro = ("ప్రశాంతంగా కూర్చుని జపించండి\nమాలపై 108 సార్లు జపించండి",)
         ctas = ("ఈ వీడియోపై మీ అభిప్రాయాన్ని కామెంట్ చేయండి", "ప్రతి రోజూ ఉదయం 6 గంటలకు కొత్త మంత్రం - సబ్‌స్క్రైబ్ చేయండి")
-        sub = f"ఈ రోజు: {why}"
-        cta_head = "నేటి మంత్రం"
+        footer_line = "ప్రతి రోజూ ఉదయం 6 గంటలకు కొత్త మంత్రం · సబ్‌స్క్రైబ్"
     if len(title) > 100:
         title = title[:99] + "…"
     desc_head = (f"🙏 {date_line}\n{why}" + (f" ({tithi_line})" if tithi_line and tithi_line not in why else "") +
@@ -200,13 +196,11 @@ def build(channel: str, d: date, tithi: str) -> RequestShort:
     return RequestShort(
         slug=f"beej_{channel}_{d.isoformat()}", handle="", comment_id="", deity_te=name,
         bg_top=bg_top, bg_mid=bg_mid, bg_bottom=bg_bottom, glow=glow,
-        slides=(
-            Slide("intro", 3.5, date_line, name + "\n" + kind, tithi_line or why, sub),
-            Slide("mantra", 7.0, kind, mantra, dei.translit, count),
-            Slide("outro", 3.5, cta_head, outro[0]),
+        slides=(  # ONE card, 12 s: date + tithi on top, then the mantra, transliteration and count
+            Slide("mantra", 12.0, f"{name} {kind}", mantra, dei.translit, count),
         ),
         title=title, title_en=f"{dei.key.title()} {kind_en} Mantra - {d.strftime('%d %b %Y')} | Chant 108 Times",
         description_te=desc_head, description_en=desc_en, hashtags=hashtags, tags=tags,
         lang=cfg["lang"], token_file=cfg["token_file"], expected_channel=cfg["expected"], watermark=cfg["watermark"],
-        header=name, cta_lines=ctas, footer_main=footer, footer_en=footer_en,
+        header=f"{date_line} · {tithi_line if why == WEEKDAY_NAME[d.weekday()][i] else why}", tag_footer=footer_line, cta_lines=ctas, footer_main=footer, footer_en=footer_en,
     )

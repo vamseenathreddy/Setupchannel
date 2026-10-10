@@ -35,3 +35,4 @@ Deity = festival override (2026 dates, refresh yearly) > tithi at sunrise (Hyder
 `scripts/post_beej_mantra.py`, gate `channels/beej/gate.py`, workflows `post-beej-{mahanavi,mantra-sangam,trance-beats}.yml`,
 state `beej_state.json` (one POST_SLOT per channel), cron-job.org pings every 10 min 6:00-6:50.
 Seed mantras are labelled beej; Shiva/Vishnu/Subrahmanya are labelled moola.
+Beej Shorts are a single 12 s card (date + tithi/festival on top, mantra, transliteration, count, subscribe line); keep every Short under 15 s.

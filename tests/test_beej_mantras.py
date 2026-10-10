@@ -36,7 +36,7 @@ def test_build_valid_seo_and_safe_zone(channel: str, tmp_path: Path):
     spec = bm.build(channel, date(2026, 10, 24), "Shukla Chaturthi")
     assert len(spec.title) <= 100 and spec.hashtags[0] == "#Shorts" and len(spec.hashtags) <= 5
     assert len(spec.description()) <= 5000 and len(", ".join(spec.tags)) <= 500
-    assert spec.total_seconds <= 20 and spec.lang == bm.CHANNELS[channel]["lang"]
+    assert len(spec.slides) == 1 and spec.total_seconds <= 15 and spec.lang == bm.CHANNELS[channel]["lang"]
     for s in RequestCardRenderer(get_settings()).render_all(spec, tmp_path):
         for x0, y0, x1, y1 in s.boxes:
             assert x0 >= SAFE_L - 4 and x1 <= SAFE_R + 4 and y0 >= SAFE_TOP and y1 <= SAFE_BOTTOM
