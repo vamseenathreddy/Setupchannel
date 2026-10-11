@@ -1,20 +1,23 @@
 """YouTube Data API v3: upload, captions, playlist, seed comment.
 
-Adapted 2026-10 to reuse mahanavi's file-based OAuth token pattern instead of
+Adapted 2026-10 to reuse channel A's file-based OAuth token pattern instead of
 three raw YT_CLIENT_ID/YT_CLIENT_SECRET/YT_REFRESH_TOKEN secrets (the zip's
 original scheme) -- this channel (Channel D) is a separate YouTube
 channel but lives under the SAME Google Cloud OAuth project/client_secrets.json
 already used by the rest of this repo, just with its own saved token file
-(see mahanavi.config.Settings.ramana_youtube_token_file), created once by
-running `python -m mahanavi.scripts.youtube_shorts_auth_setup --token-file
+(see ytcore.config.Settings.ramana_youtube_token_file), created once by
+running `python -m ytcore.scripts.youtube_shorts_auth_setup --token-file
 data/youtube_token_ramana.json` locally and choosing the Channel D
 channel at the Google consent screen.
 
 Deliberately does NOT pass an explicit scopes= to Credentials.from_authorized_user_file
 -- see YouTubeShortsUploader._build_service()'s long comment in
-src/mahanavi/publishers/youtube_shorts_uploader.py for why (a documented past
+src/ytcore/publishers/youtube_shorts_uploader.py for why (a documented past
 production incident, RefreshError: invalid_scope).
 """
+import os as _os, sys as _sys  # noqa: E401
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "..", "src"))  # noqa: E402
+from ytcore.brandcfg import D_NAME  # noqa: E402
 import io
 import time
 from pathlib import Path
@@ -30,8 +33,8 @@ def service(token_file: Path):
     if not Path(token_file).exists():
         raise SystemExit(
             f"No saved YouTube token at {token_file}. Run "
-            "`python -m mahanavi.scripts.youtube_shorts_auth_setup --token-file "
-            f"{token_file}` once first, choosing the Ramana Maharshi TV channel."
+            "`python -m ytcore.scripts.youtube_shorts_auth_setup --token-file "
+            f"{token_file}` once first, choosing the {D_NAME} channel."
         )
     credentials = Credentials.from_authorized_user_file(str(token_file))
     if credentials.expired and credentials.refresh_token:

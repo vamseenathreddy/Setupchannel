@@ -1,12 +1,12 @@
 """Daily Hindi timing Shorts for Channel B: Rahu Kaal, Shubh Muhurat, Durmuhurat.
 
 Hindi version of Channel A' three daily timing Shorts. The times are computed locally
-with the Swiss Ephemeris (mahanavi.panchang.local_provider), so no Panchang API and no quota is
+with the Swiss Ephemeris (ytcore.panchang.local_provider), so no Panchang API and no quota is
 used. Location is New Delhi (the card says so); change LOCATION to use another city.
 """
 from datetime import date, timedelta
 
-from mahanavi.panchang.local_provider import DELHI, LocalPanchangProvider
+from ytcore.panchang.local_provider import DELHI, LocalPanchangProvider
 
 LOCATION_NAME_HI, LOCATION_NAME_EN = "दिल्ली", "New Delhi"
 LOCATION = DELHI

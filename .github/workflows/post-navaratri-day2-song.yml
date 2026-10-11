@@ -23,6 +23,9 @@ on:
 permissions:
   contents: read
 
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
+
 jobs:
   post-navaratri-day2-song:
     runs-on: ubuntu-latest
@@ -65,7 +68,7 @@ jobs:
           MAHANAVI_PLAYLIST_ID_NAVARATRI_SONGS: ${{ secrets.MAHANAVI_PLAYLIST_ID_NAVARATRI_SONGS }}
         run: |
           set -o pipefail
-          python3 -m mahanavi.scripts.post_navaratri_day2_song 2>&1 | tee data/navaratri_day2_song_error.log
+          python3 -m ytcore.scripts.post_navaratri_day2_song 2>&1 | tee data/navaratri_day2_song_error.log
 
       # Diagnostic hand-off (same pattern as Day 1 -- this environment
       # can't fetch GitHub Actions job logs directly, blocked egress to

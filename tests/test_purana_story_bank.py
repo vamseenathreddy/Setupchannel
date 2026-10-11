@@ -1,5 +1,5 @@
-from mahanavi.content.purana_short_stories import PURANA_SHORT_STORIES
-from mahanavi.scripts.post_purana_short import _next_postable_index, _story_pinned_to
+from ytcore.content.purana_short_stories import PURANA_SHORT_STORIES
+from ytcore.scripts.post_purana_short import _next_postable_index, _story_pinned_to
 
 
 def test_bank_loaded_and_unique():

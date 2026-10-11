@@ -16,6 +16,9 @@ on:
 permissions:
   contents: read
 
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
+
 jobs:
   update-seo:
     runs-on: ubuntu-latest

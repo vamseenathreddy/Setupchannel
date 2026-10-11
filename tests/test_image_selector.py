@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from mahanavi.config import Settings
-from mahanavi.core.models import Deity
-from mahanavi.database.repositories import ImageHistoryRepository
-from mahanavi.exceptions import ImageSelectionError
-from mahanavi.images.selector import RandomImageSelector, deity_from_folder_name
+from ytcore.config import Settings
+from ytcore.core.models import Deity
+from ytcore.database.repositories import ImageHistoryRepository
+from ytcore.exceptions import ImageSelectionError
+from ytcore.images.selector import RandomImageSelector, deity_from_folder_name
 
 
 def _make_settings(images_root: Path) -> Settings:

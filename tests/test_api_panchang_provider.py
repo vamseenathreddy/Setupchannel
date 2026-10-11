@@ -5,8 +5,8 @@ from datetime import date, time
 import pytest
 import requests_mock
 
-from mahanavi.exceptions import PanchangFetchError
-from mahanavi.panchang.api_provider import ApiPanchangProvider
+from ytcore.exceptions import PanchangFetchError
+from ytcore.panchang.api_provider import ApiPanchangProvider
 
 BASE_URL = "https://fake-panchang-api.test/v1/panchang"
 

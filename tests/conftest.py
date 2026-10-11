@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from mahanavi.database.db import DatabaseManager
-from mahanavi.database.repositories import ImageHistoryRepository
+from ytcore.database.db import DatabaseManager
+from ytcore.database.repositories import ImageHistoryRepository
 
 
 @pytest.fixture

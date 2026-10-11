@@ -13,18 +13,23 @@ are NOT changed. What changes:
 Usage: python scripts/ci/fix_kamakhya_metadata.py dry-run|apply
 """
 from __future__ import annotations
+import os as _os, sys as _sys  # noqa: E401
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "..", "src"))  # noqa: E402
+from ytcore.brandcfg import A_NAME, A_TE  # noqa: E402
+import os as _os, sys as _sys  # noqa: E401
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "..", "src"))  # noqa: E402
 
 import re
 import sys
 
-from mahanavi.config import get_settings
-from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
+from ytcore.config import get_settings
+from ytcore.publishers.youtube_shorts_uploader import YouTubeShortsUploader
 
 VIDEOS = ["at-SA1XoOL8", "3pQ29TSbhow", "hyScHvnkLmI", "mpsvfMT0guo", "cqld4FfKIrM", "Tu7tuH9PBI0"]
 PLAYLIST_TITLE = "శ్రీ కామాఖ్యా దేవి స్తోత్రాలు | Sri Kamakhya Devi Stotrams and Mantras"
 PLAYLIST_DESC = (
-    "శ్రీ కామాఖ్యా దేవి స్తోత్రాలు, బీజ మంత్రం మరియు అష్టకం, తెలుగు భక్తి ఛానల్ మహానవి స్పిరిచువల్స్ నుండి.\n\n"
-    "Sri Kamakhya Devi stotram, beej mantra chant and ashtakam from Mahanavi Spirituals, "
+    f"శ్రీ కామాఖ్యా దేవి స్తోత్రాలు, బీజ మంత్రం మరియు అష్టకం, తెలుగు భక్తి ఛానల్ {A_TE} నుండి.\n\n"
+    f"Sri Kamakhya Devi stotram, beej mantra chant and ashtakam from {A_NAME}, "
     "a Telugu devotional channel.\n\n"
     "ప్రతి శుక్రవారం కొత్త స్తోత్రం కోసం సబ్‌స్క్రైబ్ చేయండి."
 )

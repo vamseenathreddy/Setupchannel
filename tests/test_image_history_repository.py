@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from mahanavi.database.repositories import ImageHistoryRepository
+from ytcore.database.repositories import ImageHistoryRepository
 
 
 def test_no_usage_initially(image_history_repo: ImageHistoryRepository) -> None:

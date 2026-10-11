@@ -31,10 +31,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from mahanavi.config import get_settings
-from mahanavi.exceptions import YouTubeUploadError
-from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
-from mahanavi.scripts.post_navaratri_song import (
+from ytcore.config import get_settings
+from ytcore.exceptions import YouTubeUploadError
+from ytcore.publishers.youtube_shorts_uploader import YouTubeShortsUploader
+from ytcore.scripts.post_navaratri_song import (
     LYRIC_LINES,
     SCENE_SEQUENCE,
     SONG_FILENAME,

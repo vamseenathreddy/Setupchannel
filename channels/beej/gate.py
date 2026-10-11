@@ -1,7 +1,7 @@
 """Gate for the daily 6 AM beej mantra Short (three channels share beej_state.json, one POST_SLOT each).
 Day-seeded target minute inside 06:00-06:40 IST; a late backup run may still post until 08:00 IST.
 
-  BEEJ_CHANNEL=mahanavi|mantra_sangam|trance_beats POST_SLOT=<same> STATE_FILE=data/beej_state.json \\
+  BEEJ_CHANNEL=channel A|mantra_sangam|trance_beats POST_SLOT=<same> STATE_FILE=data/beej_state.json \\
       python -m channels.beej.gate
 """
 import datetime as dt

@@ -4,11 +4,11 @@ from datetime import date
 
 import pytest
 
-from mahanavi.core.interfaces import PanchangProvider
-from mahanavi.core.models import PanchangData
-from mahanavi.exceptions import PanchangFetchError
-from mahanavi.panchang.dummy_provider import DummyPanchangProvider
-from mahanavi.panchang.fallback_provider import FallbackPanchangProvider
+from ytcore.core.interfaces import PanchangProvider
+from ytcore.core.models import PanchangData
+from ytcore.exceptions import PanchangFetchError
+from ytcore.panchang.dummy_provider import DummyPanchangProvider
+from ytcore.panchang.fallback_provider import FallbackPanchangProvider
 
 
 class _AlwaysFailsProvider(PanchangProvider):

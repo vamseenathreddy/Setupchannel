@@ -18,6 +18,9 @@ on:
 permissions:
   contents: read
 
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
+
 jobs:
   fix-kamakhya-metadata:
     runs-on: ubuntu-latest

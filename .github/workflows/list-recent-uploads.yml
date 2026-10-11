@@ -25,6 +25,9 @@ on:
 permissions:
   contents: read
 
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
+
 jobs:
   list-recent-uploads:
     runs-on: ubuntu-latest

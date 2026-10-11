@@ -7,14 +7,14 @@ htmlcov/
 data/
 # The unanchored "data/" rule above matches a folder named "data" at ANY
 # depth, not just the repo-root data/ (synced state) -- it silently
-# swallowed ramana/data/ (the Ramana Maharshi TV CONTENT BANK, real
+# swallowed ramana/data/ (the Channel D CONTENT BANK, real
 # committed content, not runtime state) the first time that folder was
 # added, causing every real run to fail with FileNotFoundError until
 # force-added back in. Un-ignore it explicitly so this can't happen
 # again, here or for any future channel's own committed content bank.
 !ramana/data/
 !ramana/data/**
-# Same bug, same fix, for every channel added under channels/<name>/data/ (Divine Mantra Sangam, Devotional Trance Beats, and any future
+# Same bug, same fix, for every channel added under channels/<name>/data/ (and any future
 # static-content-bank channel) -- their content.csv files are real committed content, not
 # runtime state, and must not be swallowed by the unanchored "data/" rule above.
 !channels/*/data/

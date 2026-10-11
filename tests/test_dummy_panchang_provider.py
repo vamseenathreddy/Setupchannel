@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from mahanavi.panchang.dummy_provider import DummyPanchangProvider
+from ytcore.panchang.dummy_provider import DummyPanchangProvider
 
 
 def test_returns_panchang_data_for_any_date() -> None:

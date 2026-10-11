@@ -1,4 +1,4 @@
-from mahanavi.video.watermark import GITA_POSITIONS_Y, POSITIONS_Y, overlay_filter
+from ytcore.video.watermark import GITA_POSITIONS_Y, POSITIONS_Y, overlay_filter
 
 
 def test_overlay_filter_cycles_each_layer_in_its_own_slot():

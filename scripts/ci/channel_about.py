@@ -5,10 +5,15 @@
   python scripts/ci/channel_about.py apply [channel|all]
   
 
-channels: mahanavi, ramana. Output goes to stdout (the workflow tees it to a Drive file).
+channels: channel A, ramana. Output goes to stdout (the workflow tees it to a Drive file).
 `apply` fetches the channel's CURRENT brandingSettings and changes only description, keywords, country
 and defaultLanguage, so nothing else (banner, trailer, featured channels) is lost.
 """
+import os as _os, sys as _sys  # noqa: E401
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "..", "src"))  # noqa: E402
+from ytcore.brandcfg import A_NAME, A_TE, D_NAME, D_TE  # noqa: E402
+import os as _os, sys as _sys  # noqa: E401
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "..", "src"))  # noqa: E402
 import json
 import sys
 from pathlib import Path
@@ -26,13 +31,13 @@ CHANNELS = {
         token="youtube_token.json", expect="mahanavi", lang="te",
         keywords=['"Rahu Kalam today"', '"Durmuhurtham today"', '"Shubha Ghadiyalu"', '"rashi mantra"',
                   '"Bhagavad Gita Telugu"', '"Purana stories Telugu"', '"telugu devotional"', '"telugu bhakthi"',
-                  '"daily mantra"', '"mahanavi spirituals"', '"vishnu songs"', '"shiva songs"', '"lakshmi mantra"',
+                  '"daily mantra"', f'"{A_NAME.lower()}"', '"vishnu songs"', '"shiva songs"', '"lakshmi mantra"',
                   '"krishna bhajan"', '"telugu stotra"', '"devotional chants"', '"bhakti songs"',
                   '"Ayyappa Songs"', '"karthika maasam songs"', '"Ammavari Songs"', '"powerful mantras"',
                   '"telugu spiritual channel"'],
         description=(
-            "Welcome to Mahanavi Spirituals, your sacred space for Telugu devotional music and daily bhakti. "
-            "| మహానవి స్పిరిచువల్స్\n\n"
+            f"Welcome to {A_NAME}, your sacred space for Telugu devotional music and daily bhakti. "
+            f"| {A_TE}\n\n"
             "Devotional songs, bhajans, mantras and stotras (Vishnu, Shiva, Lakshmi, Hanuman, Ayyappa, Durga, "
             "Venkateswara), plus daily Telugu Shorts: today's Rahu Kalam, Durmuhurtham and Shubha Ghadiyalu, "
             "rashi mantras, Bhagavad Gita slokas with meaning, and Purana stories.\n\n"
@@ -50,7 +55,7 @@ CHANNELS = {
                   '"Ramana Maharshi quotes"', "Arunachala", '"spiritual teachings"', '"Telugu spiritual"',
                   "రమణ మహర్షి"],
         description=(
-            "Ramana Maharshi TV | రమణ మహర్షి TV\n\n"
+            f"{D_NAME} | {D_TE}\n\n"
             "One short, clear thought each day from Sri Ramana Maharshi, in Telugu and English: his teachings "
             "on self-inquiry (\"Who am I?\"), silence, surrender and the path of Advaita, his questions and "
             "answers, and moments from his life.\n\n"

@@ -50,6 +50,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
+
 jobs:
   post-purana-short:
     runs-on: ubuntu-latest
@@ -108,7 +111,7 @@ jobs:
           if [ -n "${{ inputs.force_story }}" ]; then
             ARGS="$ARGS --story ${{ inputs.force_story }}"
           fi
-          python3 -m mahanavi.scripts.post_purana_short $ARGS
+          python3 -m ytcore.scripts.post_purana_short $ARGS
 
       # Marks today's post done -- deliberately NO `if: always()` here:
       # this step only runs if the pipeline step above actually

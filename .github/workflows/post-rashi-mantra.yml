@@ -1,7 +1,7 @@
 name: Channel A | Weekly Rashi Mantra Table (Sunday 8 AM IST)
 
 # 2026-10-09: replaced the daily one-rashi Short with ONE weekly table of all 12 rashis, Sundays only
-# (gate blocks Mon-Sat; cron-job.org job runs Sundays only). Script: mahanavi.scripts.post_rashi_weekly.
+# (gate blocks Mon-Sat; cron-job.org job runs Sundays only). Script: ytcore.scripts.post_rashi_weekly.
 
 # Moved 2026-10-03 from manual-only to a recurring daily post, once a
 # day, at a TIME THAT VARIES DAY TO DAY within an 8:00-9:00 AM IST
@@ -59,6 +59,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
+
 jobs:
   post-rashi-mantra:
     runs-on: ubuntu-latest
@@ -114,7 +117,7 @@ jobs:
           if [ "${{ inputs.public }}" = "true" ]; then
             ARGS="$ARGS --public"
           fi
-          python3 -m mahanavi.scripts.post_rashi_weekly $ARGS
+          python3 -m ytcore.scripts.post_rashi_weekly $ARGS
 
       # Marks today's post done -- deliberately NO `if: always()` here:
       # this step only runs if the pipeline step above actually

@@ -17,6 +17,9 @@ on:
 permissions:
   contents: read
 
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
+
 jobs:
   delete-unlisted-videos:
     runs-on: ubuntu-latest

@@ -87,8 +87,8 @@ def run(ch: ChannelPipeline, argv=None) -> int:
         return 0
 
     from . import upload
-    from mahanavi.config import get_settings
-    from mahanavi.publishers.blogger_publisher import post_to_blogger
+    from ytcore.config import get_settings
+    from ytcore.publishers.blogger_publisher import post_to_blogger
 
     settings = get_settings()
     yt = upload.service(ch.youtube_token_file)

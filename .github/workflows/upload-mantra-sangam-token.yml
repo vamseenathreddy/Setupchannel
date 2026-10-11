@@ -1,7 +1,7 @@
 name: Setup | Upload Channel B YouTube Token to Drive
 
 # Same idea as upload-local-token.yml but ONLY touches data/youtube_token_mantra_sangam.json (Channel B).
-# 1. Run `python -m mahanavi.scripts.youtube_shorts_auth_setup --token-file data/youtube_token_mantra_sangam.json` locally.
+# 1. Run `python -m ytcore.scripts.youtube_shorts_auth_setup --token-file data/youtube_token_mantra_sangam.json` locally.
 # 2. Copy the whole contents of data/youtube_token_mantra_sangam.json into a repo secret named LOCAL_MANTRA_TOKEN_JSON.
 # 3. Run this workflow, then delete the secret.
 on:
@@ -9,6 +9,9 @@ on:
 
 permissions:
   contents: read
+
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
 
 jobs:
   upload-local-token:

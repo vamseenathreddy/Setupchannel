@@ -2,6 +2,7 @@
 
   TIMING_KIND=rahu python -m channels.mantra_sangam.scripts.post_timings [--dry-run] [--public]
 """
+from ytcore.brandcfg import B_NAME, B_SHORT  # noqa: E402
 import dataclasses
 import os
 import sys
@@ -11,19 +12,19 @@ from channels.mantra_sangam import channel_config, metadata_timings, timings
 
 PLAYLIST_TITLE = "आज का पंचांग | Daily Panchang: Rahu Kaal, Shubh Muhurat, Durmuhurat (Hindi)"
 PLAYLIST_DESC = ("हर दिन का राहु काल, शुभ मुहूर्त (अभिजीत और ब्रह्म मुहूर्त) और दुर्मुहूर्त, सरल हिंदी में एक शॉर्ट में। "
-                 "रोज़ अपडेट के लिए Divine Mantra Sangam को सब्सक्राइब करें।\n\nDaily Rahu Kaal, Shubh Muhurat (Abhijit and "
+                 f"रोज़ अपडेट के लिए {B_NAME} को सब्सक्राइब करें।\n\nDaily Rahu Kaal, Shubh Muhurat (Abhijit and "
                  "Brahma Muhurat) and Durmuhurat in simple Hindi, one short every day. Times are calculated for New Delhi.\n\n"
                  "#RahuKaal #ShubhMuhurat #Durmuhurat #Panchang #HindiDevotional")
 
 
 def main():
-    from mahanavi.config import get_settings
+    from ytcore.config import get_settings
 
     kind = os.environ["TIMING_KIND"]
     settings = get_settings()
     pipeline = ChannelPipeline(
         channel_key={"rahu": "mantra_rahu", "shubh": "mantra_shubh", "durm": "mantra_durm"}[kind],
-        expected_channel="Mantra Sangam",
+        expected_channel=f"{B_SHORT}",
         fetch_row=timings.fetch_row_for(kind),
         render_cfg=dataclasses.replace(channel_config.TIMING_CFG, music_offset={"rahu": 0, "shubh": 3, "durm": 5}[kind]),
         metadata_bundle=metadata_timings.bundle,

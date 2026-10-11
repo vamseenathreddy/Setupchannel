@@ -1,7 +1,8 @@
 """YouTube metadata for the Hindi Purana / Rashi Shorts. Titles mix Hindi with the English name."""
+from ytcore.brandcfg import B_NAME  # noqa: E402
 import os
 
-CHANNEL = "Divine Mantra Sangam"
+CHANNEL = f"{B_NAME}"
 PREFIX = {"purana": "पुराण कथा | Purana Story", "rashi": "राशि मंत्र | Rashi Mantra"}
 TAGS = {
     "purana": ["#PuranaStory", "#पुराणकथा", "#HinduMythology", "#KrishnaStory"],

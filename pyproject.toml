@@ -3,7 +3,7 @@ requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mahanavi-spirituals"
+name = "setupchannel"
 version = "0.1.0"
 description = "Automated daily Hindu devotional content pipeline for YouTube Community Posts."
 requires-python = ">=3.13"
@@ -14,7 +14,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src", "."]
 testpaths = ["tests"]
-addopts = "-v --cov=mahanavi --cov-report=term-missing"
+addopts = "-v --cov=ytcore --cov-report=term-missing"
 
 [tool.mypy]
 python_version = "3.13"
@@ -26,6 +26,6 @@ ignore_missing_imports = true
 # per-font _mv_* attributes) so mixed Telugu/Latin text renders in one call; that is
 # inherently dynamic and cannot be expressed in Pillow's type stubs.
 [[tool.mypy.overrides]]
-module = "mahanavi.images.fonts"
+module = "ytcore.images.fonts"
 disallow_untyped_defs = false
 disable_error_code = ["attr-defined", "method-assign"]

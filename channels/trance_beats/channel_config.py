@@ -1,11 +1,13 @@
 """Render/pick configuration for Channel C -- the second Hindi-only devotional
-channel in this repo ("also same hindi version of mahanavi spirituals"). Content leans
+channel in this repo ("also same hindi version of Channel A"). Content leans
 Krishna/Radha bhajan-kirtan (vs Channel B's Shiva/Om-mantra-chanting focus) so the
 two channels don't look like duplicates of each other. Hind Bold is a cleaner, more
 contemporary Devanagari display font than Channel B's ornate Yatra One, matching
 this channel's more modern "beats" branding; a magenta/violet "trance" palette distinguishes
 it from Channel B's warm gold.
 """
+from ytcore.brandcfg import A_NAME, C_HANDLE, C_NAME  # noqa: E402
+
 from pathlib import Path
 
 from channels.engine.render import ChannelConfig, TextBlock
@@ -32,8 +34,8 @@ PALETTES = [  # fallback gradients -- magenta/violet "trance" tones, distinct fr
 ]
 
 RENDER_CFG = ChannelConfig(
-    channel_name="Devotional Trance Beats",
-    watermark_handle="@DevotionalTranceBeats",
+    channel_name=f"{C_NAME}",
+    watermark_handle=f"{C_HANDLE}",
     assets_dir=CHANNEL_DIR / "assets",
     blocks=[
         TextBlock(field="text_primary", font=FONT_HI, size=120, color_key="primary", bold=True),

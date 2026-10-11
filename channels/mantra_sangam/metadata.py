@@ -1,9 +1,10 @@
 """Everything YouTube sees besides the pixels for Channel B. Hindi-only content
 (text_secondary is blank in every row) -- there is no English/localization block here, unlike
 the bilingual channels in this repo."""
+from ytcore.brandcfg import B_NAME  # noqa: E402
 import os
 
-CHANNEL = "Divine Mantra Sangam"
+CHANNEL = f"{B_NAME}"
 CAT_WORD = {"mantra": "Mantra", "quote": "Teaching", "aarti": "Aarti"}
 CAT_TAGS = {
     "mantra": ["#Mantra", "#OmNamahShivaya", "#HinduMantra"],

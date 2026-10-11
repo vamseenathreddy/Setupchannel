@@ -1,4 +1,9 @@
 """Render one 5 second, 1080x1920 bilingual Short: image layers via Pillow, video via ffmpeg."""
+import os as _os, sys as _sys  # noqa: E401
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "..", "src"))  # noqa: E402
+from ytcore.brandcfg import D_HANDLE, D_NAME  # noqa: E402
+import os as _os, sys as _sys  # noqa: E401
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "..", "src"))  # noqa: E402
 import glob
 import hashlib
 import random
@@ -26,8 +31,8 @@ ZOOM = 0.0                          # 0 = completely still picture. Try 0.03 for
 FONT_TE = ROOT / "assets/fonts/Ponnala-Regular.ttf"  # only one weight exists; plain Regular is used (no synthetic bold, owner request 2026-10-07)
 FONT_EN = ROOT / "assets/fonts/Poppins-Bold.ttf"      # bold, to match the weight of the Telugu text
 FONT_EN_LIGHT = ROOT / "assets/fonts/Poppins-Regular.ttf"
-CHANNEL = "Ramana Maharshi TV"
-HANDLE = "@ramanamaharshitv"
+CHANNEL = f"{D_NAME}"
+HANDLE = f"{D_HANDLE}"
 
 CREAM, GOLD, WHITE, SOFT = (255, 236, 196), (244, 190, 90), (245, 245, 245), (210, 205, 195)
 

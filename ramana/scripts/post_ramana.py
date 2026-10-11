@@ -9,7 +9,7 @@ post) never causes a second post.
   python ramana/scripts/post_ramana.py --dry-run               # render and write metadata only
   python ramana/scripts/post_ramana.py --dry-run --date 2026-12-30 --row l010
 
-This mirrors the structure of src/mahanavi/scripts/post_rashi_mantra_short.py and friends
+This mirrors the structure of src/ytcore/scripts/post_rashi_mantra_short.py and friends
 (same Blogger step, same "non-fatal extras" pattern) but is otherwise a self-contained
 pipeline using the Ramana-specific content bank/renderer under ramana/src/.
 """
@@ -25,12 +25,12 @@ RAMANA_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RAMANA_ROOT))
 from src import common, metadata, pick, render, state as state_mod  # noqa: E402
 
-# So `mahanavi.config` / `mahanavi.publishers.blogger_publisher` are importable even when this
+# So `ytcore.config` / `ytcore.publishers.blogger_publisher` are importable even when this
 # script is invoked directly (python ramana/scripts/post_ramana.py) rather than via `-m`.
 REPO_ROOT = RAMANA_ROOT.parent
 sys.path.insert(0, str(REPO_ROOT / "src"))
-from mahanavi.config import get_settings  # noqa: E402
-from mahanavi.publishers.blogger_publisher import post_to_blogger  # noqa: E402
+from ytcore.config import get_settings  # noqa: E402
+from ytcore.publishers.blogger_publisher import post_to_blogger  # noqa: E402
 
 IST = ZoneInfo("Asia/Kolkata")
 
@@ -111,7 +111,7 @@ def main():
         print(f"::warning::seed comment failed: {e}")
 
     # Same in-repo Blogger API v3 step as every other series in this repo (replaces the broken
-    # IFTTT applet) -- see src/mahanavi/publishers/blogger_publisher.py's module docstring.
+    # IFTTT applet) -- see src/ytcore/publishers/blogger_publisher.py's module docstring.
     if post_to_blogger(settings, video_id, meta["title"], meta["description"], blog_id=settings.ramana_blogger_blog_id):
         print("Posted to Blogger.")
     else:

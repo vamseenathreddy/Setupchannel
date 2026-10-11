@@ -1,12 +1,13 @@
 """Viewer-request Shorts (content/request_shorts.py + images/request_card_renderer.py)."""
+from ytcore.brandcfg import B_SHORT  # noqa: E402
 import shutil
 from pathlib import Path
 
 import pytest
 
-from mahanavi.config import get_settings
-from mahanavi.content.request_shorts import NARASIMHA, SHANI_HI, SHANI_TE, SPECS
-from mahanavi.images.request_card_renderer import SAFE_BOTTOM, SAFE_L, SAFE_R, SAFE_TOP, RequestCardRenderer
+from ytcore.config import get_settings
+from ytcore.content.request_shorts import NARASIMHA, SHANI_HI, SHANI_TE, SPECS
+from ytcore.images.request_card_renderer import SAFE_BOTTOM, SAFE_L, SAFE_R, SAFE_TOP, RequestCardRenderer
 
 
 def test_spec_seo_is_valid():
@@ -50,7 +51,7 @@ def test_all_text_inside_the_safe_zone(tmp_path: Path):
 def test_assemble_matches_total_duration(tmp_path: Path):
     import subprocess
 
-    from mahanavi.scripts.post_request_short import assemble
+    from ytcore.scripts.post_request_short import assemble
 
     settings = get_settings()
     slides = RequestCardRenderer(settings).render_all(NARASIMHA, tmp_path)
@@ -76,6 +77,6 @@ def test_shani_amavasya_specs(spec, tmp_path: Path):
 
 
 def test_hindi_spec_posts_to_mantra_sangam():
-    assert SHANI_HI.lang == "hi" and SHANI_HI.expected_channel == "Mantra Sangam"
+    assert SHANI_HI.lang == "hi" and SHANI_HI.expected_channel == f"{B_SHORT}"
     assert SHANI_HI.token_file == "youtube_token_mantra_sangam.json"
     assert SHANI_TE.token_file == "youtube_token.json"

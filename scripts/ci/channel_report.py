@@ -16,9 +16,9 @@ import statistics
 import sys
 from zoneinfo import ZoneInfo
 
-from mahanavi.config import get_settings
-from mahanavi.exceptions import YouTubeUploadError
-from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
+from ytcore.config import get_settings
+from ytcore.exceptions import YouTubeUploadError
+from ytcore.publishers.youtube_shorts_uploader import YouTubeShortsUploader
 
 IST = ZoneInfo("Asia/Kolkata")
 # Order matters: first match wins. Titles carry the series keyword (see each channel's metadata.py).
@@ -49,7 +49,7 @@ def fetch_analytics(settings, days_back: int) -> dict:
     """Per-video retention from the YouTube Analytics API (needs the yt-analytics.readonly scope on the
     saved token). Returns {} with a clear note if the scope is missing, so the rest of the report still prints."""
     try:
-        from mahanavi.publishers.youtube_analytics_client import build_analytics_service
+        from ytcore.publishers.youtube_analytics_client import build_analytics_service
 
         svc = build_analytics_service(settings)
         end = dt.date.today()

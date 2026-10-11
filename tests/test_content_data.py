@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from mahanavi.content.data import (
+from ytcore.content.data import (
     DEITY_CONTENT,
     GENERAL_ENGLISH_KEYWORDS,
     GENERAL_TELUGU_HASHTAGS,
@@ -10,7 +10,7 @@ from mahanavi.content.data import (
     WEEKDAY_DEITY_MAP,
     pick_beeja_mantram,
 )
-from mahanavi.core.models import Deity
+from ytcore.core.models import Deity
 
 
 def test_every_deity_has_content() -> None:

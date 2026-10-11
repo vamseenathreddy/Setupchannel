@@ -4,11 +4,12 @@ Hindi version of Channel A's Purana and Rashi Mantra Shorts. Content is a static
 row is the first one not yet in used_ids (the list restarts when every row has been used).
 Titles mix Hindi with the English name of the main word, e.g. "गजेंद्र मोक्ष (Gajendra Moksham)".
 """
+from ytcore.brandcfg import B_NAME  # noqa: E402
 import csv
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parent / "data"
-CHANNEL = "Divine Mantra Sangam"
+CHANNEL = f"{B_NAME}"
 OPINION = "इस वीडियो पर अपनी राय कमेंट करें"
 SUB = {"purana": "रोज़ एक पुराण कथा के लिए सब्सक्राइब करें", "rashi": "रोज़ राशि मंत्र के लिए सब्सक्राइब करें"}
 CSV = {"purana": DATA / "purana.csv", "rashi": DATA / "rashi.csv"}

@@ -19,6 +19,9 @@ on:
 permissions:
   contents: read
 
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
+
 jobs:
   set-thumbnail:
     runs-on: ubuntu-latest

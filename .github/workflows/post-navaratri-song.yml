@@ -18,6 +18,9 @@ on:
 permissions:
   contents: read
 
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
+
 jobs:
   post-navaratri-song:
     runs-on: ubuntu-latest
@@ -61,7 +64,7 @@ jobs:
           MAHANAVI_PLAYLIST_ID_NAVARATRI_SONGS: ${{ secrets.MAHANAVI_PLAYLIST_ID_NAVARATRI_SONGS }}
         run: |
           set -o pipefail
-          python3 -m mahanavi.scripts.post_navaratri_song 2>&1 | tee data/navaratri_song_error.log
+          python3 -m ytcore.scripts.post_navaratri_song 2>&1 | tee data/navaratri_song_error.log
 
       # Diagnostic hand-off (added 2026-10-03): this environment can't
       # fetch GitHub Actions job logs directly (they redirect to blob

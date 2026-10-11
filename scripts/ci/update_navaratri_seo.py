@@ -20,10 +20,10 @@ from __future__ import annotations
 
 import sys
 
-from mahanavi.config import get_settings
-from mahanavi.content.navaratri_song_seo import build_navaratri_song_seo
-from mahanavi.exceptions import YouTubeUploadError
-from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
+from ytcore.config import get_settings
+from ytcore.content.navaratri_song_seo import build_navaratri_song_seo
+from ytcore.exceptions import YouTubeUploadError
+from ytcore.publishers.youtube_shorts_uploader import YouTubeShortsUploader
 
 TITLE_MATCH = "కనకదుర్గమ్మా"
 

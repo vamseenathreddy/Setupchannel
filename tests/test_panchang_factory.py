@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from mahanavi.config import Settings
-from mahanavi.exceptions import ConfigError
-from mahanavi.panchang.api_provider import ApiPanchangProvider
-from mahanavi.panchang.dummy_provider import DummyPanchangProvider
-from mahanavi.panchang.factory import get_panchang_provider
+from ytcore.config import Settings
+from ytcore.exceptions import ConfigError
+from ytcore.panchang.api_provider import ApiPanchangProvider
+from ytcore.panchang.dummy_provider import DummyPanchangProvider
+from ytcore.panchang.factory import get_panchang_provider
 
 
 def _settings(tmp_path: Path, **overrides: object) -> Settings:

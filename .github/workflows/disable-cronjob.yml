@@ -7,6 +7,9 @@ on:
         required: true
 permissions:
   contents: read
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
+
 jobs:
   disable:
     runs-on: ubuntu-latest

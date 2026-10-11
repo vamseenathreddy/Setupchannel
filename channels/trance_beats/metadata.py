@@ -1,9 +1,10 @@
 """Everything YouTube sees besides the pixels for Channel C. Hindi-only
 content, Krishna/Radha bhajan-kirtan focus (vs Channel B's mantra-chanting focus)."""
+from ytcore.brandcfg import C_NAME  # noqa: E402
 import os
 import re
 
-CHANNEL = "Devotional Trance Beats"
+CHANNEL = f"{C_NAME}"
 CAT_WORD = {"bhajan": "Bhajan", "kirtan": "Kirtan", "quote": "Teaching", "gita": "Bhagavad Gita",
             "bhagavatam": "Shrimad Bhagavatam", "mantra": "Krishna Mantra"}
 CAT_TAGS = {

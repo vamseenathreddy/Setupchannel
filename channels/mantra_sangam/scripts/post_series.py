@@ -2,6 +2,7 @@
 
   SERIES_KIND=purana python -m channels.mantra_sangam.scripts.post_series [--dry-run] [--public]
 """
+from ytcore.brandcfg import B_SHORT  # noqa: E402
 import dataclasses
 import os
 import sys
@@ -18,14 +19,14 @@ PLAYLISTS = {
 
 
 def main():
-    from mahanavi.config import get_settings
+    from ytcore.config import get_settings
 
     kind = os.environ["SERIES_KIND"]
     settings = get_settings()
     title, desc = PLAYLISTS[kind]
     pipeline = ChannelPipeline(
         channel_key=f"mantra_{kind}",
-        expected_channel="Mantra Sangam",
+        expected_channel=f"{B_SHORT}",
         fetch_row=series.fetch_row_for(kind),
         render_cfg=dataclasses.replace(channel_config.SERIES_CFG, music_offset={"purana": 7, "rashi": 9}[kind]),
         metadata_bundle=metadata_series.bundle,

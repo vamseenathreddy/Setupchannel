@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from mahanavi.scripts.check_festival_today import FESTIVALS_2026, _SPECIAL_TITHIS
+from ytcore.scripts.check_festival_today import FESTIVALS_2026, _SPECIAL_TITHIS
 
 
 def test_special_tithis_match_real_provider_spelling_variants() -> None:

@@ -20,6 +20,9 @@ on:
 permissions:
   contents: read
 
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
+
 jobs:
   weekly-performance-report:
     runs-on: ubuntu-latest
@@ -54,7 +57,7 @@ jobs:
           MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
           MAHANAVI_TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           MAHANAVI_TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python3 -m mahanavi.scripts.weekly_performance_report --days "${{ inputs.days || '7' }}"
+        run: python3 -m ytcore.scripts.weekly_performance_report --days "${{ inputs.days || '7' }}"
 
       - name: Push state to Drive
         if: always()

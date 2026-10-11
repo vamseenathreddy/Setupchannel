@@ -16,6 +16,9 @@ on:
 permissions:
   contents: read
 
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
+
 jobs:
   setup-playlists:
     runs-on: ubuntu-latest
@@ -46,7 +49,7 @@ jobs:
       - name: Create/find playlists and print their IDs
         env:
           MAHANAVI_YOUTUBE_TOKEN_FILE: ./data/youtube_token.json
-        run: python3 -m mahanavi.scripts.youtube_playlists_setup
+        run: python3 -m ytcore.scripts.youtube_playlists_setup
 
       - name: Push state to Drive
         if: always()

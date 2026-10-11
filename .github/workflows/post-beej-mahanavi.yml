@@ -1,7 +1,7 @@
 name: Channel A | Beej Mantra Short (6 AM IST)
 
 # Daily 6 AM beej (seed) mantra Short, deity chosen by festival / tithi / weekday
-# (src/mahanavi/content/beej_mantras.py). Shares data/beej_state.json with the other two channels (one
+# (src/ytcore/content/beej_mantras.py). Shares data/beej_state.json with the other two channels (one
 # POST_SLOT each, serialised by the shared concurrency group). cron-job.org pings every 10 min 6:00-6:50 IST.
 # Posts PUBLIC by default.
 on:
@@ -28,6 +28,9 @@ concurrency:
 
 permissions:
   contents: read
+
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
 
 jobs:
   post-beej:
@@ -86,7 +89,7 @@ jobs:
           ARGS="--channel mahanavi"
           if [ "${{ inputs.public }}" != "false" ]; then ARGS="$ARGS --public"; fi
           if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
-          python3 -m mahanavi.scripts.post_beej_mantra $ARGS
+          python3 -m ytcore.scripts.post_beej_mantra $ARGS
 
       - name: Push state to Drive
         if: always() && steps.gate.outputs.post == 'true'

@@ -4,20 +4,21 @@ Shared by every channel in this repo (originally written for Channel D,
 see ramana/src/upload.py; copied here unchanged, byte-for-byte, so the
 Pattern-A engine (channels/engine/) has its own copy to import without
 depending on ramana/). Each channel is a separate YouTube channel, each with
-its OWN saved token file (see mahanavi.config.Settings' per-channel
+its OWN saved token file (see ytcore.config.Settings' per-channel
 *_youtube_token_file fields), but every one of them can reuse the SAME
 Google Cloud OAuth project/client_secrets.json already used by this repo --
 or a different Google account entirely if that channel lives there (any
 Google account can consent to the same OAuth client). Create each channel's
-token once by running `python -m mahanavi.scripts.youtube_shorts_auth_setup
+token once by running `python -m ytcore.scripts.youtube_shorts_auth_setup
 --token-file <path for this channel>` locally and choosing the right
 channel/account at the Google consent screen.
 
 Deliberately does NOT pass an explicit scopes= to Credentials.from_authorized_user_file
 -- see YouTubeShortsUploader._build_service()'s long comment in
-src/mahanavi/publishers/youtube_shorts_uploader.py for why (a documented past
+src/ytcore/publishers/youtube_shorts_uploader.py for why (a documented past
 production incident, RefreshError: invalid_scope).
 """
+from ytcore.brandcfg import D_NAME  # noqa: E402
 import io
 import time
 from pathlib import Path
@@ -33,8 +34,8 @@ def service(token_file: Path):
     if not Path(token_file).exists():
         raise SystemExit(
             f"No saved YouTube token at {token_file}. Run "
-            "`python -m mahanavi.scripts.youtube_shorts_auth_setup --token-file "
-            f"{token_file}` once first, choosing the Ramana Maharshi TV channel."
+            "`python -m ytcore.scripts.youtube_shorts_auth_setup --token-file "
+            f"{token_file}` once first, choosing the {D_NAME} channel."
         )
     credentials = Credentials.from_authorized_user_file(str(token_file))
     if credentials.expired and credentials.refresh_token:

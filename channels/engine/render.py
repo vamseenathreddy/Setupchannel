@@ -96,8 +96,8 @@ def _font(path, size):
 
 def _mixed_font(latin_path, size, telugu_path, bold=False):
     """Telugu characters in `telugu_path` (plain, no synthetic bold), all other characters in `latin_path`.
-    Uses the ImageDraw run-splitting patch from mahanavi.images.fonts."""
-    import mahanavi.images.fonts as mf  # noqa: F401  (importing installs the ImageDraw patch)
+    Uses the ImageDraw run-splitting patch from ytcore.images.fonts."""
+    import ytcore.images.fonts as mf  # noqa: F401  (importing installs the ImageDraw patch)
     from fontTools.ttLib import TTFont
 
     cmap = _CMAPS.setdefault(str(telugu_path), frozenset(TTFont(str(telugu_path)).getBestCmap().keys()))

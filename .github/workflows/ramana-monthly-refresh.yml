@@ -25,6 +25,9 @@ concurrency:
   group: ramana-content-refresh
   cancel-in-progress: false
 
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
+
 jobs:
   refresh:
     runs-on: ubuntu-latest

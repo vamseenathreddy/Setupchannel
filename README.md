@@ -29,7 +29,7 @@ Both are 10-second vertical Shorts: a rendered alert card
 (`assets/music/alert_bgm.mp3`), uploaded via the official YouTube Data
 API v3 (`publishers/youtube_shorts_uploader.py`).
 
-Entry point: `src/mahanavi/scripts/post_alert_shorts.py`.
+Entry point: `src/ytcore/scripts/post_alert_shorts.py`.
 
 **Timing design — hourly ticks + a gate, not a single precise-time cron:**
 GitHub's `schedule:` event is best-effort and, confirmed across several
@@ -83,7 +83,7 @@ currently only run if you invoke them manually.
 ## Repository layout
 
 ```
-src/mahanavi/
+src/ytcore/
 ├── config.py                 # Settings — loaded from .env, validated at startup
 ├── logging_config.py         # Rotating file + console logging
 ├── exceptions.py              # Exception hierarchy used across the whole app
@@ -183,7 +183,7 @@ string** — blank is treated as "not set."
 ### 4. Set up YouTube (official Data API v3)
 
 ```bash
-python -m mahanavi.scripts.youtube_shorts_auth_setup
+python -m ytcore.scripts.youtube_shorts_auth_setup
 ```
 
 Opens a browser window for one-time OAuth consent; saves a refreshable
@@ -204,7 +204,7 @@ the first account's daily quota is exhausted.
 ## Configuration reference
 
 Every setting lives in `.env` (copy from `.env.example`), all prefixed
-`MAHANAVI_`. Full list and defaults are in `src/mahanavi/config.py`.
+`MAHANAVI_`. Full list and defaults are in `src/ytcore/config.py`.
 
 | Variable | Purpose |
 |---|---|
@@ -223,9 +223,9 @@ Every setting lives in `.env` (copy from `.env.example`), all prefixed
 **Alert Shorts, manual test run:**
 
 ```bash
-python -m mahanavi.scripts.post_alert_shorts --date 2026-09-16   # unlisted by default
-python -m mahanavi.scripts.post_alert_shorts --public            # only once you're happy with the results
-python -m mahanavi.scripts.post_alert_shorts --no-delay          # skip the wall-clock wait, for local testing
+python -m ytcore.scripts.post_alert_shorts --date 2026-09-16   # unlisted by default
+python -m ytcore.scripts.post_alert_shorts --public            # only once you're happy with the results
+python -m ytcore.scripts.post_alert_shorts --no-delay          # skip the wall-clock wait, for local testing
 ```
 
 **In production**, this runs on GitHub's schedule via
@@ -238,8 +238,8 @@ can also trigger it on demand from the Actions tab
 ```bash
 pip install pytest pytest-cov mypy
 PYTHONPATH=src pytest                                       # full suite
-PYTHONPATH=src pytest --cov=mahanavi --cov-report=term-missing
-PYTHONPATH=src mypy src/mahanavi --ignore-missing-imports    # type checking
+PYTHONPATH=src pytest --cov=ytcore --cov-report=term-missing
+PYTHONPATH=src mypy src/ytcore --ignore-missing-imports    # type checking
 ```
 
 CI (`.github/workflows/ci.yml`) runs both automatically on every push/PR.

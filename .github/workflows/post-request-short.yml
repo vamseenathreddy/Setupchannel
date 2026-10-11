@@ -1,7 +1,7 @@
 name: Tools | Viewer Request Short (private draft)
 
 # Builds a one-off Short a viewer asked for in the comments (specs live in
-# src/mahanavi/content/request_shorts.py) and uploads it PRIVATE so the owner can verify it in
+# src/ytcore/content/request_shorts.py) and uploads it PRIVATE so the owner can verify it in
 # YouTube Studio and publish it by hand. After publishing, run again with `after_publish_video_id`
 # to reply to the viewer's comment and post the mantras as the first comment.
 on:
@@ -34,6 +34,9 @@ concurrency:
 
 permissions:
   contents: read
+
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
 
 jobs:
   post-request-short:
@@ -83,7 +86,7 @@ jobs:
             ARGS="$ARGS --privacy ${{ inputs.privacy }}"
             if [ -n "${{ inputs.publish_at }}" ]; then ARGS="$ARGS --publish-at ${{ inputs.publish_at }}"; fi
           fi
-          python3 -m mahanavi.scripts.post_request_short $ARGS 2>&1 | tee data/recent_uploads_log.txt
+          python3 -m ytcore.scripts.post_request_short $ARGS 2>&1 | tee data/recent_uploads_log.txt
 
       - name: Push state to Drive
         if: always()

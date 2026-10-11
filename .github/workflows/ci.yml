@@ -43,11 +43,11 @@ jobs:
         # here is just defensive in case this command is ever run without
         # that config (e.g. a bare `pytest` invocation elsewhere).
         run: |
-          PYTHONPATH=src pytest --cov=mahanavi --cov-report=term-missing --cov-report=xml --ignore=ramana
+          PYTHONPATH=src pytest --cov=ytcore --cov-report=term-missing --cov-report=xml --ignore=ramana
 
       - name: Type check with mypy
         run: |
-          PYTHONPATH=src mypy src/mahanavi --ignore-missing-imports
+          PYTHONPATH=src mypy src/ytcore --ignore-missing-imports
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4

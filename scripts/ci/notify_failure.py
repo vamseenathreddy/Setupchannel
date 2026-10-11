@@ -10,7 +10,7 @@ phone within seconds instead of only being noticed days later as a gap
 on the channel.
 
 Deliberately STDLIB-ONLY (urllib, not `requests`) and does NOT import
-the `mahanavi` package or read .env -- this step can run even when an
+the `ytcore` package or read .env -- this step can run even when an
 earlier step in the SAME failing job never got as far as `pip
 install`, so it can't depend on either. Reads its two secrets straight
 from the environment (passed as `env:` in the workflow step, sourced
@@ -25,7 +25,7 @@ Usage (as wired into each workflow):
 Silently no-ops (exit 0) if the secrets aren't configured yet, so
 adding this step to every workflow today doesn't break anything before
 the user has actually created a bot -- see
-src/mahanavi/notifications/telegram_alert.py for the one-time setup.
+src/ytcore/notifications/telegram_alert.py for the one-time setup.
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ import urllib.request
 
 
 def main() -> int:
-    workflow_name = sys.argv[1] if len(sys.argv) > 1 else "A Mahanavi Spirituals workflow"
+    workflow_name = sys.argv[1] if len(sys.argv) > 1 else "A workflow"
 
     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
     chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()

@@ -29,9 +29,9 @@ from __future__ import annotations
 
 import sys
 
-from mahanavi.config import get_settings
-from mahanavi.exceptions import YouTubeUploadError
-from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
+from ytcore.config import get_settings
+from ytcore.exceptions import YouTubeUploadError
+from ytcore.publishers.youtube_shorts_uploader import YouTubeShortsUploader
 
 DEFAULT_TITLE_SUBSTRING = "కనకదుర్గమ్మా"
 

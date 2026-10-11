@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mahanavi.database.db import DatabaseManager
+from ytcore.database.db import DatabaseManager
 
 
 def test_schema_created(tmp_path: Path) -> None:

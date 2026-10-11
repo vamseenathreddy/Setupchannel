@@ -15,6 +15,9 @@ on:
 permissions:
   contents: read
 
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
+
 jobs:
   add-captions-and-comment:
     runs-on: ubuntu-latest

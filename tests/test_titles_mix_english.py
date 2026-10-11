@@ -6,7 +6,7 @@ import re
 
 import pytest
 
-FILES = (glob.glob("src/mahanavi/content/*.py") + glob.glob("channels/*/metadata.py")
+FILES = (glob.glob("src/ytcore/content/*.py") + glob.glob("channels/*/metadata.py")
          + glob.glob("channels/*/channel_config.py") + ["ramana/src/metadata.py"])
 
 

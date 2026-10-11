@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from mahanavi.exceptions import RetryExhaustedError
-from mahanavi.retry import retry_with_backoff
+from ytcore.exceptions import RetryExhaustedError
+from ytcore.retry import retry_with_backoff
 
 
 def test_succeeds_on_first_try() -> None:

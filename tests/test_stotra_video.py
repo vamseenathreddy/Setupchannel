@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from mahanavi.exceptions import VideoAssemblyError
-from mahanavi.video import stotra_video as sv
+from ytcore.exceptions import VideoAssemblyError
+from ytcore.video import stotra_video as sv
 
 
 def _spec(pages=None):

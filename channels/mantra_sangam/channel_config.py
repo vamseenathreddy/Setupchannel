@@ -1,9 +1,11 @@
-"""Render/pick configuration for Channel B -- "same like mahanavi spirituals but
-hindi only" -- so this reuses mahanavi's own warm gold/saffron devotional palette, but draws
+"""Render/pick configuration for Channel B -- "same like Channel A but
+hindi only" -- so this reuses channel A's own warm gold/saffron devotional palette, but draws
 ONLY Hindi text (text_secondary is left blank in every content row; the render engine skips
 empty blocks automatically). Yatra One is a decorative, devotional-feeling Devanagari display
 font (visually in the same spirit as Ponnala, the Telugu font the rest of this repo uses).
 """
+from ytcore.brandcfg import A_NAME, B_HANDLE, B_NAME  # noqa: E402
+
 from pathlib import Path
 
 from channels.engine.render import ChannelConfig, TextBlock
@@ -30,7 +32,7 @@ PALETTES = [  # same warm devotional gradients as mahanavi/ramana -- deliberatel
 ]
 
 RENDER_CFG = ChannelConfig(
-    channel_name="Divine Mantra Sangam",
+    channel_name=f"{B_NAME}",
     assets_dir=CHANNEL_DIR / "assets",
     blocks=[
         TextBlock(field="text_primary", font=FONT_HI, size=130, color_key="primary", bold=True),
@@ -50,7 +52,7 @@ ROTATION = {0: "mantra", 1: "quote", 2: "mantra", 3: "aarti", 4: "quote", 5: "ma
 # ---- Daily timing Shorts (Hindi version of Channel A's Rahu Kalam / Shubha Ghadiyalu / Durmuhurtham) ----
 FONT_HI_BOLD = REPO_ROOT / "channels/engine/assets/fonts/Hind-Bold.ttf"
 TIMING_CFG = ChannelConfig(
-    channel_name="Divine Mantra Sangam",
+    channel_name=f"{B_NAME}",
     assets_dir=CHANNEL_DIR / "assets",
     blocks=[
         TextBlock(field="t_date", font=FONT_LABEL, size=58, color_key="secondary", bold=False),
@@ -67,7 +69,7 @@ TIMING_CFG = ChannelConfig(
     music_rotate=True,
     layouts=LAYOUTS,
     palettes=PALETTES,
-    watermark_handle="@DivineMantraSangam",
+    watermark_handle=f"{B_HANDLE}",
     logo_path=str(CHANNEL_DIR / "assets" / "logo.png"), logo_width=170, logo_y=230,
     photo_text_h=1090, photo_text_bottom=1470, safe_bottom=1470, safe_top=430, text_max_w=880,
     photo_shade_from=420, photo_shade_alpha=0.88,
@@ -76,7 +78,7 @@ TIMING_CFG = ChannelConfig(
 
 # ---- Hindi Purana story / Rashi mantra Shorts (bank series) ----
 SERIES_CFG = ChannelConfig(
-    channel_name="Divine Mantra Sangam",
+    channel_name=f"{B_NAME}",
     assets_dir=CHANNEL_DIR / "assets",
     blocks=[
         TextBlock(field="t_label", font=FONT_LABEL, size=54, color_key="accent", bold=False),
@@ -92,7 +94,7 @@ SERIES_CFG = ChannelConfig(
     music_rotate=True,
     layouts=LAYOUTS,
     palettes=PALETTES,
-    watermark_handle="@DivineMantraSangam",
+    watermark_handle=f"{B_HANDLE}",
     logo_path=str(CHANNEL_DIR / "assets" / "logo.png"), logo_width=170, logo_y=230,
     photo_text_h=1090, photo_text_bottom=1470, safe_bottom=1470, safe_top=430, text_max_w=880,
     photo_shade_from=420, photo_shade_alpha=0.88,

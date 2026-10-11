@@ -3,10 +3,10 @@ import logging
 
 import pytest
 
-from mahanavi.config import get_settings
-from mahanavi.content.rashi_mantra_content import RASHI_MANTRAS
-from mahanavi.images.rashi_card_renderer import RashiCard, RashiCardRenderer
-from mahanavi.scripts import post_rashi_mantra_short as m
+from ytcore.config import get_settings
+from ytcore.content.rashi_mantra_content import RASHI_MANTRAS
+from ytcore.images.rashi_card_renderer import RashiCard, RashiCardRenderer
+from ytcore.scripts import post_rashi_mantra_short as m
 
 
 @pytest.mark.parametrize("idx", range(12))

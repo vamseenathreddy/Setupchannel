@@ -1,6 +1,6 @@
 import datetime as dt
 
-from mahanavi.content import rashi_weekly as w
+from ytcore.content import rashi_weekly as w
 
 
 def test_week_is_sunday_to_saturday():

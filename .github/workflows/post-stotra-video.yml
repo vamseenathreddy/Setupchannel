@@ -2,7 +2,7 @@ name: Channel A | Stotra Video (weekly)
 
 # Weekly long-form stotra/mantra video (landscape, Telugu lyric pages
 # over a deity background, custom thumbnail). Content spec:
-# src/mahanavi/content/stotras/<slug>.json. The audio and background
+# src/ytcore/content/stotras/<slug>.json. The audio and background
 # image named in the spec must be in the shared Drive folder.
 # Defaults to PRIVATE so the owner reviews before it goes live.
 on:
@@ -23,6 +23,9 @@ on:
 
 permissions:
   contents: read
+
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
 
 jobs:
   post-stotra-video:
@@ -67,7 +70,7 @@ jobs:
           set -o pipefail
           EXTRA=""
           if [ "$RENDER_ONLY" = "true" ]; then EXTRA="--render-only"; fi
-          python3 -m mahanavi.scripts.post_stotra_video "$SLUG" --privacy "$PRIVACY" $EXTRA 2>&1 | tee data/stotra_error.log
+          python3 -m ytcore.scripts.post_stotra_video "$SLUG" --privacy "$PRIVACY" $EXTRA 2>&1 | tee data/stotra_error.log
       - name: Upload render as run artifact
         if: always()
         uses: actions/upload-artifact@v4

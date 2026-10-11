@@ -4,9 +4,9 @@ Usage: python scripts/ci/delete_video.py VIDEO_ID [EXPECTED_TITLE_SUBSTRING]
 Refuses if the title substring is given and does not match."""
 from __future__ import annotations
 import sys
-from mahanavi.config import get_settings
-from mahanavi.exceptions import YouTubeUploadError
-from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
+from ytcore.config import get_settings
+from ytcore.exceptions import YouTubeUploadError
+from ytcore.publishers.youtube_shorts_uploader import YouTubeShortsUploader
 
 
 def clear_from_playlists(yt, video_id: str) -> int:

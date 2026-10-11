@@ -1,7 +1,10 @@
 """Everything YouTube sees besides the pixels: title, description, tags, captions, comment, localizations."""
+import os as _os, sys as _sys  # noqa: E401
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "..", "src"))  # noqa: E402
+from ytcore.brandcfg import D_NAME  # noqa: E402
 import os
 
-CHANNEL = "Ramana Maharshi TV"
+CHANNEL = f"{D_NAME}"
 CAT_WORD = {"quote": "Teachings", "qa": "Satsang", "life": "Life"}
 CAT_TAGS = {
     "quote": ["#SpiritualQuotes", "#Advaita", "#SelfInquiry", "#WhoAmI"],

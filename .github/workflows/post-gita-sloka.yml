@@ -37,6 +37,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
+
 jobs:
   post-gita-sloka:
     runs-on: ubuntu-latest
@@ -109,7 +112,7 @@ jobs:
           if [ -n "${{ inputs.force_sloka }}" ]; then
             ARGS="$ARGS --sloka ${{ inputs.force_sloka }}"
           fi
-          python3 -m mahanavi.scripts.post_gita_sloka_short $ARGS
+          python3 -m ytcore.scripts.post_gita_sloka_short $ARGS
 
       - name: Mark today done
         if: steps.gate.outputs.target == 'post'

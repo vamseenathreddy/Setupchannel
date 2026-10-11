@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from mahanavi.config import get_settings
-from mahanavi.content import beej_mantras as bm
-from mahanavi.images.request_card_renderer import SAFE_BOTTOM, SAFE_L, SAFE_R, SAFE_TOP, RequestCardRenderer
+from ytcore.config import get_settings
+from ytcore.content import beej_mantras as bm
+from ytcore.images.request_card_renderer import SAFE_BOTTOM, SAFE_L, SAFE_R, SAFE_TOP, RequestCardRenderer
 
 
 @pytest.mark.parametrize("d,tithi,key", [

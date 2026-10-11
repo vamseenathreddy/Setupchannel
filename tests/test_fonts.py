@@ -5,9 +5,9 @@ from pathlib import Path
 import pytest
 from PIL import ImageFont
 
-from mahanavi.config import PROJECT_ROOT
-from mahanavi.exceptions import ImageRenderError
-from mahanavi.images.fonts import FontManager
+from ytcore.config import PROJECT_ROOT
+from ytcore.exceptions import ImageRenderError
+from ytcore.images.fonts import FontManager
 
 REAL_FONT_PATH = PROJECT_ROOT / "assets" / "fonts" / "NotoSansTelugu-Variable.ttf"
 

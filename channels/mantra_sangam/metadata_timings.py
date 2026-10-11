@@ -1,9 +1,10 @@
 """YouTube metadata for the Hindi timing Shorts. Titles mix Hindi with the English term."""
+from ytcore.brandcfg import B_NAME  # noqa: E402
 import os
 
 from channels.mantra_sangam import timings
 
-CHANNEL = "Divine Mantra Sangam"
+CHANNEL = f"{B_NAME}"
 NAMES = {  # (hindi, english)
     "rahu": ("राहु काल", "Rahu Kaal"),
     "shubh": ("शुभ मुहूर्त", "Shubh Muhurat"),

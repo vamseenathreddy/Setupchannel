@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from datetime import date
 
-from mahanavi.core.models import Deity
-from mahanavi.images.telugu_text import (
+from ytcore.core.models import Deity
+from ytcore.images.telugu_text import (
     DEITY_TELUGU_NAMES,
     NAKSHATRAM_TELUGU,
     PANCHANG_LABELS,
@@ -89,14 +89,14 @@ def test_translate_nakshatram_unknown_value_falls_back() -> None:
 
 
 def test_dummy_provider_tithis_all_translatable() -> None:
-    from mahanavi.panchang.dummy_provider import _TITHIS
+    from ytcore.panchang.dummy_provider import _TITHIS
 
     for tithi in _TITHIS:
         assert tithi in TITHI_TELUGU, f"{tithi!r} has no Telugu translation"
 
 
 def test_dummy_provider_nakshatrams_all_translatable() -> None:
-    from mahanavi.panchang.dummy_provider import _NAKSHATRAMS
+    from ytcore.panchang.dummy_provider import _NAKSHATRAMS
 
     for nakshatram in _NAKSHATRAMS:
         assert nakshatram in NAKSHATRAM_TELUGU, f"{nakshatram!r} has no Telugu translation"

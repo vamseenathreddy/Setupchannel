@@ -41,6 +41,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
+
 jobs:
   post-concept-short:
     runs-on: ubuntu-latest
@@ -99,7 +102,7 @@ jobs:
           if [ -n "${{ inputs.force_concept }}" ]; then
             ARGS="$ARGS --concept ${{ inputs.force_concept }}"
           fi
-          python3 -m mahanavi.scripts.post_concept_short $ARGS
+          python3 -m ytcore.scripts.post_concept_short $ARGS
 
       # Deliberately NO `if: always()` -- only runs if the pipeline step
       # above actually succeeded, so a failed upload leaves today's

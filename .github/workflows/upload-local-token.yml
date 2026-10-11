@@ -9,7 +9,7 @@ name: Setup | Upload Refreshed YouTube Token to Drive
 # those.
 #
 # USAGE:
-#   1. Run `python -m mahanavi.scripts.youtube_shorts_auth_setup`
+#   1. Run `python -m ytcore.scripts.youtube_shorts_auth_setup`
 #      locally, sign in, approve permissions.
 #   2. Open the resulting data/youtube_token.json in a text editor,
 #      copy its ENTIRE contents.
@@ -28,6 +28,9 @@ on:
 
 permissions:
   contents: read
+
+env:
+  CHANNEL_BRANDS: ${{ secrets.CHANNEL_BRANDS }}
 
 jobs:
   upload-local-token:

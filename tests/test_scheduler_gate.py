@@ -1,7 +1,7 @@
 """
 Tests for scripts/ci/scheduler_gate.py's decision logic (_decide).
 
-This script lives outside the installed `mahanavi` package (it's a CI-only
+This script lives outside the installed `ytcore` package (it's a CI-only
 helper, like drive_state_sync.py, never imported at runtime), so it's
 loaded here directly by file path rather than via a normal import.
 """

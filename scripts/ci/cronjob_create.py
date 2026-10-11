@@ -37,21 +37,21 @@ def _every_10(start_h, start_m, count):
 
 # (workflow file, job title, hours, minutes)
 TARGETS = [
-    ("daily-shorts.yml", "Mahanavi - Timing Shorts Rahu/Shubh/Durm (12-3 AM)", *_every_10(0, 0, 18)),
-    ("post-ramana-short.yml", "Ramana Maharshi TV - quote Short (12-1 AM)", *_every_10(0, 0, 10)),
-    ("post-ramana-qa.yml", "Ramana Maharshi TV - Q&A Short (10-11 AM)", *_every_10(10, 0, 10)),
-    ("post-ramana-life.yml", "Ramana Maharshi TV - Life Short (5-6 PM)", *_every_10(17, 0, 10)),
+    ("daily-shorts.yml", "Channel A - Timing Shorts Rahu/Shubh/Durm (12-3 AM)", *_every_10(0, 0, 18)),
+    ("post-ramana-short.yml", "Channel D - quote Short (12-1 AM)", *_every_10(0, 0, 10)),
+    ("post-ramana-qa.yml", "Channel D - Q&A Short (10-11 AM)", *_every_10(10, 0, 10)),
+    ("post-ramana-life.yml", "Channel D - Life Short (5-6 PM)", *_every_10(17, 0, 10)),
     # Channel B (from Sat 10 Oct 2026) and Channel C (2026-10-09): static 10-minute pings.
-    ("post-mantra-sangam-rahu.yml", "Mantra Sangam - Rahu Kaal Short (12 AM)", *_every_10(0, 5, 6)),
-    ("post-mantra-sangam-shubh.yml", "Mantra Sangam - Shubh Muhurat Short (1 AM)", *_every_10(1, 5, 6)),
-    ("post-mantra-sangam-durm.yml", "Mantra Sangam - Durmuhurat Short (2 AM)", *_every_10(2, 5, 6)),
-    ("post-mantra-sangam-purana.yml", "Mantra Sangam - Purana Story Short (5 PM)", *_every_10(17, 0, 6)),
-    ("post-beej-mahanavi.yml", "Mahanavi - Beej Mantra Short (6 AM)", *_every_10(6, 0, 6)),
-    ("post-beej-mantra-sangam.yml", "Mantra Sangam - Beej Mantra Short (6 AM)", *_every_10(6, 0, 6)),
-    ("post-beej-trance-beats.yml", "Trance Beats - Beej Mantra Short (6 AM)", *_every_10(6, 0, 6)),
-    ("post-trance-bhagavatam.yml", "Trance Beats - Bhagavatam Short (7 AM)", *_every_10(7, 0, 12)),
-    ("post-trance-mantra.yml", "Trance Beats - Mantra Short (1 PM)", *_every_10(13, 0, 12)),
-    ("post-devotional-trance-beats.yml", "Trance Beats - Gita Short (7 PM)", *_every_10(19, 0, 12)),
+    ("post-mantra-sangam-rahu.yml", "Channel B - Rahu Kaal Short (12 AM)", *_every_10(0, 5, 6)),
+    ("post-mantra-sangam-shubh.yml", "Channel B - Shubh Muhurat Short (1 AM)", *_every_10(1, 5, 6)),
+    ("post-mantra-sangam-durm.yml", "Channel B - Durmuhurat Short (2 AM)", *_every_10(2, 5, 6)),
+    ("post-mantra-sangam-purana.yml", "Channel B - Purana Story Short (5 PM)", *_every_10(17, 0, 6)),
+    ("post-beej-mahanavi.yml", "Channel A - Beej Mantra Short (6 AM)", *_every_10(6, 0, 6)),
+    ("post-beej-mantra-sangam.yml", "Channel B - Beej Mantra Short (6 AM)", *_every_10(6, 0, 6)),
+    ("post-beej-trance-beats.yml", "Channel C - Beej Mantra Short (6 AM)", *_every_10(6, 0, 6)),
+    ("post-trance-bhagavatam.yml", "Channel C - Bhagavatam Short (7 AM)", *_every_10(7, 0, 12)),
+    ("post-trance-mantra.yml", "Channel C - Mantra Short (1 PM)", *_every_10(13, 0, 12)),
+    ("post-devotional-trance-beats.yml", "Channel C - Gita Short (7 PM)", *_every_10(19, 0, 12)),
 ]
 
 

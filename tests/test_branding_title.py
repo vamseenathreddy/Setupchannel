@@ -1,4 +1,5 @@
-from mahanavi.content.branding import BRAND_NAME, brand_tags, brand_title
+from ytcore.brandcfg import A_HANDLE, A_NAME  # noqa: E402
+from ytcore.content.branding import BRAND_NAME, brand_tags, brand_title
 
 
 def test_brand_title_appends_name_and_fits():
@@ -9,10 +10,10 @@ def test_brand_title_appends_name_and_fits():
 
 
 def test_brand_title_idempotent():
-    t = brand_title("Purana Kathalu by Mahanavi Spirituals")
-    assert t == "Purana Kathalu by Mahanavi Spirituals" and brand_title(t) == t
+    t = brand_title(f"Purana Kathalu by {A_NAME}")
+    assert t == f"Purana Kathalu by {A_NAME}" and brand_title(t) == t
 
 
 def test_brand_tags_added_once():
-    tags = brand_tags(["Shorts", "mahanavi spirituals"])
-    assert tags.count("mahanavi spirituals") == 1 and "mahanavispirituals" in tags
+    tags = brand_tags(["Shorts", f"{A_NAME.lower()}"])
+    assert tags.count(f"{A_NAME.lower()}") == 1 and f"{A_HANDLE.lstrip("@").lower()}" in tags

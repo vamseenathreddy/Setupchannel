@@ -2,7 +2,7 @@
 import re
 from datetime import date, datetime
 
-from mahanavi.panchang.local_provider import HYDERABAD, LocalPanchangProvider
+from ytcore.panchang.local_provider import HYDERABAD, LocalPanchangProvider
 
 
 def _mins(s):

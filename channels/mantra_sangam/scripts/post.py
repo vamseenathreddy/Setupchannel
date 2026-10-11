@@ -4,6 +4,7 @@
   python -m channels.mantra_sangam.scripts.post --dry-run
   python -m channels.mantra_sangam.scripts.post --public
 """
+from ytcore.brandcfg import B_SHORT  # noqa: E402
 import sys
 from pathlib import Path
 
@@ -14,12 +15,12 @@ CHANNEL_DIR = Path(__file__).resolve().parents[1]
 
 
 def main():
-    from mahanavi.config import get_settings
+    from ytcore.config import get_settings
 
     settings = get_settings()
     pipeline = ChannelPipeline(
         channel_key="mantra_sangam",
-        expected_channel="Mantra Sangam",
+        expected_channel=f"{B_SHORT}",
         content_csv=CHANNEL_DIR / "data" / "content.csv",
         special_csv=None,
         render_cfg=channel_config.RENDER_CFG,
