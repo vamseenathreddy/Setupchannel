@@ -58,6 +58,7 @@ from mahanavi.images.gita_sloka_card_renderer import (
     TEXT_LINE_SPACING,
     strip_danda_marks,
 )
+from mahanavi.images.flow import StickerZone, wrap_block
 from mahanavi.images.layout import vertical_gradient
 from mahanavi.video.watermark import bake_watermark
 
@@ -180,18 +181,42 @@ class GitaQuizCardRenderer:
             )
             opinion_h = int(opinion_font.size * 1.15)
             opinion_top = footer_bottom - opinion_h
+            zone = StickerZone(height, width - margin_x)
+            # Footer rows that land in the product-tag sticker zone wrap into the column to its right at the
+            # same font size (2026-10-11); iterate until the bottom-anchored position settles.
+            sub_line_h = int(subscribe_font.size * TEXT_LINE_SPACING)
+            subscribe_lines = [card.subscribe_text]
+            for _ in range(4):
+                subscribe_top = opinion_top - int(height * 0.012) - sub_line_h * len(subscribe_lines)
+                new_lines = wrap_block(
+                    draw, card.subscribe_text, subscribe_font, content_width, subscribe_top, sub_line_h, zone,
+                    lambda t: self._wrap_text(draw, t, subscribe_font, content_width),
+                )
+                if len(new_lines) == len(subscribe_lines):
+                    subscribe_lines = new_lines
+                    break
+                subscribe_lines = new_lines
+            subscribe_h = sub_line_h * len(subscribe_lines)
             subscribe_top = opinion_top - int(height * 0.012) - subscribe_h
             icon_row_top = subscribe_top - block_gap - icon_size if card.icon_paths else subscribe_top
+            cta_line_h = int(cta_font.size * TEXT_LINE_SPACING)
             cta_top = icon_row_top - block_gap - cta_block_h
+            for _ in range(3):
+                cta_lines = wrap_block(
+                    draw, card.cta_text, cta_font, content_width, cta_top, cta_line_h, zone,
+                    lambda t: self._wrap_text(draw, t, cta_font, content_width),
+                )
+                new_top = icon_row_top - block_gap - cta_line_h * len(cta_lines)
+                if new_top == cta_top:
+                    break
+                cta_top = new_top
+            cta_block_h = cta_line_h * len(cta_lines)
 
             header_bottom = (
                 content_top + invocation_h + block_gap + series_h + block_gap + question_h + block_gap
             )
 
-            # Remaining space between the header (invocation/series/
-            # question) and the footer (CTA/icons/subscribe) is split
-            # between the Sanskrit verse (memory cue, top) and the 4
-            # options (bottom).
+            # Verse first, options directly under it (text moves UP, clear of the sticker zone).
             body_box_top = header_bottom
             body_box_bottom = cta_top - block_gap
             body_box_height = max(body_box_bottom - body_box_top, int(height * 0.15))
@@ -199,11 +224,11 @@ class GitaQuizCardRenderer:
 
             sanskrit_font, sanskrit_lines, sanskrit_block_h = self._fit_block_to_box(
                 draw, strip_danda_marks(target.sanskrit_deva), max_width=content_width, max_height=sanskrit_box_height,
-                start_frac=SANSKRIT_START_FONT_FRAC, min_frac=SANSKRIT_MIN_FONT_FRAC,
+                start_frac=SANSKRIT_START_FONT_FRAC, min_frac=SANSKRIT_MIN_FONT_FRAC, y0=body_box_top, zone=zone,
             )
 
-            sanskrit_top = body_box_top + max((sanskrit_box_height - sanskrit_block_h) // 2, 0)
-            options_top = body_box_top + sanskrit_box_height + block_gap
+            sanskrit_top = body_box_top
+            options_top = sanskrit_top + sanskrit_block_h + block_gap
 
             cursor_y = content_top
             cursor_y = self._draw_centered_line(draw, card.invocation_text, invocation_font, width, cursor_y, COLOR_GOLD)
@@ -212,21 +237,22 @@ class GitaQuizCardRenderer:
             cursor_y += block_gap
             self._draw_centered_line(draw, card.question_text, question_font, width, cursor_y, COLOR_TEXT_LIGHT)
 
-            self._draw_paragraph(draw, sanskrit_lines, sanskrit_font, width, sanskrit_top, COLOR_GOLD)
+            self._draw_paragraph(draw, sanskrit_lines, sanskrit_font, width, sanskrit_top, COLOR_GOLD, zone)
 
             y = options_top
             for label in option_labels:
                 bbox = draw.textbbox((0, 0), label, font=option_font)
                 text_w = bbox[2] - bbox[0]
-                draw.text((margin_x, y - bbox[1]), label, font=option_font, fill=(*COLOR_TEXT_LIGHT, 255))
+                ox = zone.left if zone.hits(y, option_line_h) else margin_x
+                draw.text((ox, y - bbox[1]), label, font=option_font, fill=(*COLOR_TEXT_LIGHT, 255))
                 y += option_line_h
 
-            self._draw_paragraph(draw, cta_lines, cta_font, width, cta_top, COLOR_GOLD)
+            self._draw_paragraph(draw, cta_lines, cta_font, width, cta_top, COLOR_GOLD, zone)
 
             if card.icon_paths:
-                self._draw_icon_row(canvas, card.icon_paths, width, icon_row_top)
+                self._draw_icon_row(canvas, card.icon_paths, width, icon_row_top, zone)
 
-            self._draw_paragraph(draw, subscribe_lines, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT)
+            self._draw_paragraph(draw, subscribe_lines, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT, zone)
             self._draw_centered_line(draw, OPINION_TE, opinion_font, width, opinion_top, COLOR_TEXT_LIGHT)
 
             if card.next_verse_hint is not None:
@@ -305,7 +331,7 @@ class GitaQuizCardRenderer:
 
     def _fit_block_to_box(
         self, draw: ImageDraw.ImageDraw, text: str, max_width: int, max_height: int,
-        start_frac: float, min_frac: float,
+        start_frac: float, min_frac: float, y0: int | None = None, zone: StickerZone | None = None,
     ) -> tuple["ImageFont.FreeTypeFont", list[str], int]:
         start_size = int(CARD_WIDTH * start_frac)
         min_size = int(CARD_WIDTH * min_frac)
@@ -313,34 +339,45 @@ class GitaQuizCardRenderer:
         size = start_size
         while size >= min_size:
             font = self._fonts.get_font(size=size, weight="Regular")
-            lines: list[str] = []
-            for raw_line in text.split("\n"):
-                lines.extend(self._wrap_text(draw, raw_line, font, max_width))
             line_height = int(size * TEXT_LINE_SPACING)
+            lines = self._wrap_para(draw, text, font, max_width, y0, line_height, zone)
             total_height = line_height * len(lines)
             if total_height <= max_height or size == min_size:
                 return font, lines, total_height
             size -= 2
 
         font = self._fonts.get_font(size=min_size, weight="Regular")
-        lines = []
-        for raw_line in text.split("\n"):
-            lines.extend(self._wrap_text(draw, raw_line, font, max_width))
+        lines = self._wrap_para(draw, text, font, max_width, y0, int(min_size * TEXT_LINE_SPACING), zone)
         return font, lines, int(min_size * TEXT_LINE_SPACING) * len(lines)
+
+    def _wrap_para(
+        self, draw: ImageDraw.ImageDraw, text: str, font: "ImageFont.FreeTypeFont", max_width: int,
+        y0: int | None, line_height: int, zone: StickerZone | None,
+    ) -> list[str]:
+        if y0 is None or zone is None:
+            lines: list[str] = []
+            for raw_line in text.split("\n"):
+                lines.extend(self._wrap_text(draw, raw_line, font, max_width))
+            return lines
+        return wrap_block(draw, text, font, max_width, y0, line_height, zone,
+                          lambda t: self._wrap_text(draw, t, font, max_width))
 
     def _draw_paragraph(
         self, draw: ImageDraw.ImageDraw, lines: list[str], font: "ImageFont.FreeTypeFont",
-        width: int, top: int, color: tuple[int, int, int],
+        width: int, top: int, color: tuple[int, int, int], zone: StickerZone | None = None,
     ) -> None:
         line_height = int(font.size * TEXT_LINE_SPACING)
         y = top
         for line in lines:
             bbox = draw.textbbox((0, 0), line, font=font)
             line_w = bbox[2] - bbox[0]
-            draw.text(((width - line_w) // 2, y - bbox[1]), line, font=font, fill=(*color, 255))
+            cx = zone.cx(y, line_height, line_w, width) if zone else width // 2
+            draw.text((cx - line_w // 2, y - bbox[1]), line, font=font, fill=(*color, 255))
             y += line_height
 
-    def _draw_icon_row(self, canvas: Image.Image, icon_paths: list[Path], width: int, top: int) -> None:
+    def _draw_icon_row(
+        self, canvas: Image.Image, icon_paths: list[Path], width: int, top: int, zone: StickerZone | None = None,
+    ) -> None:
         icon_size = int(width * ICON_FRAC)
         icon_gap = int(width * ICON_GAP_FRAC)
 
@@ -358,7 +395,16 @@ class GitaQuizCardRenderer:
             return
 
         total_w = sum(icon.width for icon in icons) + icon_gap * (len(icons) - 1)
-        x = (width - total_w) // 2
+        cx = width // 2
+        if zone is not None and zone.hits(top, icon_size):
+            # Row would cover the product-tag sticker: shrink the ICONS (not text) to fit the column to its right.
+            if total_w > zone.width:
+                k = zone.width / total_w
+                icons = [i.resize((max(1, int(i.width * k)), max(1, int(i.height * k)))) for i in icons]
+                icon_gap = int(icon_gap * k)
+                total_w = sum(i.width for i in icons) + icon_gap * (len(icons) - 1)
+            cx = zone.centre
+        x = cx - total_w // 2
         max_h = max(icon.height for icon in icons)
 
         for icon in icons:

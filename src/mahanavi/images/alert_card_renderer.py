@@ -56,6 +56,7 @@ from mahanavi.config import Settings
 from mahanavi.exceptions import ImageRenderError
 from mahanavi.images.fonts import FontManager
 from mahanavi.video.watermark import bake_watermark
+from mahanavi.images.flow import StickerZone
 from mahanavi.images.layout import vertical_gradient
 
 from mahanavi.images.opinion_line import OPINION_TE
@@ -217,11 +218,31 @@ class AlertCardRenderer:
             opinion_font = self._fit_font_to_width(
                 draw, OPINION_TE, max_width=content_width, start_size=int(width * SUBSCRIBE_FONT_FRAC), weight="Bold",
             )
-            opinion_bbox = draw.textbbox((0, 0), OPINION_TE, font=opinion_font)
-            opinion_h = int(opinion_bbox[3] - opinion_bbox[1])
-            footer_block_h = (subscribe_h + footer_line_gap + opinion_h
-                              + (comment_h + footer_line_gap if card.comment_prompt_text else 0))
-            footer_top = footer_bottom - footer_block_h
+            zone = StickerZone(height, width - margin_x)
+
+            # Footer lines are bottom-anchored. Any that land in the product-tag sticker zone (lower-left)
+            # wrap into the column to its right at the SAME font size instead of shrinking (2026-10-11).
+            footer_items = [(OPINION_TE, opinion_font, False), (card.subscribe_text, subscribe_font, False)]
+            if card.comment_prompt_text and comment_font is not None:
+                footer_items.append((card.comment_prompt_text, comment_font, False))
+            footer_lines = [[t] for t, _, _ in footer_items]
+            for _ in range(4):
+                y_bottom = footer_bottom
+                new_lines = []
+                for (text, font, _), prev in zip(footer_items, footer_lines):
+                    lh = self._line_h(draw, font)
+                    top = y_bottom - lh * len(prev)
+                    lines = self._wrap_flow(draw, text, font, top, lh, content_width, zone)
+                    top = y_bottom - lh * len(lines)
+                    lines = self._wrap_flow(draw, text, font, top, lh, content_width, zone)
+                    new_lines.append(lines)
+                    y_bottom = y_bottom - lh * len(lines) - footer_line_gap
+                if new_lines == footer_lines:
+                    break
+                footer_lines = new_lines
+            footer_h = sum(self._line_h(draw, f) * len(ln) for (_, f, _), ln in zip(footer_items, footer_lines)) \
+                + footer_line_gap * (len(footer_items) - 1)
+            footer_top = footer_bottom - footer_h
 
             content_top = badge_bottom + int(height * 0.04) if card.date_text else (
                 icons_bottom + int(height * 0.05) if icons_bottom else int(height * 0.30)
@@ -232,66 +253,48 @@ class AlertCardRenderer:
             n_gaps = len(card.lines) + 1 + (1 if card.secondary_info else 0)
             min_gap = 2
             line_gap = int(height * 0.012)
+            max_gap = int(height * 0.045)
 
-            # Shrink-to-fit loop: moving the safe zone up (above) means
-            # less room than before, and dense days (mantra + secondary
-            # periods together) can need more than gap-shrinking alone can
-            # supply -- confirmed via a real render that even minimum gaps
-            # weren't enough and text started overlapping itself. Try
-            # progressively smaller label/value/secondary font sizes
-            # (never below 65% of the base size, which stays readable)
-            # until the content actually fits at MINIMUM gaps, then hand
-            # off to the normal gap-distribution logic below.
-            font_scale = 1.0
-            while True:
+            def plan(font_scale: float, gap: int):
+                """Wrap every block at its estimated y (zone-aware) for a given inter-block gap."""
                 label_font = self._fonts.get_font(size=max(int(width * LABEL_FONT_FRAC * font_scale), 18), weight="Regular")
                 value_font = self._fonts.get_font(size=max(int(width * VALUE_FONT_FRAC * font_scale), 22), weight="Bold")
                 secondary_font = self._fonts.get_font(size=max(int(width * SECONDARY_FONT_FRAC * font_scale), 16), weight="Regular")
-
-                wrapped_lines = []
+                y = content_top + title_h + gap
+                blocks = []
                 for label, value in card.lines:
-                    label_wrapped = self._wrap_text(draw, label, label_font, content_width)
-                    value_wrapped = self._wrap_text(draw, value, value_font, content_width)
-                    label_h = self._block_height(draw, label_wrapped, label_font)
-                    value_h = self._block_height(draw, value_wrapped, value_font)
-                    wrapped_lines.append((label_wrapped, value_wrapped, label_h + line_gap + value_h))
-
-                secondary_wrapped = []
-                secondary_h = 0
+                    llh, vlh = self._line_h(draw, label_font), self._line_h(draw, value_font)
+                    lw = self._wrap_flow(draw, label, label_font, y, llh, content_width, zone)
+                    y += llh * len(lw) + line_gap
+                    vw = self._wrap_flow(draw, value, value_font, y, vlh, content_width, zone)
+                    y += vlh * len(vw) + gap
+                    blocks.append((lw, vw))
+                sw: list[str] = []
                 if card.secondary_info:
-                    secondary_wrapped = self._wrap_text(draw, card.secondary_info, secondary_font, content_width)
-                    secondary_h = self._block_height(draw, secondary_wrapped, secondary_font)
+                    slh = self._line_h(draw, secondary_font)
+                    sw = self._wrap_flow(draw, card.secondary_info, secondary_font, y, slh, content_width, zone)
+                fixed = title_h + sum(
+                    self._line_h(draw, label_font) * len(lw) + self._line_h(draw, value_font) * len(vw)
+                    for lw, vw in blocks
+                ) + (self._line_h(draw, secondary_font) * len(sw) if sw else 0)
+                return label_font, value_font, secondary_font, blocks, sw, fixed
 
-                total_lines_height = sum(h for _, _, h in wrapped_lines)
-                needed_at_min_gap = title_h + secondary_h + n_gaps * min_gap + total_lines_height
-
-                if needed_at_min_gap <= available_height or font_scale <= 0.65:
+            # Shrink-to-fit is only the LAST resort now (needed only when even the zone-aware wrap
+            # cannot fit): the sticker zone no longer forces smaller text.
+            font_scale = 1.0
+            gap = max_gap
+            while True:
+                for _ in range(3):
+                    label_font, value_font, secondary_font, blocks, secondary_wrapped, content_fixed_height = plan(font_scale, gap)
+                    ideal_gap = (available_height - content_fixed_height) // n_gaps
+                    new_gap = max(min(ideal_gap, max_gap), min_gap)
+                    if new_gap == gap:
+                        break
+                    gap = new_gap
+                if content_fixed_height + n_gaps * min_gap <= available_height or font_scale <= 0.65:
                     break
                 font_scale -= 0.08
-
-            # Correct formula: solve directly for the gap that makes
-            # content_fixed_height + n_gaps*gap == available_height,
-            # rather than scaling baseline_gap by a needed/available ratio
-            # (that ratio approach was mathematically wrong -- it doesn't
-            # account for how much of needed_height is fixed content vs.
-            # gaps, and under-shot badly once content_fixed was a large
-            # share of the total, causing exactly the overlap a real
-            # render caught: gaps looked "shrunk" but not by enough).
-            # The font-shrink loop above already guarantees
-            # content_fixed_height + n_gaps*min_gap <= available_height,
-            # so this quotient is always >= min_gap when that holds.
-            content_fixed_height = title_h + secondary_h + total_lines_height
-            ideal_gap = (available_height - content_fixed_height) // n_gaps
-            # Capped (added 2026-10-04, for the devotional quote block below):
-            # on a light-content day, leaving `gap` fully uncapped stretches it
-            # to consume ALL of available_height, so cursor_y always lands
-            # exactly at footer_top with nothing left over -- confirmed via a
-            # real render showing oddly large blank spacing between elements
-            # instead of a usable gap. Capping it keeps spacing visually
-            # reasonable and leaves the rest of available_height as genuine
-            # leftover room, which the quote block (if any) gets to use.
-            max_gap = int(height * 0.045)
-            gap = max(min(ideal_gap, max_gap), min_gap)
+                gap = max_gap
 
             cursor_y = content_top
             title_w = title_bbox[2] - title_bbox[0]
@@ -301,22 +304,18 @@ class AlertCardRenderer:
             )
             cursor_y += title_h + gap
 
-            for label_wrapped, value_wrapped, _ in wrapped_lines:
-                cursor_y = self._draw_centered_block(draw, label_wrapped, label_font, width, cursor_y)
+            for label_wrapped, value_wrapped in blocks:
+                cursor_y = self._draw_flow_block(draw, label_wrapped, label_font, width, cursor_y, zone)
                 cursor_y += line_gap
-                cursor_y = self._draw_centered_block(draw, value_wrapped, value_font, width, cursor_y)
+                cursor_y = self._draw_flow_block(draw, value_wrapped, value_font, width, cursor_y, zone)
                 cursor_y += gap
 
             if card.secondary_info:
-                cursor_y = self._draw_centered_block(draw, secondary_wrapped, secondary_font, width, cursor_y)
+                cursor_y = self._draw_flow_block(draw, secondary_wrapped, secondary_font, width, cursor_y, zone)
                 cursor_y += gap
 
-            # Devotional quote block: fills whatever room is left between
-            # the main content and the fixed footer. Purely space-permitting
-            # -- on a dense day (long mantra + secondary_info), cursor_y may
-            # already be close to footer_top, so this shrinks the quote font
-            # first and, if it still won't fit even at the minimum size,
-            # skips it entirely rather than ever overlapping the footer.
+            # Devotional quote block: fills whatever room is left between the main content and the
+            # footer; skipped (never overlapping) if there isn't room.
             if card.quote_text:
                 quote_top_margin = int(height * 0.025)
                 quote_block_top = cursor_y + quote_top_margin
@@ -327,8 +326,11 @@ class AlertCardRenderer:
                         quote_font = self._fonts.get_font(
                             size=max(int(width * QUOTE_FONT_FRAC * quote_scale), 16), weight="Medium",
                         )
-                        quote_wrapped = self._wrap_text(draw, card.quote_text, quote_font, int(content_width * 0.9))
-                        quote_h = self._block_height(draw, quote_wrapped, quote_font)
+                        quote_wrapped = self._wrap_flow(
+                            draw, card.quote_text, quote_font, quote_block_top, self._line_h(draw, quote_font),
+                            int(content_width * 0.9), zone,
+                        )
+                        quote_h = self._line_h(draw, quote_font) * len(quote_wrapped)
 
                         source_h = 0
                         source_font = None
@@ -345,39 +347,22 @@ class AlertCardRenderer:
                         quote_scale -= 0.1
 
                     if total_quote_h <= quote_available:
-                        quote_y = self._draw_centered_block(draw, quote_wrapped, quote_font, width, quote_block_top, fill=COLOR_QUOTE_TEXT)
+                        quote_y = self._draw_flow_block(draw, quote_wrapped, quote_font, width, quote_block_top, zone, fill=COLOR_QUOTE_TEXT)
                         if card.quote_source and source_font is not None:
                             quote_y += int(height * 0.012)
                             source_text = f"— {card.quote_source}"
                             source_bbox = draw.textbbox((0, 0), source_text, font=source_font)
                             source_w = source_bbox[2] - source_bbox[0]
+                            sx = zone.cx(quote_y, self._line_h(draw, source_font), source_w, width)
                             draw.text(
-                                ((width - source_w) // 2, quote_y - source_bbox[1]),
+                                (sx - source_w // 2, quote_y - source_bbox[1]),
                                 source_text, font=source_font, fill=COLOR_QUOTE_TEXT,
                             )
                     # else: genuinely no room even at the smallest size -- skip silently.
 
-            opinion_top = footer_bottom - opinion_h
-            subscribe_top = opinion_top - footer_line_gap - subscribe_h
-            subscribe_w = subscribe_bbox[2] - subscribe_bbox[0]
-            draw.text(
-                ((width - subscribe_w) // 2, subscribe_top - subscribe_bbox[1]),
-                card.subscribe_text, font=subscribe_font, fill=COLOR_TEXT_LIGHT,
-            )
-
-            opinion_w = opinion_bbox[2] - opinion_bbox[0]
-            draw.text(
-                ((width - opinion_w) // 2, opinion_top - opinion_bbox[1]),
-                OPINION_TE, font=opinion_font, fill=COLOR_TEXT_LIGHT,
-            )
-
-            if card.comment_prompt_text and comment_font is not None and comment_bbox is not None:
-                comment_top = subscribe_top - footer_line_gap - comment_h
-                comment_w = comment_bbox[2] - comment_bbox[0]
-                draw.text(
-                    ((width - comment_w) // 2, comment_top - comment_bbox[1]),
-                    card.comment_prompt_text, font=comment_font, fill=COLOR_TEXT_LIGHT,
-                )
+            y = footer_top
+            for (text, font, _), lines in zip(reversed(footer_items), reversed(footer_lines)):
+                y = self._draw_flow_block(draw, lines, font, width, y, zone) + footer_line_gap
 
             output_path = self._build_output_path(card, for_date)
             final = canvas.convert("RGB")
@@ -486,6 +471,49 @@ class AlertCardRenderer:
         if current:
             lines.append(current)
         return lines
+
+    @staticmethod
+    def _line_h(draw: ImageDraw.ImageDraw, font: "ImageFont.FreeTypeFont") -> int:
+        return int(draw.textbbox((0, 0), "Ag", font=font)[3])
+
+    def _wrap_flow(
+        self, draw: ImageDraw.ImageDraw, text: str, font: "ImageFont.FreeTypeFont", y0: int, line_h: int,
+        full_w: int, zone: "StickerZone",
+    ) -> list[str]:
+        """_wrap_text, but rows that fall in the sticker zone use the narrower column. Blocks that never
+        touch the zone are wrapped exactly as before."""
+        base = self._wrap_text(draw, text, font, full_w)
+        if not (y0 + len(base) * line_h > zone.top and y0 < zone.bottom):
+            return base
+        lines: list[str] = []
+        y, current = y0, ""
+        for word in text.split(" "):
+            candidate = f"{current} {word}".strip()
+            bbox = draw.textbbox((0, 0), candidate, font=font)
+            width = zone.width if zone.hits(y, line_h) else full_w
+            if (bbox[2] - bbox[0]) <= width or not current:
+                current = candidate
+            else:
+                lines.append(current)
+                y += line_h
+                current = word
+        if current:
+            lines.append(current)
+        return lines
+
+    def _draw_flow_block(
+        self, draw: ImageDraw.ImageDraw, wrapped: list[str], font: "ImageFont.FreeTypeFont", width: int,
+        top: int, zone: "StickerZone", fill: tuple[int, int, int] = COLOR_TEXT_LIGHT,
+    ) -> int:
+        line_height = self._line_h(draw, font)
+        y = top
+        for line in wrapped:
+            bbox = draw.textbbox((0, 0), line, font=font)
+            line_w = bbox[2] - bbox[0]
+            cx = zone.cx(y, line_height, line_w, width)
+            draw.text((cx - line_w // 2, y - bbox[1]), line, font=font, fill=fill)
+            y += line_height
+        return y
 
     def _block_height(
         self, draw: ImageDraw.ImageDraw, wrapped: list[str], font: "ImageFont.FreeTypeFont",

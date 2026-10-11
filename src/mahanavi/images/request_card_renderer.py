@@ -16,6 +16,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 from mahanavi.config import Settings
 from mahanavi.content.request_shorts import RequestShort, Slide
 from mahanavi.images.fonts import FontManager
+from mahanavi.images.layout import PRODUCT_ZONE_BOTTOM_FRAC, PRODUCT_ZONE_TOP_FRAC, PRODUCT_ZONE_X1_FRAC
 from mahanavi.video.watermark import bake_watermark
 
 W, H = 1080, 1920
@@ -23,6 +24,12 @@ SAFE_L, SAFE_R, SAFE_TOP, SAFE_BOTTOM = 150, 930, 230, 1385
 TEXT_W = SAFE_R - SAFE_L
 GOLD, CREAM, SOFT = (240, 196, 92), (255, 246, 226), (214, 206, 224)
 STACK_TOP, STACK_H = 560, 700   # mantra / transliteration / meaning band (ends well above the footer tag at 1318)
+# YouTube Shopping product-tag sticker sits lower-left; keep text out of it (lines there flow into the
+# column to its right instead of shrinking the font).
+ZONE_TOP, ZONE_BOTTOM = int(H * PRODUCT_ZONE_TOP_FRAC) - 8, int(H * PRODUCT_ZONE_BOTTOM_FRAC)
+NARROW_L = int(W * PRODUCT_ZONE_X1_FRAC) + 30
+NARROW_W = SAFE_R - NARROW_L
+NARROW_CX = (NARROW_L + SAFE_R) // 2
 ENGINE_FONTS = Path(__file__).resolve().parents[3] / "channels" / "engine" / "assets" / "fonts"
 
 
@@ -77,13 +84,42 @@ class RequestCardRenderer:
             lines += self._greedy(para, font, width)
         return lines
 
+    @staticmethod
+    def _in_zone(y: float, lh: int) -> bool:
+        return y + lh > ZONE_TOP and y < ZONE_BOTTOM
+
+    def _wrap_at(self, text: str, font: ImageFont.FreeTypeFont, y0: int, lh: int) -> list[str]:
+        """Like _wrap, but lines that would land in the product-sticker zone are wrapped to the narrower
+        column right of it. Blocks that never touch the zone keep the balanced wrap."""
+        base = self._wrap(text, font)
+        if not (y0 + len(base) * lh > ZONE_TOP and y0 < ZONE_BOTTOM):
+            return base
+        lines: list[str] = []
+        y = y0
+        for para in text.split("\n"):
+            cur = ""
+            for word in para.split():
+                width = NARROW_W if self._in_zone(y, lh) else TEXT_W
+                test = f"{cur} {word}".strip()
+                if cur and self._probe.textlength(test, font=font) > width:
+                    lines.append(cur)
+                    y += lh
+                    cur = word
+                else:
+                    cur = test
+            if cur:
+                lines.append(cur)
+                y += lh
+        return lines
+
     def _fit(self, text: str, start: int, floor: int, max_h: int,
-             spacing: float = 1.4) -> tuple[list[str], ImageFont.FreeTypeFont, int]:
+             spacing: float = 1.4, y0: int | None = None) -> tuple[list[str], ImageFont.FreeTypeFont, int]:
         """Largest font size in [floor, start] at which the wrapped text fits TEXT_W x max_h."""
         size = start
         while True:
             font = self._font(size)
-            lines = self._wrap(text, font)
+            lh_try = int(size * spacing)
+            lines = self._wrap(text, font) if y0 is None else self._wrap_at(text, font, y0, lh_try)
             height = len(lines) * int(size * spacing)
             if (height <= max_h and all(self._probe.textlength(ln, font=font) <= TEXT_W for ln in lines)) or size <= floor:
                 return lines, font, int(size * spacing)
@@ -109,9 +145,11 @@ class RequestCardRenderer:
 
     # ---- drawing -----------------------------------------------------------------------------
     def _line(self, layer: Image.Image, boxes: list[Box], text: str, font: ImageFont.FreeTypeFont, y: int,
-              color: tuple[int, ...]) -> None:
+              color: tuple[int, ...], zone_flow: int = 0) -> None:
         d = ImageDraw.Draw(layer)
-        x = (W - d.textlength(text, font=font)) / 2
+        lw = d.textlength(text, font=font)
+        cx = NARROW_CX if zone_flow and self._in_zone(y, zone_flow) and lw <= NARROW_W + 4 else W / 2
+        x = cx - lw / 2
         d.text((x + 3, y + 3), text, font=font, fill=(0, 0, 0, 150))
         d.text((x, y), text, font=font, fill=color)
         b = d.textbbox((x, y), text, font=font)
@@ -120,7 +158,7 @@ class RequestCardRenderer:
     def _block(self, layer: Image.Image, boxes: list[Box], lines: list[str], font: ImageFont.FreeTypeFont,
                lh: int, y: int, color: tuple[int, ...]) -> int:
         for ln in lines:
-            self._line(layer, boxes, ln, font, y, color)
+            self._line(layer, boxes, ln, font, y, color, zone_flow=lh)
             y += lh
         return y
 
@@ -169,17 +207,19 @@ class RequestCardRenderer:
             self._block(layer, boxes, lines, font, lh, 420, GOLD)
             # Fit the three blocks into the band between the heading and the footer tag: shrink the mantra a
             # little at a time until the whole stack fits, so a long verse never crowds the footer.
+            top = 540
             budget = 430
             while True:
-                m_lines, m_font, m_lh = self._fit(slide.text, 92, 44, budget)
-                t_lines, t_font, t_lh = self._fit(slide.translit, 42, 28, 190, 1.35)
-                n_lines, n_font, n_lh = self._fit(slide.meaning, 44, 30, 150)
-                heights = (len(m_lines) * m_lh, 60, len(t_lines) * t_lh, 40, len(n_lines) * n_lh)
-                if sum(heights) <= STACK_H or budget <= 200:
+                m_lines, m_font, m_lh = self._fit(slide.text, 92, 44, budget, y0=top)
+                y1 = top + len(m_lines) * m_lh + 60
+                t_lines, t_font, t_lh = self._fit(slide.translit, 42, 28, 190, 1.35, y0=y1)
+                y2 = y1 + len(t_lines) * t_lh + 40
+                n_lines, n_font, n_lh = self._fit(slide.meaning, 44, 30, 150, y0=y2)
+                end = y2 + len(n_lines) * n_lh
+                if end <= 1300 or budget <= 200:
                     break
                 budget -= 30
-            y = STACK_TOP + max(0, (STACK_H - sum(heights)) // 2)
-            y = self._block(layer, boxes, m_lines, m_font, m_lh, y, CREAM)
+            y = self._block(layer, boxes, m_lines, m_font, m_lh, top, CREAM)
             self._ornament(layer, y + 30)
             y = self._block(layer, boxes, t_lines, t_font, t_lh, y + 60, SOFT)
             self._block(layer, boxes, n_lines, n_font, n_lh, y + 40, GOLD)
