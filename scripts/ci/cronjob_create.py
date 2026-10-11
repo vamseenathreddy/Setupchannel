@@ -33,23 +33,34 @@ def _every_10(start_h, start_m, count):
     return hours, minutes
 
 
+def _pings(*times):
+    """Fixed-time pings: (hour, minute) pairs -> (hours, minutes) lists. Cron-job.org takes the cross product,
+    so every pair given must be expressible; we keep all pings of one job on the same minutes set."""
+    hours = sorted({h for h, _ in times})
+    minutes = sorted({m for _, m in times})
+    return hours, minutes
+
+
 # (workflow file, job title, hours, minutes)
+# FIXED TIMES (from 2026-10-11, IST). Each Short posts at its window start; a second ping 20 minutes later is the
+# retry. Two pings per Short instead of 6-12 saves GitHub Actions minutes. The cross product of hours x minutes is
+# what cron-job.org fires, so each job uses ONE hour and two minutes.
 TARGETS = [
-    ("daily-shorts.yml", "Mahanavi - Timing Shorts Rahu/Shubh/Durm (12-3 AM)", *_every_10(0, 0, 18)),
-    ("post-ramana-short.yml", "Ramana Maharshi TV - quote Short (12-1 AM)", *_every_10(0, 0, 10)),
-    ("post-ramana-qa.yml", "Ramana Maharshi TV - Q&A Short (10-11 AM)", *_every_10(10, 0, 10)),
-    ("post-ramana-life.yml", "Ramana Maharshi TV - Life Short (5-6 PM)", *_every_10(17, 0, 10)),
-    # Divine Mantra Sangam (from Sat 10 Oct 2026) and Devotional Trance Beats (2026-10-09): static 10-minute pings.
-    ("post-mantra-sangam-rahu.yml", "Mantra Sangam - Rahu Kaal Short (12 AM)", *_every_10(0, 5, 6)),
-    ("post-mantra-sangam-shubh.yml", "Mantra Sangam - Shubh Muhurat Short (1 AM)", *_every_10(1, 5, 6)),
-    ("post-mantra-sangam-durm.yml", "Mantra Sangam - Durmuhurat Short (2 AM)", *_every_10(2, 5, 6)),
-    ("post-mantra-sangam-purana.yml", "Mantra Sangam - Purana Story Short (5 PM)", *_every_10(17, 0, 6)),
-    ("post-beej-mahanavi.yml", "Mahanavi - Beej Mantra Short (6 AM)", *_every_10(6, 0, 6)),
-    ("post-beej-mantra-sangam.yml", "Mantra Sangam - Beej Mantra Short (6 AM)", *_every_10(6, 0, 6)),
-    ("post-beej-trance-beats.yml", "Trance Beats - Beej Mantra Short (6 AM)", *_every_10(6, 0, 6)),
-    ("post-trance-bhagavatam.yml", "Trance Beats - Bhagavatam Short (7 AM)", *_every_10(7, 0, 12)),
-    ("post-trance-mantra.yml", "Trance Beats - Mantra Short (1 PM)", *_every_10(13, 0, 12)),
-    ("post-devotional-trance-beats.yml", "Trance Beats - Gita Short (7 PM)", *_every_10(19, 0, 12)),
+    # Mahanavi timing Shorts: one job, each Short owns an hour (Rahu 12, Shubh 1, Durm 2 AM): 6 pings
+    ("daily-shorts.yml", "Mahanavi - Timing Shorts Rahu/Shubh/Durm (12-3 AM)", [0, 1, 2], [0, 20]),
+    ("post-ramana-short.yml", "Ramana Maharshi TV - quote Short (12:00 AM)", [0], [0, 20]),
+    ("post-ramana-qa.yml", "Ramana Maharshi TV - Q&A Short (10:00 AM)", [10], [0, 20]),
+    ("post-ramana-life.yml", "Ramana Maharshi TV - Life Short (5:00 PM)", [17], [0, 20]),
+    ("post-mantra-sangam-rahu.yml", "Mantra Sangam - Rahu Kaal Short (12:05 AM)", [0], [5, 25]),
+    ("post-mantra-sangam-shubh.yml", "Mantra Sangam - Shubh Muhurat Short (1:05 AM)", [1], [5, 25]),
+    ("post-mantra-sangam-durm.yml", "Mantra Sangam - Durmuhurat Short (2:05 AM)", [2], [5, 25]),
+    ("post-mantra-sangam-purana.yml", "Mantra Sangam - Purana Story Short (5:00 PM)", [17], [0, 20]),
+    ("post-beej-mahanavi.yml", "Mahanavi - Beej Mantra Short (6:00 AM)", [6], [0, 20]),
+    ("post-beej-mantra-sangam.yml", "Mantra Sangam - Beej Mantra Short (6:15 AM)", [6], [15, 35]),
+    ("post-beej-trance-beats.yml", "Trance Beats - Beej Mantra Short (6:30 AM)", [6], [30, 50]),
+    ("post-trance-bhagavatam.yml", "Trance Beats - Bhagavatam Short (7:00 AM)", [7], [0, 20]),
+    ("post-trance-mantra.yml", "Trance Beats - Mantra Short (1:00 PM)", [13], [0, 20]),
+    ("post-devotional-trance-beats.yml", "Trance Beats - Gita Short (7:00 PM)", [19], [0, 20]),
 ]
 
 

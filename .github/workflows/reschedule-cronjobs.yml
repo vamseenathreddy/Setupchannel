@@ -21,8 +21,6 @@ name: System | Reschedule cron-job.org pings (daily)
 # computed times look right in the logs, before trusting the daily
 # schedule to actually reschedule things.
 on:
-  schedule:
-    - cron: "35 18 * * *" # 00:05 IST daily
   workflow_dispatch:
     inputs:
       dry_run:

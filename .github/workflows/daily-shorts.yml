@@ -1,17 +1,6 @@
 name: Mahanavi | Timing Shorts - Rahu, Shubh, Durm (12-3 AM IST)
 
 on:
-  schedule:
-    # Ticks EVERY HOUR, all day. A cheap gate step (scripts/ci/
-    # scheduler_gate.py) decides on each tick whether to actually do
-    # anything -- see that script's docstring for the full reasoning.
-    # In short: GitHub's schedule: event is best-effort and has
-    # confirmedly failed to fire at all on several real nights when
-    # this was a single once-a-night cron. Hourly ticks give many
-    # independent chances, and each Short's own "posted today" marker
-    # (synced from Drive) means a dropped tick just gets retried on
-    # the next one instead of silently losing the whole night.
-    - cron: '0 * * * *'
   workflow_dispatch:
     inputs:
       force_target:
