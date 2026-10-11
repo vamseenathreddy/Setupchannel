@@ -1,6 +1,6 @@
 # Pipelines map (IST). One row per daily Short. Workflow display names follow "<Channel> | <Short> (<time>)".
 
-All 9 channel tokens share ONE Google Cloud project (client 199121460691) = ONE YouTube API quota. Avoid test uploads.
+All channel tokens share ONE Google Cloud project (client 199121460691) = ONE YouTube API quota. Avoid test uploads.
 Reliable trigger = cron-job.org (GitHub `schedule:` pings are best-effort and sometimes arrive hours late).
 
 | Channel | Short | Workflow file | Window (IST) | Token file |
@@ -14,12 +14,7 @@ Reliable trigger = cron-job.org (GitHub `schedule:` pings are best-effort and so
 | Mantra Sangam | Rashi (daily slot RETIRED; Hindi weekly table to come) | post-mantra-sangam-rashi.yml | not posting | same |
 | Mantra Sangam | Purana Story | post-mantra-sangam-purana.yml | 5:00-5:50 PM | same |
 | Ramana TV | Quote / Q&A / Life | post-ramana-short / -qa / -life.yml | 12 AM / 10 AM / 5 PM | youtube_token_ramana.json |
-| Jesus | Bible Quote / Bible Quiz / Bible Quote 2 (all PUBLIC) | post-jesus-worship-waves.yml / post-jesus-bible-quiz.yml / post-jesus-bible-quote-pm.yml | 12-1 AM / 9-10 AM / 5-6 PM (from 10 Oct 2026; cron-job.org pings every 10 min) | youtube_token_jesus.json |
 | Trance Beats | Bhagavatam / Mantra / Gita | post-trance-bhagavatam / -mantra / post-devotional-trance-beats.yml | 7 AM / 1 PM / 7 PM | youtube_token_trance_beats.json |
-| InfoShorts | Telugu Short | post-infoshorts-telugu.yml | 7 AM | youtube_token_infoshorts.json |
-| Pulse | Boosting Short | post-pulse-boosting.yml | 12 PM | youtube_token_pulse_boosting.json |
-| Tollywood News | Short | post-tollywood-news.yml | 1 PM | youtube_token_tollywood_news.json |
-| Live Hyderabad | Short | post-live-hyderabad.yml | 2 PM | youtube_token_live_hyderabad.json |
 
 Retired: post-divine-mantra-sangam.yml (old single 9 AM post, deleted; its cron-job.org job 8595443 is disabled).
 Name prefixes: `Tools |` one-off utilities, `Setup |` one-time setup/token uploads, `System |` scheduled housekeeping.
@@ -36,3 +31,6 @@ Deity = festival override (2026 dates, refresh yearly) > tithi at sunrise (Hyder
 state `beej_state.json` (one POST_SLOT per channel), cron-job.org pings every 10 min 6:00-6:50.
 Seed mantras are labelled beej; Shiva/Vishnu/Subrahmanya are labelled moola.
 Beej Shorts are a single 12 s card (date + tithi/festival on top, mantra, transliteration, count, subscribe line); keep every Short under 15 s.
+
+## Channels (2026-10-11)
+Active: Mahanavi, Divine Mantra Sangam, Devotional Trance Beats, Ramana Maharshi TV. Removed on 2026-10-11 at the owner's request: Jesus Worship Waves, Pulse Boosting, InfoShorts Telugu, Tollywood News, Live Hyderabad (code, content, workflows and cron-job.org jobs).

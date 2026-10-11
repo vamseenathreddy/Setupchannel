@@ -226,15 +226,6 @@ class Settings(BaseSettings):
     # regardless of which account it belongs to), an optional dedicated
     # Blogger blog, and an optional playlist. All unset = silently skipped,
     # same convention as every field above.
-    jesus_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_jesus.json")
-    jesus_blogger_blog_id: str | None = Field(default=None)
-    jesus_playlist_id: str | None = Field(default=None)        # Bible Quotes playlist (morning Short)
-    jesus_quiz_playlist_id: str | None = Field(default=None)   # Bible Quiz playlist (evening Short)
-
-    infoshorts_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_infoshorts.json")
-    infoshorts_blogger_blog_id: str | None = Field(default=None)
-    infoshorts_playlist_id: str | None = Field(default=None)
-
     mantra_sangam_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_mantra_sangam.json")
     mantra_sangam_blogger_blog_id: str | None = Field(default=None)
     mantra_sangam_playlist_id: str | None = Field(default=None)
@@ -243,17 +234,6 @@ class Settings(BaseSettings):
     trance_beats_blogger_blog_id: str | None = Field(default=None)
     trance_beats_playlist_id: str | None = Field(default=None)
 
-    # Pattern B (live/trending content, one Short/day each, see
-    # channels/engine/trending.py) -- same shape, no playlist field since
-    # these don't have a natural single-topic playlist.
-    pulse_boosting_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_pulse_boosting.json")
-    pulse_boosting_blogger_blog_id: str | None = Field(default=None)
-
-    tollywood_news_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_tollywood_news.json")
-    tollywood_news_blogger_blog_id: str | None = Field(default=None)
-
-    live_hyderabad_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_live_hyderabad.json")
-    live_hyderabad_blogger_blog_id: str | None = Field(default=None)
 
     # --- Telegram alerts (pipeline health review, 2026-10-03) ---
     # See notifications/telegram_alert.py's module docstring for the

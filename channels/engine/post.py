@@ -35,10 +35,6 @@ class ChannelPipeline:
     special_csv: Path | None = None
     sensitive_words: tuple = ()
     warmup_days: int = 0
-    # Pattern B (one live/trending story a day): set fetch_row instead of content_csv/rotation.
-    # Called as fetch_row(used_ids) -> row dict (same shape as a content.csv row) or None if
-    # nothing fresh was found today (the pipeline then exits cleanly, nothing posted).
-    fetch_row: Callable | None = None
     blogger_blog_id: str | None = None
     playlist_id: str | None = None
     playlist_title: str = ""         # used (find or create) when playlist_id is empty
@@ -67,24 +63,15 @@ def run(ch: ChannelPipeline, argv=None) -> int:
 
     rows = None
     special = None
-    if ch.fetch_row is not None:
-        # Pattern B: one live/trending story, no static bank. "Nothing fresh" is a clean,
-        # non-error skip -- unlike Pattern A, an empty day is expected sometimes (no story
-        # published in the last N hours), not a configuration bug.
-        row, reason = ch.fetch_row(st["used_ids"]), "trending"
-        if row is None:
-            print("No fresh trending story found for today -- skipping, nothing posted.")
-            return 0
+    rows = common.load_rows(ch.content_csv)
+    special = common.special_for(date, ch.special_csv)
+    if args.row:
+        row, reason = next((r for r in rows if r["id"] == args.row), None), "forced"
     else:
-        rows = common.load_rows(ch.content_csv)
-        special = common.special_for(date, ch.special_csv)
-        if args.row:
-            row, reason = next((r for r in rows if r["id"] == args.row), None), "forced"
-        else:
-            row, reason = pick.choose_row(rows, date, st["used_ids"], ch.rotation, ch.sensitive_words, ch.warmup_days)
-        if row is None:
-            print("::error::Content bank is empty or the row id is unknown.")
-            return 1
+        row, reason = pick.choose_row(rows, date, st["used_ids"], ch.rotation, ch.sensitive_words, ch.warmup_days)
+    if row is None:
+        print("::error::Content bank is empty or the row id is unknown.")
+        return 1
     print(f"Date {date} | row {row['id']} ({row['category']}) | {reason} | special={special.get('label_primary') if special else '-'}")
 
     out = Path(args.out)

@@ -1,11 +1,11 @@
 """Read or update each channel's YouTube "About" (description, keywords, country, default language)
-and create the Pulse Boosting playlist.
+
 
   python scripts/ci/channel_about.py read  [channel|all]
   python scripts/ci/channel_about.py apply [channel|all]
-  python scripts/ci/channel_about.py pulse-playlist
+  
 
-channels: mahanavi, ramana, jesus, pulse. Output goes to stdout (the workflow tees it to a Drive file).
+channels: mahanavi, ramana. Output goes to stdout (the workflow tees it to a Drive file).
 `apply` fetches the channel's CURRENT brandingSettings and changes only description, keywords, country
 and defaultLanguage, so nothing else (banner, trailer, featured channels) is lost.
 """
@@ -60,52 +60,9 @@ CHANNELS = {
             "రోజూ ప్రశాంతత కోసం సబ్‌స్క్రైబ్ చేయండి."
         ),
     ),
-    "jesus": dict(
-        token="youtube_token_jesus.json", expect="jesus", lang="en",
-        keywords=['"Bible verse of the day"', '"Bible quiz"', '"daily Bible quote"', '"Telugu Bible"',
-                  '"Bible verse Telugu"', '"Telugu Christian songs"', '"Yesu songs"', '"Jesus worship"',
-                  '"Christian worship songs"', '"Telugu Yesu Geethalu"', '"gospel songs"', '"Christian Shorts"',
-                  '"prayer music"', "బైబిల్"],
-        description=(
-            "Welcome to Jesus Worship Waves, your home for Bible verses, Christian worship songs and Telugu "
-            "Yesu Geethalu.\n\n"
-            "Every morning: a Bible verse in English and Telugu, with a short thought on how it applies to "
-            "our life.\n"
-            "Every evening: a Bible quiz. Which book and chapter is today's verse from? Answer in the comments.\n"
-            "Plus Telugu and English worship songs, gospel praise and prayer music that bring peace, hope and "
-            "encouragement.\n\n"
-            "ప్రతి ఉదయం బైబిల్ వచనం ఇంగ్లీష్, తెలుగులో, అది మన జీవితానికి ఎలా వర్తిస్తుందో చిన్న ఆలోచనతో. "
-            "ప్రతి సాయంత్రం బైబిల్ క్విజ్: ఈ వచనం ఏ పుస్తకం, ఏ అధ్యాయంలోనిది? అలాగే తెలుగు, ఇంగ్లీష్ "
-            "ఆరాధన పాటలు.\n\n"
-            "Subscribe for a daily Bible quote and quiz.\n"
-            "రోజూ బైబిల్ వచనం, క్విజ్ కోసం సబ్‌స్క్రైబ్ చేయండి."
-        ),
-    ),
-    "pulse": dict(
-        token="youtube_token_pulse_boosting.json", expect="pulse", lang="en",
-        keywords=['"technology updates"', '"gadget reviews"', '"inspiring stories"', "creativity", "inspiring",
-                  "latest", "trending", '"science news"', '"tech news"', '"new gadgets"', '"daily Shorts"'],
-        description=(
-            "Pulse Boosting\n\n"
-            "Your daily boost of what's new: technology updates, gadget launches, science breakthroughs, "
-            "inspiring stories and creative ideas. One fresh Short every day.\n\n"
-            "Every Short is based on a real, recent headline, and we credit the publisher in each video. "
-            "We never make up news.\n\n"
-            "Subscribe for a daily pulse of what's trending."
-        ),
-    ),
 }
 COUNTRY = "IN"
 
-PULSE_PLAYLIST = (
-    "Pulse Boosting Daily | Tech, Gadgets, Science & Inspiring Stories",
-    "A fresh Short every day from Pulse Boosting: technology updates, gadget launches and reviews, science "
-    "breakthroughs, inspiring stories and creative ideas, all from real, recent headlines with the source "
-    "credited in every video.\n\n"
-    "Watch the latest tech news, new gadgets, science discoveries and motivation in under a minute.\n\n"
-    "Subscribe to Pulse Boosting for a daily boost of what's new and trending.\n\n"
-    "#PulseBoosting #TechUpdates #GadgetReviews #InspiringStories #Creativity #Trending #Shorts",
-)
 
 
 def _yt(key):
@@ -151,29 +108,12 @@ def apply(key):
     return True
 
 
-def pulse_playlist():
-    yt = _yt("pulse")
-    title, desc = PULSE_PLAYLIST
-    existing = {i["snippet"]["title"]: i["id"] for i in
-                yt.playlists().list(part="snippet", mine=True, maxResults=50).execute().get("items", [])}
-    if title in existing:
-        pid = existing[title]
-        print("found pulse playlist:", pid)
-    else:
-        body = {"snippet": {"title": title, "description": desc, "defaultLanguage": "en"},
-                "status": {"privacyStatus": "public"}}
-        pid = yt.playlists().insert(part="snippet,status", body=body).execute()["id"]
-        print("created pulse playlist:", pid)
-    print("PULSE_PLAYLIST_ID", pid)
 
 
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "read"
     which = sys.argv[2] if len(sys.argv) > 2 else "all"
     keys = list(CHANNELS) if which == "all" else [which]
-    if mode == "pulse-playlist":
-        pulse_playlist()
-        return 0
     for k in keys:
         try:
             read(k) if mode == "read" else apply(k)

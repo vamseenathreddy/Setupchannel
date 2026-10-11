@@ -1,6 +1,6 @@
-name: Tools | Create cron-job.org pings (Ramana x3, Jesus Bible Quiz)
+name: Tools | Create cron-job.org pings
 
-# One-off. Creates the cron-job.org jobs that dispatch the Ramana quote/Q&A/Life and Jesus Bible Quiz workflows
+# One-off. Creates the cron-job.org jobs that dispatch the Ramana quote/Q&A/Life
 # (cloned from the Rashi Mantra job). Run with dry_run ON first to see the plan.
 on:
   workflow_dispatch:

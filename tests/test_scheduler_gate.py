@@ -160,9 +160,9 @@ def test_post_slot_gives_second_daily_post_its_own_marker(monkeypatch):
     state = {"posted": {"2026-10-10": {"row": "v1", "video_id": "a", "at": "x"}}, "used_ids": []}
     args = (dt.time(17, 0), 40, dt.time(19, 0))
     monkeypatch.delenv("POST_SLOT", raising=False)
-    assert gate.decide("jesus", now, state, *args)[0] is False   # first post already done today
+    assert gate.decide("chan_a", now, state, *args)[0] is False   # first post already done today
     monkeypatch.setenv("POST_SLOT", "pm")
-    assert gate.decide("jesus_pm", now, state, *args)[0] is True  # the pm slot has its own marker
+    assert gate.decide("chan_b", now, state, *args)[0] is True  # the pm slot has its own marker
     state_mod.mark_posted(state, "2026-10-10", "v2", "b", False, "y")
     assert "2026-10-10#pm" in state["posted"] and "2026-10-10" in state["posted"]
-    assert gate.decide("jesus_pm", now, state, *args)[0] is False
+    assert gate.decide("chan_b", now, state, *args)[0] is False

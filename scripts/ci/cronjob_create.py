@@ -6,7 +6,7 @@ New jobs are CLONED from an existing job (the Rashi Mantra one): same GitHub dis
 server-side inside this script and never printed.
 
 Static schedules (every 10 minutes through the window) are used for the Ramana Shorts, whose windows are
-12-1 AM, 10-11 AM and 5-6 PM IST. Jesus Bible Quiz starts with a wide evening schedule; the daily orchestrator
+12-1 AM, 10-11 AM and 5-6 PM IST.
 (cronjob_reschedule.py) narrows it to the day's target minute from then on.
 
 Usage: CRONJOB_ORG_API_KEY=... python3 scripts/ci/cronjob_create.py [--dry-run]
@@ -36,15 +36,9 @@ def _every_10(start_h, start_m, count):
 # (workflow file, job title, hours, minutes)
 TARGETS = [
     ("daily-shorts.yml", "Mahanavi - Timing Shorts Rahu/Shubh/Durm (12-3 AM)", *_every_10(0, 0, 18)),
-    ("post-pulse-boosting.yml", "Pulse Boosting - Short (12-2 PM)", *_every_10(12, 0, 12)),
     ("post-ramana-short.yml", "Ramana Maharshi TV - quote Short (12-1 AM)", *_every_10(0, 0, 10)),
     ("post-ramana-qa.yml", "Ramana Maharshi TV - Q&A Short (10-11 AM)", *_every_10(10, 0, 10)),
     ("post-ramana-life.yml", "Ramana Maharshi TV - Life Short (5-6 PM)", *_every_10(17, 0, 10)),
-    # Jesus posts 3 public Shorts a day (2026-10-10): static 10-minute pings through each window; the gates
-    # (channels/jesus/scripts/ci/gate*.py) pick the day's random minute inside it.
-    ("post-jesus-worship-waves.yml", "Jesus - Bible Quote Short (12-1 AM)", *_every_10(0, 0, 6)),
-    ("post-jesus-bible-quiz.yml", "Jesus - Bible Quiz Short (9-10 AM)", *_every_10(9, 0, 6)),
-    ("post-jesus-bible-quote-pm.yml", "Jesus - Bible Quote Short 2 (5-6 PM)", *_every_10(17, 0, 6)),
     # Divine Mantra Sangam (from Sat 10 Oct 2026) and Devotional Trance Beats (2026-10-09): static 10-minute pings.
     ("post-mantra-sangam-rahu.yml", "Mantra Sangam - Rahu Kaal Short (12 AM)", *_every_10(0, 5, 6)),
     ("post-mantra-sangam-shubh.yml", "Mantra Sangam - Shubh Muhurat Short (1 AM)", *_every_10(1, 5, 6)),

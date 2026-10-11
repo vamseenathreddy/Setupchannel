@@ -14,8 +14,7 @@ data/
 # again, here or for any future channel's own committed content bank.
 !ramana/data/
 !ramana/data/**
-# Same bug, same fix, for every channel added under channels/<name>/data/ (Jesus Worship
-# Waves, InfoShorts Telugu, Divine Mantra Sangam, Devotional Trance Beats, and any future
+# Same bug, same fix, for every channel added under channels/<name>/data/ (Divine Mantra Sangam, Devotional Trance Beats, and any future
 # static-content-bank channel) -- their content.csv files are real committed content, not
 # runtime state, and must not be swallowed by the unanchored "data/" rule above.
 !channels/*/data/
@@ -39,9 +38,5 @@ run_daily_shorts_stdout.log
 
 # Source material (copyrighted book compilations) -- never commit to a public repo
 source_material/
-channels/jesus/assets/music/candidates/*.mp3
-channels/jesus/assets/music/candidates/index.txt
-channels/pulse_boosting/assets/music/candidates/*.mp3
-channels/pulse_boosting/assets/music/candidates/index.txt
 channels/trance_beats/assets/music/candidates/*.mp3
 channels/trance_beats/assets/music/candidates/index.txt

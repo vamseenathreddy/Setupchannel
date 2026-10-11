@@ -12,7 +12,7 @@ on:
       token_files:
         description: "Comma-separated saved tokens to search"
         required: false
-        default: "youtube_token.json,youtube_token_trance_beats.json,youtube_token_mantra_sangam.json,youtube_token_ramana.json,youtube_token_jesus.json"
+        default: "youtube_token.json,youtube_token_trance_beats.json,youtube_token_mantra_sangam.json,youtube_token_ramana.json"
 
 permissions:
   contents: read

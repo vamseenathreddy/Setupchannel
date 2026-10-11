@@ -1,4 +1,4 @@
-"""Cut an uploaded song into BGM clips for the Jesus Worship Waves Shorts, and approve the
+"""Cut an uploaded song into BGM clips for the Divine Mantra Sangam Shorts, and approve the
 ones the owner likes.
 
   python scripts/dev/slice_bgm.py slice SONG.mp3 [SONG2.mp3 ...]   # -> assets/music/candidates/
@@ -18,8 +18,8 @@ from pathlib import Path
 
 import os
 
-# Channel whose clips we are cutting (default jesus); e.g. CHANNEL=pulse_boosting python scripts/dev/slice_bgm.py slice song.wav
-MUSIC = Path(__file__).resolve().parents[2] / f"channels/{os.environ.get('CHANNEL', 'jesus')}/assets/music"
+# Channel whose clips we are cutting (default mantra_sangam); e.g. CHANNEL=trance_beats python scripts/dev/slice_bgm.py slice song.wav
+MUSIC = Path(__file__).resolve().parents[2] / f"channels/{os.environ.get('CHANNEL', 'mantra_sangam')}/assets/music"
 CANDIDATES, APPROVED = MUSIC / "candidates", MUSIC / "approved"
 CLIP_SECONDS = 5
 FADE = 0.3

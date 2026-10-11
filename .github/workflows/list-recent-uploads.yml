@@ -18,7 +18,7 @@ on:
         required: false
         default: ""
       token_file:
-        description: "Which saved token to check (default youtube_token.json; e.g. youtube_token_jesus.json)"
+        description: "Which saved token to check (default youtube_token.json)"
         required: false
         default: "youtube_token.json"
 

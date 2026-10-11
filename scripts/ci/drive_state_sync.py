@@ -199,29 +199,18 @@ STATE_FILES = [
     # file for each "youtube_token_*.json" (overwritten for real the first time
     # drive_state_sync.py push runs after a local youtube_shorts_auth_setup.py --token-file
     # run for that channel), and a file containing just "{}" for each "*_state.json".
-    "youtube_token_jesus.json",
-    "jesus_state.json",
     "mantra_sangam_rahu_state.json",  # Hindi timing Shorts (3/day); MUST be pre-created containing {}
     "mantra_sangam_shubh_state.json",
     "mantra_sangam_durm_state.json",
     "mantra_sangam_purana_state.json",
     "mantra_sangam_rashi_state.json",
     "beej_state.json",  # daily 6 AM beej mantra Shorts (3 channels, one POST_SLOT each); MUST be pre-created containing {}
-    "jesus_quiz_state.json",  # evening Bible Quiz Short (shares youtube_token_jesus.json); MUST be pre-created containing {}
-    "youtube_token_infoshorts.json",
-    "infoshorts_state.json",
     "youtube_token_mantra_sangam.json",
     "mantra_sangam_state.json",
     "youtube_token_trance_beats.json",
     "trance_beats_state.json",
     "trance_bhagavatam_state.json",
     "trance_mantra_state.json",
-    "youtube_token_pulse_boosting.json",
-    "pulse_boosting_state.json",
-    "youtube_token_tollywood_news.json",
-    "tollywood_news_state.json",
-    "youtube_token_live_hyderabad.json",
-    "live_hyderabad_state.json",
 ]
 
 
