@@ -61,6 +61,19 @@ on:
           forced run does NOT advance the stored rotation state.
         required: false
         default: ''
+  schedule:
+    - cron: "30 11 * * *"
+    - cron: "40 11 * * *"
+    - cron: "50 11 * * *"
+    - cron: "0 12 * * *"
+    - cron: "10 12 * * *"
+    - cron: "20 12 * * *"
+    - cron: "30 12 * * *"
+    - cron: "40 12 * * *"
+    - cron: "50 12 * * *"
+    - cron: "0 13 * * *"
+    # several pings inside the window: the gate posts on the first one past the day's target minute,
+    # so a delayed or dropped GitHub cron cannot make a day miss.
 
 concurrency:
   group: post-ramana-life

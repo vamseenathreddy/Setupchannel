@@ -16,18 +16,11 @@ from zoneinfo import ZoneInfo
 
 IST = ZoneInfo("Asia/Kolkata")
 
-# Fixed posting times (from 2026-10-11): every Short posts at its window start instead of a random minute,
-# so a handful of exact cron-job.org pings is enough (saves GitHub Actions minutes). Flip to False to bring
-# back the day-seeded random minute.
-FIXED_TIMES = True
-
 
 def target_time(channel_key: str, date: dt.date, window_start: dt.time, window_minutes: int) -> dt.datetime:
     """Day-seeded minute inside the window: the same date always gives the same minute, so every
     ping agrees. channel_key salts the hash so different channels don't all land on the same
     offset-from-window-start minute."""
-    if FIXED_TIMES:
-        return dt.datetime.combine(date, window_start, tzinfo=IST)
     offset = int(hashlib.sha256(f"{channel_key}-gate-{date.isoformat()}".encode()).hexdigest(), 16) % (window_minutes + 1)
     return dt.datetime.combine(date, window_start, tzinfo=IST) + dt.timedelta(minutes=offset)
 

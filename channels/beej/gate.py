@@ -10,10 +10,9 @@ import sys
 
 from channels.engine import gate
 
-# Fixed start per channel (staggered 15 min: the three share one concurrency group).
-START = {"mahanavi": dt.time(6, 0), "mantra_sangam": dt.time(6, 15), "trance_beats": dt.time(6, 30)}
+WINDOW_START = dt.time(6, 0)
 WINDOW_MINUTES = 40
 LATEST = dt.time(8, 0)
 
 if __name__ == "__main__":
-    sys.exit(gate.run(f"beej_{os.environ['BEEJ_CHANNEL']}", START[os.environ["BEEJ_CHANNEL"]], WINDOW_MINUTES, LATEST))
+    sys.exit(gate.run(f"beej_{os.environ['BEEJ_CHANNEL']}", WINDOW_START, WINDOW_MINUTES, LATEST))

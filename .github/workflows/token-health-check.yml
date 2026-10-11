@@ -12,7 +12,7 @@ on:
   schedule:
     # 11:00 PM IST = 17:30 UTC -- 30 minutes before the first posting
     # window opens, leaving a small window to notice and react.
-    - cron: '30 17 * * 0'
+    - cron: '30 17 * * *'
   workflow_dispatch: {}
 
 permissions:

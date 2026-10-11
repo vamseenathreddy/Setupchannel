@@ -20,7 +20,6 @@ from src import state as state_mod  # noqa: E402
 IST = ZoneInfo("Asia/Kolkata")
 WINDOW_START = dt.time(5, 0)     # earliest possible post time
 WINDOW_MINUTES = 40              # target minute is inside 05:00 to 05:40 IST
-FIXED_TIMES = True              # fixed post time = window start (random minute disabled to save Actions minutes)
 LATEST = dt.time(8, 0)           # a late backup run may still post until this time, after that the day is skipped
 
 # Three Shorts a day (2026-10-08): one per content category, each with its own window and state file.
@@ -37,8 +36,6 @@ SLOTS = {
 def target_time(date: dt.date, slot: str = "quote") -> dt.datetime:
     """Day-seeded minute inside the window: the same date always gives the same minute, so every ping agrees."""
     start, minutes, _latest, salt = SLOTS[slot]
-    if FIXED_TIMES:
-        return dt.datetime.combine(date, start, tzinfo=IST)
     offset = int(hashlib.sha256(f"{salt}{date.isoformat()}".encode()).hexdigest(), 16) % (minutes + 1)
     return dt.datetime.combine(date, start, tzinfo=IST) + dt.timedelta(minutes=offset)
 
