@@ -22,6 +22,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 from cronjob_reschedule import _api_request, _find_job_id  # noqa: E402
 
 TEMPLATE_FRAGMENT = "post-rashi-mantra.yml"
+OLD_REPO = "vamseenathreddy/mahanavi-spirituals"
+NEW_REPO = "vamseenathreddy/Setupchannel"
 
 
 def _every_10(start_h, start_m, count):
@@ -59,16 +61,29 @@ def main() -> int:
     if not key:
         print("CRONJOB_ORG_API_KEY is not set", file=sys.stderr)
         return 1
+    rc = 0
     jobs = _api_request("GET", "/jobs", key).get("jobs", [])
     print(f"cron-job.org lists {len(jobs)} jobs")
     for j in jobs:
         print(f"  job {j.get('jobId')}: {j.get('title')!r} -> ...{j.get('url', '')[-45:]} enabled={j.get('enabled')}")
+    # Repo renamed to Setupchannel (2026-10-11): re-point every job that still dispatches the old repo name.
+    for j in jobs:
+        url = j.get("url", "")
+        if OLD_REPO in url:
+            print(f"  re-pointing job {j.get('jobId')} to {NEW_REPO}")
+            if not dry:
+                time.sleep(1.2)
+                try:
+                    _api_request("PATCH", f"/jobs/{j['jobId']}", key, {"job": {"url": url.replace(OLD_REPO, NEW_REPO)}})
+                except RuntimeError as exc:
+                    print(f"  FAILED: {exc}", file=sys.stderr)
+                    rc = 1
+    jobs = _api_request("GET", "/jobs", key).get("jobs", []) if not dry else jobs
     tmpl_id = _find_job_id(jobs, TEMPLATE_FRAGMENT)
     if tmpl_id is None:
         print(f"no template job matching {TEMPLATE_FRAGMENT}", file=sys.stderr)
         return 1
     tmpl = _api_request("GET", f"/jobs/{tmpl_id}", key).get("jobDetails", {})
-    rc = 0
     for fragment, title, hours, minutes in TARGETS:
         schedule = {"timezone": "Asia/Kolkata", "hours": hours, "minutes": minutes,
                     "mdays": [-1], "months": [-1], "wdays": [-1]}

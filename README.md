@@ -144,8 +144,8 @@ scripts/ci/
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/vamseenathreddy/mahanavi-spirituals
-cd mahanavi-spirituals
+git clone https://github.com/vamseenathreddy/Setupchannel
+cd Setupchannel
 python3.13 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
