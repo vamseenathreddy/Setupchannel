@@ -1,10 +1,10 @@
-"""Render/pick configuration for Devotional Trance Beats -- the second Hindi-only devotional
+"""Render/pick configuration for Channel C -- the second Hindi-only devotional
 channel in this repo ("also same hindi version of mahanavi spirituals"). Content leans
-Krishna/Radha bhajan-kirtan (vs Divine Mantra Sangam's Shiva/Om-mantra-chanting focus) so the
+Krishna/Radha bhajan-kirtan (vs Channel B's Shiva/Om-mantra-chanting focus) so the
 two channels don't look like duplicates of each other. Hind Bold is a cleaner, more
-contemporary Devanagari display font than Divine Mantra Sangam's ornate Yatra One, matching
+contemporary Devanagari display font than Channel B's ornate Yatra One, matching
 this channel's more modern "beats" branding; a magenta/violet "trance" palette distinguishes
-it from Divine Mantra Sangam's warm gold.
+it from Channel B's warm gold.
 """
 from pathlib import Path
 

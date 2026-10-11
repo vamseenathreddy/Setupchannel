@@ -20,7 +20,7 @@ placed at the path in MAHANAVI_YOUTUBE_CLIENT_SECRETS_FILE (defaults to
 the project root).
 
 --token-file: added 2026-10 for second (and later) YouTube channels in
-this repo (e.g. Ramana Maharshi TV) that reuse this SAME Google Cloud
+this repo (e.g. Channel D) that reuse this SAME Google Cloud
 OAuth project/client_secrets.json but need their OWN saved token,
 since each channel is authorized separately. Omit it for the original
 channel (mahanavi spirituals) -- defaults to

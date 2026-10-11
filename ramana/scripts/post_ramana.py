@@ -1,4 +1,4 @@
-"""Pipeline for the Ramana Maharshi TV series: choose, render, upload, captions, seed comment,
+"""Pipeline for the Channel D series: choose, render, upload, captions, seed comment,
 Blogger post, update state.
 
 Run only after the gate said "post" (scripts/ci/ramana_gate.py). State is written right after

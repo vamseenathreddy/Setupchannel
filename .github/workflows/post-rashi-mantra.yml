@@ -1,4 +1,4 @@
-name: Mahanavi | Weekly Rashi Mantra Table (Sunday 8 AM IST)
+name: Channel A | Weekly Rashi Mantra Table (Sunday 8 AM IST)
 
 # 2026-10-09: replaced the daily one-rashi Short with ONE weekly table of all 12 rashis, Sundays only
 # (gate blocks Mon-Sat; cron-job.org job runs Sundays only). Script: mahanavi.scripts.post_rashi_weekly.
@@ -152,4 +152,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Mahanavi | Weekly Rashi Mantra Table (Sunday 8 AM IST)"
+        run: python scripts/ci/notify_failure.py "Channel A | Weekly Rashi Mantra Table (Sunday 8 AM IST)"

@@ -41,7 +41,7 @@ TARGETS = [
     ("post-ramana-short.yml", "Ramana Maharshi TV - quote Short (12-1 AM)", *_every_10(0, 0, 10)),
     ("post-ramana-qa.yml", "Ramana Maharshi TV - Q&A Short (10-11 AM)", *_every_10(10, 0, 10)),
     ("post-ramana-life.yml", "Ramana Maharshi TV - Life Short (5-6 PM)", *_every_10(17, 0, 10)),
-    # Divine Mantra Sangam (from Sat 10 Oct 2026) and Devotional Trance Beats (2026-10-09): static 10-minute pings.
+    # Channel B (from Sat 10 Oct 2026) and Channel C (2026-10-09): static 10-minute pings.
     ("post-mantra-sangam-rahu.yml", "Mantra Sangam - Rahu Kaal Short (12 AM)", *_every_10(0, 5, 6)),
     ("post-mantra-sangam-shubh.yml", "Mantra Sangam - Shubh Muhurat Short (1 AM)", *_every_10(1, 5, 6)),
     ("post-mantra-sangam-durm.yml", "Mantra Sangam - Durmuhurat Short (2 AM)", *_every_10(2, 5, 6)),

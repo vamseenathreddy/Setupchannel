@@ -52,7 +52,7 @@ def build_quiz_options(target_index: int, for_date_ordinal: int) -> GitaQuizOpti
     """4 options: `target` plus 3 other distinct verses from GITA_SLOKAS,
     in a date-seeded shuffled order.
 
-    Raises MahanaviError if GITA_SLOKAS doesn't yet have enough verses
+    Raises Channel AError if GITA_SLOKAS doesn't yet have enough verses
     to build 4 distinct options -- see MIN_SLOKAS_FOR_QUIZ.
     """
     if len(GITA_SLOKAS) < MIN_SLOKAS_FOR_QUIZ:

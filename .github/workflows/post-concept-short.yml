@@ -1,4 +1,4 @@
-name: Mahanavi | Purana Concept Short (11 AM IST)
+name: Channel A | Purana Concept Short (11 AM IST)
 
 # Manual-trigger-only (same reasoning as post-purana-short.yml -- GitHub's
 # own scheduler has a confirmed reliability bug) -- driven externally by
@@ -132,4 +132,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Mahanavi | Purana Concept Short (11 AM IST)"
+        run: python scripts/ci/notify_failure.py "Channel A | Purana Concept Short (11 AM IST)"

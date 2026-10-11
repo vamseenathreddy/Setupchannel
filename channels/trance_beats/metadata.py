@@ -1,5 +1,5 @@
-"""Everything YouTube sees besides the pixels for Devotional Trance Beats. Hindi-only
-content, Krishna/Radha bhajan-kirtan focus (vs Divine Mantra Sangam's mantra-chanting focus)."""
+"""Everything YouTube sees besides the pixels for Channel C. Hindi-only
+content, Krishna/Radha bhajan-kirtan focus (vs Channel B's mantra-chanting focus)."""
 import os
 import re
 

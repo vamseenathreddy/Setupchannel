@@ -1,4 +1,4 @@
-"""Local (no API) panchang must agree with the Prokerala values Mahanavi posted for 2026-10-08 (Hyderabad)."""
+"""Local (no API) panchang must agree with the Prokerala values Channel A posted for 2026-10-08 (Hyderabad)."""
 import re
 from datetime import date, datetime
 

@@ -37,7 +37,7 @@ jobs:
 
       - name: Run tests with coverage
         # pyproject.toml's testpaths = ["tests"] already excludes
-        # ramana/tests/ (Ramana Maharshi TV's own suite needs extra deps
+        # ramana/tests/ (Channel D's own suite needs extra deps
         # this job doesn't install -- fonttools, ffmpeg -- and manipulates
         # sys.path for its own standalone "src" package). --ignore=ramana
         # here is just defensive in case this command is ever run without

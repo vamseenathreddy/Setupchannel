@@ -1,4 +1,4 @@
-"""Render/pick configuration for Divine Mantra Sangam -- "same like mahanavi spirituals but
+"""Render/pick configuration for Channel B -- "same like mahanavi spirituals but
 hindi only" -- so this reuses mahanavi's own warm gold/saffron devotional palette, but draws
 ONLY Hindi text (text_secondary is left blank in every content row; the render engine skips
 empty blocks automatically). Yatra One is a decorative, devotional-feeling Devanagari display
@@ -47,7 +47,7 @@ RENDER_CFG = ChannelConfig(
 ROTATION = {0: "mantra", 1: "quote", 2: "mantra", 3: "aarti", 4: "quote", 5: "mantra", 6: "aarti"}
 
 
-# ---- Daily timing Shorts (Hindi version of Mahanavi's Rahu Kalam / Shubha Ghadiyalu / Durmuhurtham) ----
+# ---- Daily timing Shorts (Hindi version of Channel A's Rahu Kalam / Shubha Ghadiyalu / Durmuhurtham) ----
 FONT_HI_BOLD = REPO_ROOT / "channels/engine/assets/fonts/Hind-Bold.ttf"
 TIMING_CFG = ChannelConfig(
     channel_name="Divine Mantra Sangam",

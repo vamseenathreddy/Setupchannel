@@ -96,7 +96,7 @@ def post_to_blogger(
     docstring.
 
     blog_id: overrides settings.blogger_blog_id -- lets other channels in
-    this repo (e.g. Ramana Maharshi TV, settings.ramana_blogger_blog_id)
+    this repo (e.g. Channel D, settings.ramana_blogger_blog_id)
     reuse this same function to post to THEIR OWN separate Blogger blog,
     added 2026-10 when this repo grew beyond one channel/one blog.
 

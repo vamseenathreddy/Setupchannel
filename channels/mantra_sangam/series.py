@@ -1,6 +1,6 @@
-"""Hindi bank series for Divine Mantra Sangam: Purana stories (70) and Rashi mantras (12).
+"""Hindi bank series for Channel B: Purana stories (70) and Rashi mantras (12).
 
-Hindi version of Mahanavi's Purana and Rashi Mantra Shorts. Content is a static CSV; each day's
+Hindi version of Channel A's Purana and Rashi Mantra Shorts. Content is a static CSV; each day's
 row is the first one not yet in used_ids (the list restarts when every row has been used).
 Titles mix Hindi with the English name of the main word, e.g. "गजेंद्र मोक्ष (Gajendra Moksham)".
 """

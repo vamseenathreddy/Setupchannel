@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CI helper: sync Mahanavi Spirituals persistent state with Google Drive.
+CI helper: sync Channel A persistent state with Google Drive.
 
 GitHub Actions runners are stateless -- every run starts from a clean
 checkout. This script uses one Drive folder as the durable store for the
@@ -137,7 +137,7 @@ window would see "not posted today" and the series could post more
 than once in the same 8-9 AM window.
 
 *** AND TO youtube_token_ramana.json / ramana_state.json, ADDED 2026-10
-for the Ramana Maharshi TV channel (ramana/ at the repo root, a
+for the Channel D channel (ramana/ at the repo root, a
 second, separate YouTube channel/pipeline folded into this SAME Drive
 folder and service account rather than standing up a second one) ***
 -- same fix, same reason, one more time: before that pipeline's first
@@ -188,8 +188,8 @@ STATE_FILES = [
     "last_gita_sloka_index.txt",
     "last_run_date_gita_sloka.txt",
     "last_run_date_rashi_mantra.txt",
-    "youtube_token_ramana.json",  # Ramana Maharshi TV channel's own OAuth token (separate channel, see config.py)
-    "ramana_state.json",          # Ramana Maharshi TV's "posted"/"used_ids" state (ramana/src/state.py)
+    "youtube_token_ramana.json",  # Channel D channel's own OAuth token (separate channel, see config.py)
+    "ramana_state.json",          # Channel D's "posted"/"used_ids" state (ramana/src/state.py)
     "ramana_qa_state.json",       # Ramana 2nd daily Short (Q&A slot)
     "ramana_life_state.json",     # Ramana 3rd daily Short (life slot)
     # --- The 7-channel expansion (channels/ at the repo root, added 2026-10) --- same pattern

@@ -1,4 +1,4 @@
-"""Gates for the Hindi Shorts (Divine Mantra Sangam), on the same IST windows as Mahanavi Spirituals.
+"""Gates for the Hindi Shorts (Channel B), on the same IST windows as Channel A.
 TIMING_KIND env: rahu | shubh | durm | rashi | purana.
 
   rahu 00:05-00:30, shubh 01:05-01:30, durm 02:05-02:30 (panchang for the new day), rashi 08:00-08:50, purana 17:00-17:50
@@ -10,7 +10,7 @@ import sys
 
 from channels.engine import gate
 
-SLOTS = {  # same windows as Mahanavi Spirituals (IST); the day's target minute falls inside the window
+SLOTS = {  # same windows as Channel A (IST); the day's target minute falls inside the window
     "rahu": ("mantra_rahu", dt.time(0, 5), 25, dt.time(1, 0)),
     "shubh": ("mantra_shubh", dt.time(1, 5), 25, dt.time(2, 0)),
     "durm": ("mantra_durm", dt.time(2, 5), 25, dt.time(3, 0)),
@@ -18,7 +18,7 @@ SLOTS = {  # same windows as Mahanavi Spirituals (IST); the day's target minute 
     "purana": ("mantra_purana", dt.time(17, 0), 50, dt.time(18, 0)),
 }
 
-# Daily Rashi is retired (2026-10-09): the Hindi version becomes a WEEKLY Sunday table like Mahanavi's.
+# Daily Rashi is retired (2026-10-09): the Hindi version becomes a WEEKLY Sunday table like Channel A's.
 # Until that is built the rashi slot never posts (manual FORCE_POST still works).
 DISABLED = {"rashi"}
 

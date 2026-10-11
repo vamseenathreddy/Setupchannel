@@ -1,7 +1,7 @@
-# Mahanavi Spirituals — Devotional YouTube Shorts Automation
+# Channel A — Devotional YouTube Shorts Automation
 
 Automated content pipelines for the Telugu devotional YouTube channel
-**Mahanavi Spirituals** (@MahanaviSpirituals). Everything ships as a
+**Channel A** (@Channel ASpirituals). Everything ships as a
 GitHub Actions workflow — nothing needs a laptop or server running 24/7.
 
 > **Note:** this repo previously also ran a "Daily Community Post"

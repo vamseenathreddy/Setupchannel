@@ -1,6 +1,6 @@
 """YouTube Data API v3: upload, captions, playlist, seed comment.
 
-Shared by every channel in this repo (originally written for Ramana Maharshi TV,
+Shared by every channel in this repo (originally written for Channel D,
 see ramana/src/upload.py; copied here unchanged, byte-for-byte, so the
 Pattern-A engine (channels/engine/) has its own copy to import without
 depending on ramana/). Each channel is a separate YouTube channel, each with

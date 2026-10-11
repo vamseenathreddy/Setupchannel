@@ -1,7 +1,7 @@
 """Generic static-text Short renderer shared by every Pattern-A channel in this repo
-(Jesus Worship Waves, InfoShorts Telugu, Divine Mantra Sangam, Devotional Trance Beats).
+(Jesus Worship Waves, InfoShorts Telugu, Channel B, Channel C).
 Generalized from ramana/src/render.py, which pioneered this exact look (still used as-is by
-Ramana Maharshi TV): Pillow for the still image layers, ffmpeg to mux a 5s video with music.
+Channel D): Pillow for the still image layers, ffmpeg to mux a 5s video with music.
 Completely still picture and text -- no motion, no scrolling -- per explicit request ("all
 shorts should be static text").
 

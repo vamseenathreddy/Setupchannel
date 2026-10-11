@@ -2,12 +2,12 @@
 
 Adapted 2026-10 to reuse mahanavi's file-based OAuth token pattern instead of
 three raw YT_CLIENT_ID/YT_CLIENT_SECRET/YT_REFRESH_TOKEN secrets (the zip's
-original scheme) -- this channel (Ramana Maharshi TV) is a separate YouTube
+original scheme) -- this channel (Channel D) is a separate YouTube
 channel but lives under the SAME Google Cloud OAuth project/client_secrets.json
 already used by the rest of this repo, just with its own saved token file
 (see mahanavi.config.Settings.ramana_youtube_token_file), created once by
 running `python -m mahanavi.scripts.youtube_shorts_auth_setup --token-file
-data/youtube_token_ramana.json` locally and choosing the Ramana Maharshi TV
+data/youtube_token_ramana.json` locally and choosing the Channel D
 channel at the Google consent screen.
 
 Deliberately does NOT pass an explicit scopes= to Credentials.from_authorized_user_file

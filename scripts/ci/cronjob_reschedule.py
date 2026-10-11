@@ -13,7 +13,7 @@ lands at-or-after that target before the window's hard cutoff. Most of
 those ticks are wasted no-ops (each still costs 1 billed GitHub Actions
 minute on this private repo).
 
-Ramana Maharshi TV (ramana/, added 2026-10) was folded in as a 5th
+Channel D (ramana/, added 2026-10) was folded in as a 5th
 entry here rather than standing up its own separate cron-job.org
 pinger (its own .github/workflows/post_ramana.yml -- not used verbatim
 in this repo -- suggested 12 pings/day on its own, ~6 Actions minutes/
@@ -149,7 +149,7 @@ SERIES = {
     # scripts/ci/gate.py window/latest, re-used here via the shared engine formula (see the
     # _engine_target_time import above) instead of hand-copying the sha256 formula again.
     # "jesus" / "jesus_quiz" removed 2026-10-10: the three Jesus Shorts now use static 10-minute pings (cronjob_create.py).
-    # "trance_beats" removed 2026-10-09: the three Trance Beats Shorts now use static 10-minute pings (cronjob_create.py).
+    # "trance_beats" removed 2026-10-09: the three Channel C Shorts now use static 10-minute pings (cronjob_create.py).
 }
 
 

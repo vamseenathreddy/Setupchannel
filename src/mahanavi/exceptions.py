@@ -1,5 +1,5 @@
 """
-Centralized exception hierarchy for Mahanavi Spirituals.
+Centralized exception hierarchy for Channel A.
 
 Every module raises exceptions from this file (or subclasses of them)
 rather than bare Exception / built-in errors, so the orchestration layer

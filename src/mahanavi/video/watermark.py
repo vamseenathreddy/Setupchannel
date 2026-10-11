@@ -5,11 +5,11 @@ Per explicit request (2026-10-07): "add a watermark of that channel's
 short. Users should not copy but readers should not feel inconvenient."
 
 Design (revised 2026-10-07 after review of the first version): one LARGE,
-very dim (~15%) "@MahanaviSpirituals" at the exact vertical middle of the
+very dim (~15%) "@Channel ASpirituals" at the exact vertical middle of the
 frame, deliberately overlapping the text. Being in the middle of the
 content it cannot be cropped out, while its low brightness keeps it from
 distracting a reader. The same look is used for every channel in this repo
-(Ramana Maharshi TV -> @ramanamaharshitv; engine channels -> their handle,
+(Channel D -> @ramanamaharshitv; engine channels -> their handle,
 or channel name until one is set).
 
 Two full-frame transparent PNG layers (one per position) are generated

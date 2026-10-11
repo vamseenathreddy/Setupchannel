@@ -1,4 +1,4 @@
-name: Mahanavi | Beej Mantra Short (6 AM IST)
+name: Channel A | Beej Mantra Short (6 AM IST)
 
 # Daily 6 AM beej (seed) mantra Short, deity chosen by festival / tithi / weekday
 # (src/mahanavi/content/beej_mantras.py). Shares data/beej_state.json with the other two channels (one
@@ -100,4 +100,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Mahanavi | Beej Mantra Short (6 AM IST)"
+        run: python scripts/ci/notify_failure.py "Channel A | Beej Mantra Short (6 AM IST)"

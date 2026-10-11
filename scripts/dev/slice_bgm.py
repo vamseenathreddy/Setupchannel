@@ -1,4 +1,4 @@
-"""Cut an uploaded song into BGM clips for the Divine Mantra Sangam Shorts, and approve the
+"""Cut an uploaded song into BGM clips for the Channel B Shorts, and approve the
 ones the owner likes.
 
   python scripts/dev/slice_bgm.py slice SONG.mp3 [SONG2.mp3 ...]   # -> assets/music/candidates/
@@ -7,7 +7,7 @@ ones the owner likes.
 
 Clips are CLIP_SECONDS (5 s) long (one Short), cut back to back, with a short fade in/out and
 loudness-normalised. Only files in assets/music/approved/ are ever used by the pipeline
-(one clip per Short, rotating -- same idea as Ramana Maharshi TV's rotating Om clips), so the
+(one clip per Short, rotating -- same idea as Channel D's rotating Om clips), so the
 owner listens to the candidates first and approves only the good ones.
 """
 import argparse

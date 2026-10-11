@@ -1,6 +1,6 @@
 """
 branding.py: the channel's brand name and one short "<series> by
-Mahanavi Spirituals" tagline per series, prepended to every Short's
+Channel A" tagline per series, prepended to every Short's
 description (explicit request, 2026-10-03: "I want in every short
 description like example 'puranakathalu by mahanavi spirituals' means
 I want to increase brand value").
@@ -40,7 +40,7 @@ SERIES_TAGLINE_NAME: dict[str, str] = {
 
 
 def brand_tagline(series_key: str) -> str:
-    """e.g. brand_tagline("purana_short") -> "Purana Kathalu by Mahanavi Spirituals"."""
+    """e.g. brand_tagline("purana_short") -> "Purana Kathalu by Channel A"."""
     name = SERIES_TAGLINE_NAME[series_key]
     return f"{name} by {BRAND_NAME}"
 
@@ -50,7 +50,7 @@ BRAND_TAGS = [BRAND_NAME.lower(), "mahanavi", "mahanavispirituals", "mahanavi sp
 
 
 def brand_title(title: str, limit: int = 100) -> str:
-    """Put the channel name in the title of every Mahanavi Short (2026-10-09 request: Google searches for
+    """Put the channel name in the title of every Channel A Short (2026-10-09 request: Google searches for
     "mahanavi spirituals" were being corrected to "mahanavami"; the exact name in every title/tag/description
     teaches Google that it is a real brand). Already-branded titles are untouched; a long title is cut
     (with an ellipsis) so the name always fits."""

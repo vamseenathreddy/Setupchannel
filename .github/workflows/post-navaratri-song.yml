@@ -1,4 +1,4 @@
-name: Mahanavi | Navaratri Song (one-time)
+name: Channel A | Navaratri Song (one-time)
 
 # One-off manual pipeline (not scheduled) for the first AI-generated
 # devotional SONG video -- see post_navaratri_song.py's module
@@ -91,4 +91,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Mahanavi | Navaratri Song (one-time)"
+        run: python scripts/ci/notify_failure.py "Channel A | Navaratri Song (one-time)"

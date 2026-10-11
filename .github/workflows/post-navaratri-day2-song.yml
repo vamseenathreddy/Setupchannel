@@ -1,4 +1,4 @@
-name: Mahanavi | Navaratri Day 2 Song (one-time)
+name: Channel A | Navaratri Day 2 Song (one-time)
 
 # One-off manual pipeline for the Dasara Navaratri Day 2 devotional SONG
 # video ("Sri Bala Tripurasundari Devi") -- see
@@ -92,4 +92,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Mahanavi | Navaratri Day 2 Song (one-time)"
+        run: python scripts/ci/notify_failure.py "Channel A | Navaratri Day 2 Song (one-time)"

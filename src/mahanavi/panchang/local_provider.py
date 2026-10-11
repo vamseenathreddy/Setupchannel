@@ -1,6 +1,6 @@
 """LocalPanchangProvider: panchang computed on this machine with the Swiss Ephemeris (pyswisseph).
 
-No API, no quota, no network -- written 2026-10-08 so the Hindi channel (Divine Mantra Sangam)
+No API, no quota, no network -- written 2026-10-08 so the Hindi channel (Channel B)
 never spends Prokerala credits. Sunrise/sunset come from the ephemeris; Rahu Kalam, Yamagandam,
 Gulika, Durmuhurtham and Abhijit are the standard weekday tables on the day length; tithi,
 nakshatra, yoga, karana and Varjyam come from the Lahiri sidereal Sun/Moon longitudes.

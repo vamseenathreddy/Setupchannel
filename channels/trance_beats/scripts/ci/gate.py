@@ -1,5 +1,5 @@
-"""Gate for Devotional Trance Beats: day-seeded target minute inside 19:00-19:40 IST (evening
-aarti time, distinct from Divine Mantra Sangam's morning slot; late backup until 21:00 IST).
+"""Gate for Channel C: day-seeded target minute inside 19:00-19:40 IST (evening
+aarti time, distinct from Channel B's morning slot; late backup until 21:00 IST).
 Run via: python -m channels.trance_beats.scripts.ci.gate
 """
 import datetime as dt

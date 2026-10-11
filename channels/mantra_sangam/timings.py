@@ -1,6 +1,6 @@
-"""Daily Hindi timing Shorts for Divine Mantra Sangam: Rahu Kaal, Shubh Muhurat, Durmuhurat.
+"""Daily Hindi timing Shorts for Channel B: Rahu Kaal, Shubh Muhurat, Durmuhurat.
 
-Hindi version of Mahanavi Spirituals' three daily timing Shorts. The times are computed locally
+Hindi version of Channel A' three daily timing Shorts. The times are computed locally
 with the Swiss Ephemeris (mahanavi.panchang.local_provider), so no Panchang API and no quota is
 used. Location is New Delhi (the card says so); change LOCATION to use another city.
 """

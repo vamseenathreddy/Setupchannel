@@ -1,4 +1,4 @@
-# Ramana Maharshi TV: daily Shorts pipeline
+# Channel D: daily Shorts pipeline
 
 One 5 second bilingual Short (Telugu in Ponnala bold, English below) posted every day before 6 AM IST with your own Om music. Each content row is used once and never repeats. Built on the same gate pattern as your other channels.
 
@@ -28,11 +28,11 @@ One 5 second bilingual Short (Telugu in Ponnala bold, English below) posted ever
 ### 2. YouTube API: reuse your audited Google Cloud project
 The "uploads are forced to private" lock applies per Google Cloud project, not per channel. Use the same project and OAuth client you already use for your other channel, so the audit already covers it.
 1. Run once on your computer: `pip install google-auth-oauthlib` then `python src/get_refresh_token.py client_secret.json`.
-2. At the Google consent screen choose the **Ramana Maharshi TV** channel. Allow upload, captions and comments.
+2. At the Google consent screen choose the **Channel D** channel. Allow upload, captions and comments.
 3. Copy the three printed values.
 
 ### 3. Drive folder for the state file
-1. In Drive create a folder, for example `Ramana TV Automation`.
+1. In Drive create a folder, for example `Channel D Automation`.
 2. Inside it create a file named exactly `ramana_state.json` from your own account. Content for a fresh start: `{"posted": {}, "used_ids": []}`.
    If you post the first Short by hand (for example `q001` on 7 Oct 2026), use this content so the automation does not repeat it:
    `{"posted": {"2026-10-07": {"row": "q001", "video_id": "manual"}}, "used_ids": ["q001"]}`
@@ -54,7 +54,7 @@ Create a GitHub fine-grained token for this repository only with **Actions: Read
 - Schedule: time zone Asia/Kolkata, hour 5, minutes 0,5,10,15,20,25,30,35,40,45,50,55 (12 pings, about 6 Actions minutes a day).
 
 ### 6. First run
-Actions > Ramana TV | Quote Short (12 AM IST) > Run workflow with **force** and **dry_run** ticked. Download the artifact and watch the video. Then run it once with only **force** ticked to post for real.
+Actions > Channel D | Quote Short (12 AM IST) > Run workflow with **force** and **dry_run** ticked. Download the artifact and watch the video. Then run it once with only **force** ticked to post for real.
 
 ## Verifying a post is real (do not trust a green run)
 A green run only means the workflow finished. Most pings are legitimate no-ops.

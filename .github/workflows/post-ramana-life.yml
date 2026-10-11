@@ -1,6 +1,6 @@
-name: Ramana TV | Life Short (5 PM IST)
+name: Channel D | Life Short (5 PM IST)
 
-# Second YouTube channel in this repo (Ramana Maharshi TV), added 2026-10.
+# Second YouTube channel in this repo (Channel D), added 2026-10.
 # Same pattern as post-rashi-mantra.yml / post-purana-short.yml / etc: a
 # cron-job.org watchdog calls this workflow's workflow_dispatch endpoint
 # repeatedly through a window, scripts/ci/ramana_gate.py (actually
@@ -15,7 +15,7 @@ name: Ramana TV | Life Short (5 PM IST)
 # YouTube Studio, not reachable by anyone else even with the link) by
 # default until reviewed -- changed 2026-10-07 from this repo's usual
 # Unlisted-by-default convention, per the owner's explicit request to
-# review every Ramana short before it's reachable at all, not just
+# review every Channel D short before it's reachable at all, not just
 # before it's public. Check `public` true in the Actions UI, or set it
 # true on the cron-job.org dispatch body, once you're happy with real
 # posts.
@@ -29,7 +29,7 @@ name: Ramana TV | Life Short (5 PM IST)
 #
 # *** ONE-TIME LOCAL STEPS BEFORE THE FIRST REAL RUN ***
 # 1. python -m mahanavi.scripts.youtube_shorts_auth_setup --token-file data/youtube_token_ramana.json
-#    (choose the Ramana Maharshi TV channel at the Google consent screen)
+#    (choose the Channel D channel at the Google consent screen)
 # 2. python scripts/ci/drive_state_sync.py push
 # 3. Create a cron-job.org job whose URL is
 #    https://api.github.com/repos/OWNER/REPO/actions/workflows/post-ramana-short.yml/dispatches
@@ -124,7 +124,7 @@ jobs:
           pip install -r ramana/requirements.txt
           pip install -e .
 
-      - name: Run Ramana Short pipeline
+      - name: Run Channel D Short pipeline
         id: pipeline
         if: steps.gate.outputs.post == 'true'
         env:
@@ -174,4 +174,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Ramana TV | Life Short (5 PM IST)"
+        run: python scripts/ci/notify_failure.py "Channel D | Life Short (5 PM IST)"

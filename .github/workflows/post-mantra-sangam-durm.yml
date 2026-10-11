@@ -1,8 +1,8 @@
-name: Mantra Sangam | Durmuhurat Short (2 AM IST)
+name: Channel B | Durmuhurat Short (2 AM IST)
 
-# Hindi daily timing Short (durm) for Divine Mantra Sangam; times computed locally (Swiss Ephemeris, no API).
+# Hindi daily timing Short (durm) for Channel B; times computed locally (Swiss Ephemeris, no API).
 # Posts UNLISTED by default until the channel owner approves. Needs data/youtube_token_mantra_sangam.json
-# to act as the Divine Mantra Sangam channel (the pipeline refuses to post to any other channel).
+# to act as the Channel B channel (the pipeline refuses to post to any other channel).
 on:
   workflow_dispatch:
     inputs:
@@ -22,7 +22,7 @@ on:
         description: "Force a specific content row id instead of the normal rotation. Leave blank for normal behavior."
         required: false
         default: ''
-  # Same IST windows as Mahanavi Spirituals; several pings per window, the gate posts on the first one past the day's target minute.
+  # Same IST windows as Channel A; several pings per window, the gate posts on the first one past the day's target minute.
   schedule:
   - cron: "40 20 * * *"
   - cron: "50 20 * * *"
@@ -76,7 +76,7 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
 
-      - name: Run Divine Mantra Sangam timing pipeline
+      - name: Run Channel B timing pipeline
         id: pipeline
         if: steps.gate.outputs.post == 'true'
         env:
@@ -122,4 +122,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Mantra Sangam | Durmuhurat Short (2 AM IST)"
+        run: python scripts/ci/notify_failure.py "Channel B | Durmuhurat Short (2 AM IST)"

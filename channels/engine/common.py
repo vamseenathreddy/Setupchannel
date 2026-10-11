@@ -1,6 +1,6 @@
 """Shared content-bank IO for every "Pattern A" static-content-bank channel in this repo
-(Jesus Worship Waves, InfoShorts Telugu, Divine Mantra Sangam, Devotional Trance Beats --
-and Ramana Maharshi TV could migrate to this shared engine later, though it currently keeps
+(Jesus Worship Waves, InfoShorts Telugu, Channel B, Channel C --
+and Channel D could migrate to this shared engine later, though it currently keeps
 its own copy of this logic under ramana/src/ since it shipped first and works).
 
 Row schema (content.csv), same for every channel using this engine:

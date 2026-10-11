@@ -1,4 +1,4 @@
-"""Pipeline entry point for Divine Mantra Sangam. Run via:
+"""Pipeline entry point for Channel B. Run via:
 
   python -m channels.mantra_sangam.scripts.post
   python -m channels.mantra_sangam.scripts.post --dry-run

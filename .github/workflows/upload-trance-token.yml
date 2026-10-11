@@ -1,6 +1,6 @@
-name: Setup | Upload Devotional Trance Beats YouTube Token to Drive
+name: Setup | Upload Channel C YouTube Token to Drive
 
-# Same idea as upload-local-token.yml but ONLY touches data/youtube_token_trance_beats.json (Devotional Trance Beats).
+# Same idea as upload-local-token.yml but ONLY touches data/youtube_token_trance_beats.json (Channel C).
 # 1. Run `python -m mahanavi.scripts.youtube_shorts_auth_setup --token-file data/youtube_token_trance_beats.json` locally.
 # 2. Copy the whole contents of data/youtube_token_trance_beats.json into a repo secret named LOCAL_TRANCE_TOKEN_JSON.
 # 3. Run this workflow, then delete the secret.

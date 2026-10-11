@@ -78,7 +78,7 @@ class Settings(BaseSettings):
     # the repo (assets/music/) rather than driven by an env var, since
     # it is not a secret -- this way it just works in CI with no extra
     # workflow wiring, and a real file has to exist here or
-    # audio/mixer.py raises MahanaviError rather than silently shipping
+    # audio/mixer.py raises Channel AError rather than silently shipping
     # a silent-audio-track Short.
     alert_short_music_path: Path | None = Field(default=PROJECT_ROOT / "assets" / "music" / "alert_bgm.mp3")
 
@@ -200,7 +200,7 @@ class Settings(BaseSettings):
     # is silently skipped everywhere, never a hard failure.
     blogger_blog_id: str | None = Field(default=None)
 
-    # --- Ramana Maharshi TV (second YouTube channel, same repo, added
+    # --- Channel D (second YouTube channel, same repo, added
     # 2026-10) -- a fully separate channel/pipeline under ramana/ at the
     # repo root (its own content bank, renderer, gate), but it reuses
     # this repo's YouTube client_secrets.json (same Google Cloud OAuth
@@ -209,7 +209,7 @@ class Settings(BaseSettings):
     # (see scripts/ci/drive_state_sync.py's STATE_FILES). Create this
     # token once locally with `python -m
     # mahanavi.scripts.youtube_shorts_auth_setup --token-file
-    # data/youtube_token_ramana.json`, choosing the Ramana Maharshi TV
+    # data/youtube_token_ramana.json`, choosing the Channel D
     # channel at the Google consent screen. Blog id/playlist id follow
     # the same "unset = silently skipped" convention as the fields
     # above.

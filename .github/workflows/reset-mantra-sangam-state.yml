@@ -1,6 +1,6 @@
-name: Tools | Reset Divine Mantra Sangam Series State
+name: Tools | Reset Channel B Series State
 
-# One-off: clears the posted/used markers of the five Divine Mantra Sangam series (fresh start). Does not touch the token.
+# One-off: clears the posted/used markers of the five Channel B series (fresh start). Does not touch the token.
 on:
   workflow_dispatch: {}
 
@@ -28,7 +28,7 @@ jobs:
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
         run: python scripts/ci/drive_state_sync.py pull
 
-      - name: Reset Mantra Sangam series state to empty
+      - name: Reset Channel B series state to empty
         run: |
           for k in rahu shubh durm purana rashi; do echo '{}' > data/mantra_sangam_${k}_state.json; done
           ls data/mantra_sangam_*_state.json

@@ -1,4 +1,4 @@
-"""Shared builder for the three daily Krishna series on Devotional Trance Beats.
+"""Shared builder for the three daily Krishna series on Channel C.
 
 gita        -> key trance_beats        (data/gita.csv)        evening
 bhagavatam  -> key trance_bhagavatam   (data/bhagavatam.csv)  morning

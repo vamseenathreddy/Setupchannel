@@ -1,4 +1,4 @@
-"""Everything YouTube sees besides the pixels for Divine Mantra Sangam. Hindi-only content
+"""Everything YouTube sees besides the pixels for Channel B. Hindi-only content
 (text_secondary is blank in every row) -- there is no English/localization block here, unlike
 the bilingual channels in this repo."""
 import os

@@ -1,7 +1,7 @@
-name: Trance Beats | Bhagavatam Short (7 AM IST)
+name: Channel C | Bhagavatam Short (7 AM IST)
 
 # Part of the 7-channel expansion (channels/, added 2026-10) -- Pattern A (static content
-# bank, Hindi-only, Krishna/Radha bhajan-kirtan focus -- distinct from Divine Mantra Sangam's
+# bank, Hindi-only, Krishna/Radha bhajan-kirtan focus -- distinct from Channel B's
 # Om/Shiva mantra focus, see channels/trance_beats/channel_config.py). This channel already has
 # real traction (24 subs, one video at 3K views per the owner) so posting reliability matters
 # more here than for the brand-new channels. Same cron-job.org + daily-reschedule pattern as
@@ -19,7 +19,7 @@ name: Trance Beats | Bhagavatam Short (7 AM IST)
 #
 # *** ONE-TIME LOCAL STEPS BEFORE THE FIRST REAL RUN ***
 # 1. python -m mahanavi.scripts.youtube_shorts_auth_setup --token-file data/youtube_token_trance_beats.json
-#    (choose the EXISTING Devotional Trance Beats channel/account at the Google consent screen
+#    (choose the EXISTING Channel C channel/account at the Google consent screen
 #    -- this is the channel with real subscribers, not a new one)
 # 2. python scripts/ci/drive_state_sync.py push
 # 3. Create a cron-job.org job whose URL is
@@ -100,7 +100,7 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
 
-      - name: Run Devotional Trance Beats pipeline
+      - name: Run Channel C pipeline
         id: pipeline
         if: steps.gate.outputs.post == 'true'
         env:
@@ -143,4 +143,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Trance Beats | Bhagavatam Short (7 AM IST)"
+        run: python scripts/ci/notify_failure.py "Channel C | Bhagavatam Short (7 AM IST)"
