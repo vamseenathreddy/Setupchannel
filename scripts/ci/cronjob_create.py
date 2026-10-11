@@ -36,10 +36,7 @@ def _every_10(start_h, start_m, count):
 # (workflow file, job title, hours, minutes)
 TARGETS = [
     ("daily-shorts.yml", "Mahanavi - Timing Shorts Rahu/Shubh/Durm (12-3 AM)", *_every_10(0, 0, 18)),
-    ("post-infoshorts-telugu.yml", "InfoShorts Telugu - Short (7-9 AM)", *_every_10(7, 0, 12)),
     ("post-pulse-boosting.yml", "Pulse Boosting - Short (12-2 PM)", *_every_10(12, 0, 12)),
-    ("post-tollywood-news.yml", "Tollywood News - Short (1-3 PM)", *_every_10(13, 0, 12)),
-    ("post-live-hyderabad.yml", "Live Hyderabad - Short (2-4 PM)", *_every_10(14, 0, 12)),
     ("post-ramana-short.yml", "Ramana Maharshi TV - quote Short (12-1 AM)", *_every_10(0, 0, 10)),
     ("post-ramana-qa.yml", "Ramana Maharshi TV - Q&A Short (10-11 AM)", *_every_10(10, 0, 10)),
     ("post-ramana-life.yml", "Ramana Maharshi TV - Life Short (5-6 PM)", *_every_10(17, 0, 10)),
