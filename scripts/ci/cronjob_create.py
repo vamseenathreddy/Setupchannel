@@ -114,4 +114,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Exception as exc:  # surface the reason as a run annotation (logs are not readable from the API)
+        import traceback
+        print("::error::" + traceback.format_exc().replace("\n", " | ")[-900:])
+        sys.exit(1)
