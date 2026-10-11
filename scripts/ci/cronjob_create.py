@@ -76,7 +76,7 @@ def main() -> int:
                 try:
                     _api_request("PATCH", f"/jobs/{j['jobId']}", key, {"job": {"url": url.replace(OLD_REPO, NEW_REPO)}})
                 except RuntimeError as exc:
-                    print(f"  FAILED: {exc}", file=sys.stderr)
+                    print(f"::error::FAILED {str(exc)[:300]}")
                     rc = 1
     jobs = _api_request("GET", "/jobs", key).get("jobs", []) if not dry else jobs
     tmpl_id = _find_job_id(jobs, TEMPLATE_FRAGMENT)
@@ -108,7 +108,7 @@ def main() -> int:
                 res = _api_request("PUT", "/jobs", key, {"job": job})
                 print(f"  created: {json.dumps(res)}")
         except RuntimeError as exc:
-            print(f"  FAILED: {exc}", file=sys.stderr)
+            print(f"::error::FAILED {str(exc)[:300]}")
             rc = 1
     return rc
 
