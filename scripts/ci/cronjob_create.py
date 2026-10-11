@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import time
 
@@ -22,8 +23,6 @@ sys.path.insert(0, os.path.dirname(__file__))
 from cronjob_reschedule import _api_request, _find_job_id  # noqa: E402
 
 TEMPLATE_FRAGMENT = "post-rashi-mantra.yml"
-OLD_REPO = "vamseenathreddy/mahanavi-spirituals"
-NEW_REPO = "vamseenathreddy/Setupchannel"
 
 
 def _every_10(start_h, start_m, count):
@@ -65,16 +64,19 @@ def main() -> int:
     jobs = _api_request("GET", "/jobs", key).get("jobs", [])
     print(f"cron-job.org lists {len(jobs)} jobs")
     for j in jobs:
-        print(f"  job {j.get('jobId')}: {j.get('title')!r} -> ...{j.get('url', '')[-45:]} enabled={j.get('enabled')}")
-    # Repo renamed to Setupchannel (2026-10-11): re-point every job that still dispatches the old repo name.
+        print(f"::notice::job {j.get('jobId')}: {j.get('title')!r} -> ...{j.get('url', '')[-60:]} enabled={j.get('enabled')}")
+    # Keep every ping job pointed at THIS repo, whatever it is called now (GITHUB_REPOSITORY): a rename or a
+    # rename-back otherwise leaves jobs calling a name that no longer exists.
+    repo = os.environ.get("GITHUB_REPOSITORY", "")
     for j in jobs:
         url = j.get("url", "")
-        if OLD_REPO in url:
-            print(f"  re-pointing job {j.get('jobId')} to {NEW_REPO}")
+        m = re.search(r"api\.github\.com/repos/([^/]+/[^/]+)/actions", url)
+        if repo and m and m.group(1).lower() != repo.lower():
+            print(f"::notice::re-pointing job {j.get('jobId')} {j.get('title')!r}: {m.group(1)} -> {repo}")
             if not dry:
                 time.sleep(1.2)
                 try:
-                    _api_request("PATCH", f"/jobs/{j['jobId']}", key, {"job": {"url": url.replace(OLD_REPO, NEW_REPO)}})
+                    _api_request("PATCH", f"/jobs/{j['jobId']}", key, {"job": {"url": url.replace(m.group(1), repo)}})
                 except RuntimeError as exc:
                     print(f"::error::FAILED {str(exc)[:300]}")
                     rc = 1
