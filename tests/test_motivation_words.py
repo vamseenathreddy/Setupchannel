@@ -26,3 +26,9 @@ def test_every_word_has_a_deity_photo_and_invocation():
     for w in mw.WORDS:
         assert w.deity in mw.INVOCATION
         assert mw.image_for(date(2026, 10, 13), w).exists()
+
+
+def test_no_word_duplicates_a_posted_concept_or_gita_title():
+    from mahanavi.content.purana_concept_shorts import PURANA_CONCEPT_SHORTS
+    taken = {c.title_te for c in PURANA_CONCEPT_SHORTS} | {"కర్మ చెయ్యి, ఫలం వదులు"}
+    assert not taken & {w.word for w in mw.WORDS}

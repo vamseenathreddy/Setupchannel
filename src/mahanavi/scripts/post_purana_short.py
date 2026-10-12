@@ -183,6 +183,12 @@ def main() -> int:
             print(f"Date-pinned festival story for today: {PURANA_SHORT_STORIES[pinned_index].title_en}")
         else:
             story_index = _next_postable_index(_read_rotation_index())
+            from mahanavi.publishers.recent_titles import is_posted, recent_titles
+            titles = recent_titles(YouTubeShortsUploader(settings)._build_service())  # noqa: SLF001
+            while story_index < len(PURANA_SHORT_STORIES) and is_posted(
+                    titles, PURANA_SHORT_STORIES[story_index].title_te, PURANA_SHORT_STORIES[story_index].title_en):
+                print(f"Duplicate guard: '{PURANA_SHORT_STORIES[story_index].title_en}' is already on the channel -- skipping.")
+                story_index = _next_postable_index(story_index + 1)
     except MahanaviError as exc:
         print(f"FAILED: {exc}", file=sys.stderr)
         return 1

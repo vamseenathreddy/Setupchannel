@@ -131,6 +131,22 @@ def main() -> int:
         print(f"FAILED: {exc}", file=sys.stderr)
         return 1
 
+    if not forced:
+        # Duplicate guard: never post a concept whose title is already on the channel. "Guess This
+        # Character" entries share a title by design, so only unique titles are guarded.
+        from collections import Counter
+
+        from mahanavi.publishers.recent_titles import is_posted, recent_titles
+        titles = recent_titles(YouTubeShortsUploader(settings)._build_service())  # noqa: SLF001
+        counts = Counter(c.title_te for c in PURANA_CONCEPT_SHORTS)
+        for _ in range(len(PURANA_CONCEPT_SHORTS)):
+            c = PURANA_CONCEPT_SHORTS[concept_index]
+            if counts[c.title_te] == 1 and is_posted(titles, c.title_te):
+                print(f"Duplicate guard: '{c.title_en}' is already on the channel -- skipping to the next concept.")
+                concept_index = (concept_index + 1) % len(PURANA_CONCEPT_SHORTS)
+            else:
+                break
+
     concept: PuranaConceptShort = PURANA_CONCEPT_SHORTS[concept_index]
     print(f"Posting concept {concept_index} ({concept.title_en}, {concept.concept_type.value}){' [FORCED]' if forced else ''}")
 
