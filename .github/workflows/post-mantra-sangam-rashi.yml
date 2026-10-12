@@ -22,12 +22,7 @@ on:
         description: "Force a specific content row id instead of the normal rotation. Leave blank for normal behavior."
         required: false
         default: ''
-  # Same IST windows as Channel A; several pings per window, the gate posts on the first one past the day's target minute.
-  schedule:
-  - cron: "35 2 * * *"
-  - cron: "50 2 * * *"
-  - cron: "5 3 * * *"
-  - cron: "20 3 * * *"
+  # No schedule: this series is retired (Rashi Mantra for Channel B no longer posts). Manual runs only.
 
 concurrency:
   group: post-mantra-sangam-rashi
