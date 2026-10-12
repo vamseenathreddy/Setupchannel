@@ -81,6 +81,11 @@ def main() -> int:
                     print(f"::error::FAILED {str(exc)[:300]}")
                     rc = 1
     jobs = _api_request("GET", "/jobs", key).get("jobs", []) if not dry else jobs
+    by_repo: dict[str, int] = {}
+    for j in jobs:
+        mm = re.search(r"api\.github\.com/repos/([^/]+/[^/]+)/actions", j.get("url", ""))
+        by_repo[mm.group(1) if mm else "other"] = by_repo.get(mm.group(1) if mm else "other", 0) + 1
+    print(f"::notice::SUMMARY jobs per target repo after re-point: {by_repo}")
     tmpl_id = _find_job_id(jobs, TEMPLATE_FRAGMENT)
     if tmpl_id is None:
         print(f"no template job matching {TEMPLATE_FRAGMENT}", file=sys.stderr)
