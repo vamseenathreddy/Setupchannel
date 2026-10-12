@@ -64,7 +64,7 @@ def main() -> int:
     jobs = _api_request("GET", "/jobs", key).get("jobs", [])
     print(f"cron-job.org lists {len(jobs)} jobs")
     for j in jobs:
-        print(f"::notice::job {j.get('jobId')}: {j.get('title')!r} -> ...{j.get('url', '')[-60:]} enabled={j.get('enabled')}")
+        print(f"job {j.get('jobId')}: {j.get('title')!r} -> ...{j.get('url', '')[-60:]} enabled={j.get('enabled')}")
     # Keep every ping job pointed at THIS repo, whatever it is called now (GITHUB_REPOSITORY): a rename or a
     # rename-back otherwise leaves jobs calling a name that no longer exists.
     repo = os.environ.get("GITHUB_REPOSITORY", "")
