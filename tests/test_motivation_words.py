@@ -20,3 +20,9 @@ def test_spec_is_two_seconds_on_mahanavi():
     assert spec.total_seconds == 2.0
     assert spec.expected_channel == "Mahanavi"
     assert len(spec.title) <= 100
+
+
+def test_every_word_has_a_deity_photo_and_invocation():
+    for w in mw.WORDS:
+        assert w.deity in mw.INVOCATION
+        assert mw.image_for(date(2026, 10, 13), w).exists()

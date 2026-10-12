@@ -17,7 +17,7 @@ from channels.engine import state as state_mod
 from mahanavi.config import get_settings
 from mahanavi.content import motivation_words
 from mahanavi.exceptions import MahanaviError, YouTubeUploadError
-from mahanavi.images.request_card_renderer import RequestCardRenderer
+from mahanavi.images.motivation_card_renderer import MotivationCardRenderer
 from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
 from mahanavi.scripts.post_beej_mantra import music_for
 from mahanavi.scripts.post_request_short import assemble, upload
@@ -38,9 +38,13 @@ def main(argv: list[str] | None = None) -> int:
         spec = motivation_words.build(today)
         print(f"{today} -> {spec.deity_te}")
         out_dir = settings.output_dir / "motivation" / spec.slug
-        slides = RequestCardRenderer(settings).render_all(spec, out_dir)
+        w = motivation_words.pick(today)
+        png = MotivationCardRenderer(settings).render(
+            photo_path=motivation_words.image_for(today, w), label="నేటి పురాణ ప్రేరణ", word=w.word, reason=w.reason,
+            source=w.source, invocation=motivation_words.INVOCATION.get(w.deity, "ఓం నమో నారాయణాయ"),
+            header=spec.header, footer=spec.tag_footer, watermark=spec.watermark, out=out_dir / "card.png")
         music = music_for("mahanavi", today, settings.alert_short_music_path)
-        video = assemble(spec, [s.path for s in slides], music, out_dir / f"{spec.slug}.mp4")
+        video = assemble(spec, [png], music, out_dir / f"{spec.slug}.mp4")
         print(f"Assembled: {video} ({spec.total_seconds:.1f}s)")
         if args.dry_run:
             return 0
