@@ -147,6 +147,10 @@ _TRANCE_FOOTER = ("🎬 और भक्ति Shorts देखें: https://w
                   "Devotional Trance Beats - हिंदी भक्ति मंत्र, भजन और कीर्तन। सनातन धर्म को सबके करीब लाना हमारा उद्देश्य है।")
 
 
+# Deity -> background photo (file under assets/images/). Durga forms use the Kanaka Durga image.
+DEITY_IMAGE: dict[str, str] = {"durga": "durga_kanakadurga.jpg", "durgadevi": "durga_kanakadurga.jpg"}
+
+
 def split_tithi(tithi: str) -> tuple[str, str]:
     """"Shukla Chaturthi" -> ("shukla", "chaturthi"); tolerant of spelling variants."""
     low = tithi.lower().replace("shashti", "shashthi").replace("poornima", "purnima").replace("pournami", "purnima")
@@ -226,6 +230,7 @@ def build(channel: str, d: date, tithi: str) -> RequestShort:
         ),
         title=title, title_en=f"{dei.key.title()} {kind_en} Mantra - {d.strftime('%d %b %Y')} | Chant 108 Times",
         description_te=desc_head, description_en=desc_en, hashtags=hashtags, tags=tags,
+        bg_image=DEITY_IMAGE.get(dei.key, ""),
         lang=cfg["lang"], token_file=cfg["token_file"], expected_channel=cfg["expected"], watermark=cfg["watermark"],
         header=f"{date_line} · {tithi_line if why == WEEKDAY_NAME[d.weekday()][i] else why}", tag_footer=footer_line, cta_lines=ctas, footer_main=footer, footer_en=footer_en,
     )

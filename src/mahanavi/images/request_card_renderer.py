@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 
 from mahanavi.config import Settings
 from mahanavi.content.request_shorts import RequestShort, Slide
@@ -33,6 +33,7 @@ NARROW_CX = (NARROW_L + SAFE_R) // 2
 ENGINE_FONTS = Path(__file__).resolve().parents[3] / "channels" / "engine" / "assets" / "fonts"
 
 
+PHOTO_DROP = 330  # px the deity photo is moved down so the face clears the mantra text
 Box = tuple[int, int, int, int]
 
 
@@ -46,6 +47,7 @@ class RequestCardRenderer:
     def __init__(self, settings: Settings) -> None:
         self._fonts = FontManager(settings.telugu_font_path)
         self._probe = ImageDraw.Draw(Image.new("RGB", (4, 4)))
+        self._assets_dir = settings.assets_dir
 
     # ---- helpers -----------------------------------------------------------------------------
     lang = "te"
@@ -125,8 +127,43 @@ class RequestCardRenderer:
                 return lines, font, int(size * spacing)
             size -= 2
 
-    @staticmethod
-    def _background(spec: RequestShort) -> Image.Image:
+    def _photo_background(self, spec: RequestShort) -> Image.Image | None:
+        """Deity photo, cover-fit and dimmed (darker behind the text band) so the text stays readable.
+        None if the file is missing/unreadable, so the plain gradient is used instead."""
+        path = self._assets_dir / "images" / spec.bg_image
+        try:
+            with Image.open(path) as raw:
+                src = raw.convert("RGB")
+        except OSError:
+            return None
+        # Soft blurred copy fills the frame; the sharp photo sits LOWER than centre so the deity's face falls
+        # below the mantra text instead of behind it (the stack above ends around y 1100).
+        base = ImageOps.fit(src, (W, H), method=Image.Resampling.LANCZOS).filter(ImageFilter.GaussianBlur(28))
+        sharp = ImageOps.fit(src, (W, H), method=Image.Resampling.LANCZOS).filter(
+            ImageFilter.UnsharpMask(radius=2, percent=60, threshold=2))
+        drop = PHOTO_DROP
+        mask = Image.new("L", (W, H), 0)
+        md = ImageDraw.Draw(mask)
+        for y in range(H - drop):  # fade the photo's top edge into the blurred fill
+            md.line((0, y + drop, W, y + drop), fill=min(255, int(255 * y / 160)))
+        base.paste(sharp.crop((0, 0, W, H - drop)).transform((W, H), Image.Transform.AFFINE, (1, 0, 0, 0, 1, -drop)), (0, 0), mask)
+        im = base
+        shade = Image.new("L", (W, H), 0)
+        sd = ImageDraw.Draw(shade)
+        for y in range(H):  # darker behind the text band (y 230-1100), lighter lower where the face is
+            t = 1 - abs((y - 640) / 640)
+            sd.line((0, y, W, y), fill=int(70 + 130 * max(0.0, min(1.0, t))))
+        im = Image.composite(Image.new("RGB", (W, H), (10, 4, 4)), im, shade)
+        d = ImageDraw.Draw(im)
+        d.rectangle((30, 30, W - 30, H - 30), outline=GOLD, width=4)
+        d.rectangle((42, 42, W - 42, H - 42), outline=GOLD, width=2)
+        return bake_watermark(im.convert("RGBA"), handle=spec.watermark).convert("RGB")
+
+    def _background(self, spec: RequestShort) -> Image.Image:
+        if spec.bg_image:
+            photo = self._photo_background(spec)
+            if photo is not None:
+                return photo
         top, mid, bot = spec.bg_top, spec.bg_mid, spec.bg_bottom
         im = Image.new("RGB", (W, H))
         px = ImageDraw.Draw(im)

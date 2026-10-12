@@ -55,6 +55,7 @@ class RequestShort:
     tag_footer: str = ""                  # footer on mantra slides ("" = none)
     footer_main: str = _CHANNEL_FOOTER_TE
     footer_en: str = _CHANNEL_FOOTER_EN
+    bg_image: str = ""                    # file under assets/images/ used as the (dimmed) background; "" = plain gradient
 
     @property
     def total_seconds(self) -> float:
