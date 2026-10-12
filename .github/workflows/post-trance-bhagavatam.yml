@@ -10,7 +10,7 @@ name: Channel C | Bhagavatam Short (7 AM IST)
 # scripts/ci/cronjob_reschedule.py re-points cron-job.org to fire only at [target, 20:55
 # safety-net] each day -- see that script's "trance_beats" SERIES entry.
 #
-# Posts UNLISTED by default (--public is NOT passed) until reviewed.
+# Posts PUBLIC by default (owner approved 2026-10-13).
 #
 # *** DRIVE SETUP REQUIRED BEFORE THE FIRST GATED RUN *** -- create two files by hand in the
 # same Drive folder as every other marker file -- an empty one named exactly
@@ -32,7 +32,7 @@ on:
         description: "Upload as public. Uncheck for an unlisted test/review run."
         required: false
         type: boolean
-        default: false
+        default: true
       bypass_gate:
         description: >-
           Post immediately, ignoring the 19:00-19:40 IST window and today's already-posted
