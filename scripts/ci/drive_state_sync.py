@@ -160,7 +160,9 @@ Usage:
 
 from __future__ import annotations
 
+import hashlib
 import io
+import json
 import os
 import sys
 from datetime import datetime
@@ -235,9 +237,17 @@ def _find_file_id(drive, name: str) -> str | None:
     return files[0]["id"] if files else None
 
 
+_HASHES = DATA_DIR / ".pulled_hashes.json"
+
+
+def _sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def pull() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     drive = _drive_client()
+    pulled: dict[str, str] = {}
     for name in STATE_FILES:
         file_id = _find_file_id(drive, name)
         if not file_id:
@@ -250,15 +260,27 @@ def pull() -> None:
             done = False
             while not done:
                 _, done = downloader.next_chunk()
+        pulled[name] = _sha(target)
         print(f"[drive-sync] restored {name} <- Drive")
+    _HASHES.write_text(json.dumps(pulled), encoding="utf-8")
 
 
 def push() -> None:
+    """Upload only files THIS run changed. Two workflows running at once each pull a snapshot; writing back
+    every file would let the slower one overwrite the other's fresh state with its stale copy (this is how a
+    Purana Concept rotation step was lost and a Short repeated)."""
     drive = _drive_client()
+    try:
+        pulled = json.loads(_HASHES.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        pulled = {}
     for name in STATE_FILES:
         local_path = DATA_DIR / name
         if not local_path.exists():
             print(f"[drive-sync] {name}: no local file to push, skipping")
+            continue
+        if pulled.get(name) == _sha(local_path):
+            print(f"[drive-sync] {name}: unchanged this run, not pushed")
             continue
         media = MediaFileUpload(str(local_path), resumable=False)
         file_id = _find_file_id(drive, name)
