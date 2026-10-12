@@ -66,7 +66,7 @@ from mahanavi.content.purana_short_stories import PuranaShortStory
 from mahanavi.exceptions import ImageRenderError
 from mahanavi.images.fonts import FontManager
 from mahanavi.video.watermark import bake_watermark
-from mahanavi.images.layout import PRODUCT_ZONE_TOP_FRAC, PRODUCT_ZONE_X1_FRAC, vertical_gradient
+from mahanavi.images.layout import vertical_gradient
 from mahanavi.images.sri_chakra import draw_sri_chakra_roundel
 
 from mahanavi.images.opinion_line import OPINION_TE
@@ -93,7 +93,7 @@ MORAL_FONT_FRAC = 0.042
 SOURCE_FONT_FRAC = 0.030
 SUBSCRIBE_FONT_FRAC = 0.038
 
-STORY_LINE_SPACING = 1.22  # (was 1.3: tighter so more text fits above the product sticker zone)  # multiplier on font size, for readable line height within the story block
+STORY_LINE_SPACING = 1.3  # multiplier on font size, for readable line height within the story block
 
 DEFAULT_SUBSCRIBE_TEXT = "ప్రతిరోజు పురాణ కథల కోసం సబ్‌స్క్రైబ్ చేయండి"
 
@@ -247,7 +247,7 @@ class PuranaShortCardRenderer:
             text_layer = Image.new("RGBA", (width, height), (0, 0, 0, 0))
             draw = ImageDraw.Draw(text_layer)
 
-            content_top = int(height * 0.04)    # starts near the top of the phone screen (was 0.055, 0.08)
+            content_top = int(height * 0.055)   # starts near the top of the phone screen (was 0.08)
             footer_bottom = int(height * 0.77)  # uses the lower half too (was 0.68); Shorts caption starts ~0.80
 
             invocation_font = self._fit_font_to_width(
@@ -284,7 +284,7 @@ class PuranaShortCardRenderer:
             source_h = int(source_font.size * 1.2)
             subscribe_h = int(subscribe_font.size * 1.15)
 
-            block_gap = int(height * 0.014)  # tightened (was 0.022) so the story can sit higher, above the product sticker zone
+            block_gap = int(height * 0.022)
             icon_size = int(width * ICON_FRAC)
 
             # Fixed engagement line ("comment your opinion on this video") sits at the validated
@@ -317,7 +317,6 @@ class PuranaShortCardRenderer:
                 story_box_height = max(story_box_bottom - story_box_top, int(height * 0.1))
                 fit = self._fit_paragraph_to_box(
                     draw, card.story.story_te, max_width=content_width, max_height=story_box_height,
-                    box_top=story_box_top, margin_x=margin_x,
                 )
                 cand = (fit, story_box_height, show_icons, show_source, icon_row_top, source_top, moral_top)
                 fits = fit[2] <= story_box_height
@@ -339,7 +338,7 @@ class PuranaShortCardRenderer:
             # Vertically center the (possibly shorter-than-budgeted) story
             # block within its box, so a short story doesn't look stranded
             # near the top with a big gap before the moral line.
-            story_top = story_box_top  # top-aligned: moved up (was vertically centered) to leave room for the product sticker
+            story_top = story_box_top + max((story_box_height - story_block_height) // 2, 0)
 
             cursor_y = content_top
             cursor_y = self._draw_centered_line(
@@ -415,38 +414,20 @@ class PuranaShortCardRenderer:
 
     def _fit_paragraph_to_box(
         self, draw: ImageDraw.ImageDraw, text: str, max_width: int, max_height: int,
-        box_top: int = 0, margin_x: int = 0,
-    ) -> tuple["ImageFont.FreeTypeFont", list[tuple[str, int]], int]:
-        """Shrink the story font (re-wrapping at each size) until the wrapped paragraph fits max_height,
-        or until STORY_MIN_FONT_FRAC is reached -- see module docstring.
-
-        PRODUCT STICKER (owner request 2026-10-11): YouTube Shopping puts a product sticker in the lower
-        left (layout.PRODUCT_ZONE_*). The story text starts as high as possible at FULL width; the rows
-        that would reach the sticker's top are wrapped into a narrower column to the RIGHT of the sticker,
-        so the sticker area stays empty and the font does not have to shrink. Returns the font, the
-        lines as (text, centre_x) pairs, and the block's total pixel height."""
+    ) -> tuple["ImageFont.FreeTypeFont", list[str], int]:
+        """Shrink the story font (re-wrapping at each size) until the
+        wrapped paragraph's total height fits max_height, or until
+        STORY_MIN_FONT_FRAC is reached -- see module docstring. Returns
+        the chosen font, the wrapped lines, and the block's total pixel
+        height (so the caller can vertically center it)."""
         start_size = int(CARD_WIDTH * STORY_START_FONT_FRAC)
         min_size = int(CARD_WIDTH * STORY_MIN_FONT_FRAC)
-        zone_top = int(CARD_HEIGHT * PRODUCT_ZONE_TOP_FRAC) - 8
-        full_cx = CARD_WIDTH // 2
-        narrow_x0 = int(CARD_WIDTH * PRODUCT_ZONE_X1_FRAC) + int(CARD_WIDTH * 0.02)
-        narrow_x1 = CARD_WIDTH - margin_x
-        narrow_w = max(narrow_x1 - narrow_x0, 200)
-        narrow_cx = (narrow_x0 + narrow_x1) // 2
-
-        def flow(font: "ImageFont.FreeTypeFont", line_height: int) -> list[tuple[str, int]]:
-            full = self._wrap_text(draw, text, font, max_width)
-            n_full = max((zone_top - box_top) // line_height, 0)
-            if len(full) <= n_full:
-                return [(ln, full_cx) for ln in full]
-            tail = self._wrap_text(draw, " ".join(full[n_full:]), font, narrow_w)
-            return [(ln, full_cx) for ln in full[:n_full]] + [(ln, narrow_cx) for ln in tail]
 
         size = start_size
         while size >= min_size:
             font = self._fonts.get_font(size=size, weight="Regular")
+            lines = self._wrap_text(draw, text, font, max_width)
             line_height = int(size * STORY_LINE_SPACING)
-            lines = flow(font, line_height)
             total_height = line_height * len(lines)
             if total_height <= max_height or size == min_size:
                 return font, lines, total_height
@@ -455,20 +436,19 @@ class PuranaShortCardRenderer:
         # Unreachable in practice (loop always returns at size == min_size),
         # kept only as an explicit fallback for static analysis.
         font = self._fonts.get_font(size=min_size, weight="Regular")
-        line_height = int(min_size * STORY_LINE_SPACING)
-        lines = flow(font, line_height)
-        return font, lines, line_height * len(lines)
+        lines = self._wrap_text(draw, text, font, max_width)
+        return font, lines, int(min_size * STORY_LINE_SPACING) * len(lines)
 
     def _draw_paragraph(
-        self, draw: ImageDraw.ImageDraw, lines: list[tuple[str, int]], font: "ImageFont.FreeTypeFont",
+        self, draw: ImageDraw.ImageDraw, lines: list[str], font: "ImageFont.FreeTypeFont",
         width: int, top: int, color: tuple[int, int, int],
     ) -> None:
         line_height = int(font.size * STORY_LINE_SPACING)
         y = top
-        for line, cx in lines:
+        for line in lines:
             bbox = draw.textbbox((0, 0), line, font=font)
             line_w = bbox[2] - bbox[0]
-            draw.text((cx - line_w // 2, y - bbox[1]), line, font=font, fill=(*color, 255))
+            draw.text(((width - line_w) // 2, y - bbox[1]), line, font=font, fill=(*color, 255))
             y += line_height
 
     def _draw_icon_row(self, canvas: Image.Image, icon_paths: list[Path], width: int, top: int) -> None:

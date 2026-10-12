@@ -63,7 +63,6 @@ from mahanavi.content.purana_concept_shorts import CONCEPT_LABEL_TE, PuranaConce
 from mahanavi.exceptions import ImageRenderError
 from mahanavi.images.fonts import FontManager
 from mahanavi.video.watermark import bake_watermark
-from mahanavi.images.flow import StickerZone, wrap_block
 from mahanavi.images.layout import vertical_gradient
 from mahanavi.images.sri_chakra import draw_sri_chakra_roundel
 
@@ -250,21 +249,6 @@ class PuranaConceptCardRenderer:
             )
             opinion_h = int(opinion_font.size * 1.15)
             opinion_top = footer_bottom - opinion_h
-            zone = StickerZone(height, width - margin_x)
-            # Footer rows in the product-tag sticker zone wrap into the column to its right, same font size.
-            sub_line_h = subscribe_h
-            subscribe_lines = [card.subscribe_text]
-            for _ in range(4):
-                subscribe_top = opinion_top - int(height * 0.012) - sub_line_h * len(subscribe_lines)
-                new_lines = wrap_block(
-                    draw, card.subscribe_text, subscribe_font, content_width, subscribe_top, sub_line_h, zone,
-                    lambda t: self._wrap_text(draw, t, subscribe_font, content_width),
-                )
-                if len(new_lines) == len(subscribe_lines):
-                    subscribe_lines = new_lines
-                    break
-                subscribe_lines = new_lines
-            subscribe_h = sub_line_h * len(subscribe_lines)
             subscribe_top = opinion_top - int(height * 0.012) - subscribe_h
             icon_row_top = subscribe_top - block_gap - icon_size if card.icon_paths else subscribe_top
             source_top = icon_row_top - block_gap - source_h
@@ -277,10 +261,9 @@ class PuranaConceptCardRenderer:
 
             body_font, body_lines, body_block_height, truncated = self._fit_paragraph_to_box(
                 draw, concept.body_te, max_width=content_width, max_height=body_box_height,
-                y0=body_box_top, zone=zone,
             )
 
-            body_top = body_box_top  # top-aligned: text moves up, clear of the product-tag sticker zone
+            body_top = body_box_top + max((body_box_height - body_block_height) // 2, 0)
 
             cursor_y = content_top
             cursor_y = self._draw_centered_line(
@@ -291,14 +274,14 @@ class PuranaConceptCardRenderer:
             cursor_y += block_gap
             self._draw_centered_line(draw, concept.title_te, title_font, width, cursor_y, COLOR_TEXT_LIGHT)
 
-            self._draw_paragraph(draw, body_lines, body_font, width, body_top, COLOR_TEXT_LIGHT, zone)
+            self._draw_paragraph(draw, body_lines, body_font, width, body_top, COLOR_TEXT_LIGHT)
 
-            self._draw_centered_line(draw, source_line, source_font, width, source_top, COLOR_TEXT_LIGHT, zone)
+            self._draw_centered_line(draw, source_line, source_font, width, source_top, COLOR_TEXT_LIGHT)
 
             if card.icon_paths:
-                self._draw_icon_row(text_layer, card.icon_paths, width, icon_row_top, zone)
+                self._draw_icon_row(text_layer, card.icon_paths, width, icon_row_top)
 
-            self._draw_paragraph(draw, subscribe_lines, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT, zone, spacing=1.15)
+            self._draw_centered_line(draw, card.subscribe_text, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT)
             self._draw_centered_line(draw, OPINION_TE, opinion_font, width, opinion_top, COLOR_TEXT_LIGHT)
 
             if truncated:
@@ -342,7 +325,6 @@ class PuranaConceptCardRenderer:
 
     def _fit_paragraph_to_box(
         self, draw: ImageDraw.ImageDraw, text: str, max_width: int, max_height: int,
-        y0: int | None = None, zone: StickerZone | None = None,
     ) -> tuple["ImageFont.FreeTypeFont", list[str], int, bool]:
         """Same shrink-and-rewrap approach as the Purana Story card's
         _fit_paragraph_to_box, but additionally returns a `truncated`
@@ -356,12 +338,8 @@ class PuranaConceptCardRenderer:
         size = start_size
         while size >= min_size:
             font = self._fonts.get_font(size=size, weight="Regular")
+            lines = self._wrap_text(draw, text, font, max_width)
             line_height = int(size * BODY_LINE_SPACING)
-            lines = (
-                self._wrap_text(draw, text, font, max_width) if y0 is None or zone is None
-                else wrap_block(draw, text, font, max_width, y0, line_height, zone,
-                                lambda t: self._wrap_text(draw, t, font, max_width))
-            )
             total_height = line_height * len(lines)
             if total_height <= max_height:
                 return font, lines, total_height, False
@@ -394,21 +372,17 @@ class PuranaConceptCardRenderer:
 
     def _draw_paragraph(
         self, draw: ImageDraw.ImageDraw, lines: list[str], font: "ImageFont.FreeTypeFont",
-        width: int, top: int, color: tuple[int, int, int], zone: StickerZone | None = None,
-        spacing: float = BODY_LINE_SPACING,
+        width: int, top: int, color: tuple[int, int, int],
     ) -> None:
-        line_height = int(font.size * spacing)
+        line_height = int(font.size * BODY_LINE_SPACING)
         y = top
         for line in lines:
             bbox = draw.textbbox((0, 0), line, font=font)
             line_w = bbox[2] - bbox[0]
-            cx = zone.cx(y, line_height, line_w, width) if zone else width // 2
-            draw.text((cx - line_w // 2, y - bbox[1]), line, font=font, fill=(*color, 255))
+            draw.text(((width - line_w) // 2, y - bbox[1]), line, font=font, fill=(*color, 255))
             y += line_height
 
-    def _draw_icon_row(
-        self, canvas: Image.Image, icon_paths: list[Path], width: int, top: int, zone: StickerZone | None = None,
-    ) -> None:
+    def _draw_icon_row(self, canvas: Image.Image, icon_paths: list[Path], width: int, top: int) -> None:
         icon_size = int(width * ICON_FRAC)
         icon_gap = int(width * ICON_GAP_FRAC)
 
@@ -426,15 +400,7 @@ class PuranaConceptCardRenderer:
             return
 
         total_w = sum(icon.width for icon in icons) + icon_gap * (len(icons) - 1)
-        cx = width // 2
-        if zone is not None and zone.hits(top, icon_size):
-            if total_w > zone.width:  # shrink the ICONS (not text) to fit the column right of the sticker
-                k = zone.width / total_w
-                icons = [i.resize((max(1, int(i.width * k)), max(1, int(i.height * k)))) for i in icons]
-                icon_gap = int(icon_gap * k)
-                total_w = sum(i.width for i in icons) + icon_gap * (len(icons) - 1)
-            cx = zone.centre
-        x = cx - total_w // 2
+        x = (width - total_w) // 2
         max_h = max(icon.height for icon in icons)
 
         for icon in icons:
@@ -469,12 +435,11 @@ class PuranaConceptCardRenderer:
 
     def _draw_centered_line(
         self, draw: ImageDraw.ImageDraw, text: str, font: "ImageFont.FreeTypeFont",
-        width: int, top: int, color: tuple[int, int, int], zone: StickerZone | None = None,
+        width: int, top: int, color: tuple[int, int, int],
     ) -> int:
         bbox = draw.textbbox((0, 0), text, font=font)
         line_w = bbox[2] - bbox[0]
-        cx = zone.cx(top, int(font.size * 1.15), line_w, width) if zone else width // 2
-        draw.text((cx - line_w // 2, top - bbox[1]), text, font=font, fill=(*color, 255))
+        draw.text(((width - line_w) // 2, top - bbox[1]), text, font=font, fill=(*color, 255))
         return top + int(font.size * 1.15)
 
     def _fit_font_to_width(

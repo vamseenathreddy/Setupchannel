@@ -65,7 +65,6 @@ from mahanavi.content.bhagavad_gita_slokas import GitaSloka
 from mahanavi.exceptions import ImageRenderError
 from mahanavi.images.fonts import FontManager
 from mahanavi.video.watermark import bake_watermark
-from mahanavi.images.flow import StickerZone, wrap_block
 from mahanavi.images.layout import vertical_gradient
 
 from mahanavi.images.opinion_line import OPINION_TE
@@ -249,22 +248,6 @@ class GitaSlokaCardRenderer:
             )
             opinion_h = int(opinion_font.size * 1.15)
             opinion_top = footer_bottom - opinion_h
-            zone = StickerZone(height, width - margin_x)
-            sub_line_h = int(subscribe_font.size * TEXT_LINE_SPACING)
-            # Footer is bottom-anchored; rows landing in the product-tag sticker zone wrap into the column
-            # to its right at the same font size (2026-10-11), so iterate until the position settles.
-            subscribe_lines = [card.subscribe_text]
-            for _ in range(4):
-                subscribe_top = opinion_top - int(height * 0.012) - sub_line_h * len(subscribe_lines)
-                new_lines = wrap_block(
-                    draw, card.subscribe_text, subscribe_font, content_width, subscribe_top, sub_line_h, zone,
-                    lambda t: self._wrap_text(draw, t, subscribe_font, content_width),
-                )
-                if len(new_lines) == len(subscribe_lines):
-                    subscribe_lines = new_lines
-                    break
-                subscribe_lines = new_lines
-            subscribe_h = sub_line_h * len(subscribe_lines)
             subscribe_top = opinion_top - int(height * 0.012) - subscribe_h
             icon_row_top = subscribe_top - block_gap - icon_size if card.icon_paths else subscribe_top
             source_top = icon_row_top - block_gap - source_h
@@ -273,23 +256,28 @@ class GitaSlokaCardRenderer:
                 content_top + invocation_h + block_gap + series_h + block_gap + badge_h + block_gap
             )
 
-            # Verse first, then its meaning directly under it (text moves UP, clear of the sticker zone);
-            # the meaning wraps into the narrow column where it passes the zone.
+            # Split the remaining vertical space between the Sanskrit
+            # verse (top half) and its Telugu meaning (bottom half),
+            # each auto-fit independently within its own half.
             body_box_top = header_bottom
             body_box_bottom = source_top - block_gap
             body_box_height = max(body_box_bottom - body_box_top, int(height * 0.15))
             sanskrit_box_height = int(body_box_height * 0.42)
+            meaning_box_height = body_box_height - sanskrit_box_height - block_gap
 
             sanskrit_font, sanskrit_lines, sanskrit_block_h = self._fit_block_to_box(
                 draw, strip_danda_marks(sloka.sanskrit_deva), max_width=content_width, max_height=sanskrit_box_height,
-                start_frac=SANSKRIT_START_FONT_FRAC, min_frac=SANSKRIT_MIN_FONT_FRAC, y0=body_box_top, zone=zone,
+                start_frac=SANSKRIT_START_FONT_FRAC, min_frac=SANSKRIT_MIN_FONT_FRAC,
             )
-            sanskrit_top = body_box_top
-            meaning_top = sanskrit_top + sanskrit_block_h + block_gap
-            meaning_box_height = max(body_box_bottom - meaning_top, int(height * 0.1))
             meaning_font, meaning_lines, meaning_block_h = self._fit_block_to_box(
                 draw, sloka.telugu_meaning, max_width=content_width, max_height=meaning_box_height,
-                start_frac=MEANING_START_FONT_FRAC, min_frac=MEANING_MIN_FONT_FRAC, y0=meaning_top, zone=zone,
+                start_frac=MEANING_START_FONT_FRAC, min_frac=MEANING_MIN_FONT_FRAC,
+            )
+
+            sanskrit_top = body_box_top + max((sanskrit_box_height - sanskrit_block_h) // 2, 0)
+            meaning_top = (
+                body_box_top + sanskrit_box_height + block_gap
+                + max((meaning_box_height - meaning_block_h) // 2, 0)
             )
 
             cursor_y = content_top
@@ -299,15 +287,15 @@ class GitaSlokaCardRenderer:
             cursor_y += block_gap
             self._draw_centered_line(draw, badge_text, badge_font, width, cursor_y, COLOR_TEXT_LIGHT)
 
-            self._draw_paragraph(draw, sanskrit_lines, sanskrit_font, width, sanskrit_top, COLOR_GOLD, zone)
-            self._draw_paragraph(draw, meaning_lines, meaning_font, width, meaning_top, COLOR_TEXT_LIGHT, zone)
+            self._draw_paragraph(draw, sanskrit_lines, sanskrit_font, width, sanskrit_top, COLOR_GOLD)
+            self._draw_paragraph(draw, meaning_lines, meaning_font, width, meaning_top, COLOR_TEXT_LIGHT)
 
-            self._draw_centered_line(draw, source_line, source_font, width, source_top, COLOR_TEXT_LIGHT, zone)
+            self._draw_centered_line(draw, source_line, source_font, width, source_top, COLOR_TEXT_LIGHT)
 
             if card.icon_paths:
-                self._draw_icon_row(canvas, card.icon_paths, width, icon_row_top, zone)
+                self._draw_icon_row(canvas, card.icon_paths, width, icon_row_top)
 
-            self._draw_paragraph(draw, subscribe_lines, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT, zone)
+            self._draw_paragraph(draw, subscribe_lines, subscribe_font, width, subscribe_top, COLOR_TEXT_LIGHT)
             self._draw_centered_line(draw, OPINION_TE, opinion_font, width, opinion_top, COLOR_TEXT_LIGHT)
 
             if card.previous_quiz_sloka is not None:
@@ -384,7 +372,7 @@ class GitaSlokaCardRenderer:
 
     def _fit_block_to_box(
         self, draw: ImageDraw.ImageDraw, text: str, max_width: int, max_height: int,
-        start_frac: float, min_frac: float, y0: int | None = None, zone: StickerZone | None = None,
+        start_frac: float, min_frac: float,
     ) -> tuple["ImageFont.FreeTypeFont", list[str], int]:
         """Shrinks a (possibly multi-line, \\n-separated) text block down
         to fit max_height, re-wrapping each explicit line at every size
@@ -396,45 +384,34 @@ class GitaSlokaCardRenderer:
         size = start_size
         while size >= min_size:
             font = self._fonts.get_font(size=size, weight="Regular")
+            lines: list[str] = []
+            for raw_line in text.split("\n"):
+                lines.extend(self._wrap_text(draw, raw_line, font, max_width))
             line_height = int(size * TEXT_LINE_SPACING)
-            lines = self._wrap_para(draw, text, font, max_width, y0, line_height, zone)
             total_height = line_height * len(lines)
             if total_height <= max_height or size == min_size:
                 return font, lines, total_height
             size -= 2
 
         font = self._fonts.get_font(size=min_size, weight="Regular")
-        lines = self._wrap_para(draw, text, font, max_width, y0, int(min_size * TEXT_LINE_SPACING), zone)
+        lines = []
+        for raw_line in text.split("\n"):
+            lines.extend(self._wrap_text(draw, raw_line, font, max_width))
         return font, lines, int(min_size * TEXT_LINE_SPACING) * len(lines)
-
-    def _wrap_para(
-        self, draw: ImageDraw.ImageDraw, text: str, font: "ImageFont.FreeTypeFont", max_width: int,
-        y0: int | None, line_height: int, zone: StickerZone | None,
-    ) -> list[str]:
-        if y0 is None or zone is None:
-            lines: list[str] = []
-            for raw_line in text.split("\n"):
-                lines.extend(self._wrap_text(draw, raw_line, font, max_width))
-            return lines
-        return wrap_block(draw, text, font, max_width, y0, line_height, zone,
-                          lambda t: self._wrap_text(draw, t, font, max_width))
 
     def _draw_paragraph(
         self, draw: ImageDraw.ImageDraw, lines: list[str], font: "ImageFont.FreeTypeFont",
-        width: int, top: int, color: tuple[int, int, int], zone: StickerZone | None = None,
+        width: int, top: int, color: tuple[int, int, int],
     ) -> None:
         line_height = int(font.size * TEXT_LINE_SPACING)
         y = top
         for line in lines:
             bbox = draw.textbbox((0, 0), line, font=font)
             line_w = bbox[2] - bbox[0]
-            cx = zone.cx(y, line_height, line_w, width) if zone else width // 2
-            draw.text((cx - line_w // 2, y - bbox[1]), line, font=font, fill=(*color, 255))
+            draw.text(((width - line_w) // 2, y - bbox[1]), line, font=font, fill=(*color, 255))
             y += line_height
 
-    def _draw_icon_row(
-        self, canvas: Image.Image, icon_paths: list[Path], width: int, top: int, zone: StickerZone | None = None,
-    ) -> None:
+    def _draw_icon_row(self, canvas: Image.Image, icon_paths: list[Path], width: int, top: int) -> None:
         icon_size = int(width * ICON_FRAC)
         icon_gap = int(width * ICON_GAP_FRAC)
 
@@ -452,16 +429,7 @@ class GitaSlokaCardRenderer:
             return
 
         total_w = sum(icon.width for icon in icons) + icon_gap * (len(icons) - 1)
-        cx = width // 2
-        if zone is not None and zone.hits(top, icon_size):
-            # Row would cover the product-tag sticker: shrink the ICONS (not text) to fit the column to its right.
-            if total_w > zone.width:
-                k = zone.width / total_w
-                icons = [i.resize((max(1, int(i.width * k)), max(1, int(i.height * k)))) for i in icons]
-                icon_gap = int(icon_gap * k)
-                total_w = sum(i.width for i in icons) + icon_gap * (len(icons) - 1)
-            cx = zone.centre
-        x = cx - total_w // 2
+        x = (width - total_w) // 2
         max_h = max(icon.height for icon in icons)
 
         for icon in icons:
@@ -489,12 +457,11 @@ class GitaSlokaCardRenderer:
 
     def _draw_centered_line(
         self, draw: ImageDraw.ImageDraw, text: str, font: "ImageFont.FreeTypeFont",
-        width: int, top: int, color: tuple[int, int, int], zone: StickerZone | None = None,
+        width: int, top: int, color: tuple[int, int, int],
     ) -> int:
         bbox = draw.textbbox((0, 0), text, font=font)
         line_w = bbox[2] - bbox[0]
-        cx = zone.cx(top, int(font.size * 1.15), line_w, width) if zone else width // 2
-        draw.text((cx - line_w // 2, top - bbox[1]), text, font=font, fill=(*color, 255))
+        draw.text(((width - line_w) // 2, top - bbox[1]), text, font=font, fill=(*color, 255))
         return top + int(font.size * 1.15)
 
     def _fit_font_to_width(

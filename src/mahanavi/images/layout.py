@@ -20,14 +20,6 @@ IMAGE_AREA_HEIGHT_FRAC = 0.46
 FOOTER_HEIGHT_FRAC = 0.055
 MARGIN_X_FRAC = 0.06
 
-# --- Product-tag sticker zone (owner request 2026-10-11) ---
-# YouTube Shopping puts the tagged product's sticker + "Shop" button on the lower-left of a Short, over the
-# video. Measured from a real posted Short (1080x1920 frame): x 45-350, y 940-1220. Cards keep this box free
-# of text so the sticker never covers anything. Fractions of the 1080x1920 canvas.
-PRODUCT_ZONE_X1_FRAC = 0.36    # right edge of the sticker box (x = 0 is the card's left edge)
-PRODUCT_ZONE_TOP_FRAC = 0.482  # top of the sticker box (y = 925 of 1920; measured sticker top is ~940)
-PRODUCT_ZONE_BOTTOM_FRAC = 0.64  # bottom of the sticker box incl. the "Shop" tab (y = 1229; measured ~1220)
-
 
 def vertical_gradient(width: int, height: int, top_rgb: tuple, bottom_rgb: tuple) -> Image.Image:
     """Return an RGB image with a smooth vertical gradient background."""
