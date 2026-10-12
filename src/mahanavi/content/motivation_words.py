@@ -1,0 +1,83 @@
+"""Daily "Purana motivation word" Short for Mahanavi: one short Telugu motivational word/phrase, a one-line
+reason drawn from a Purana / Itihasa story, and the source. 2 seconds on screen (loops in the Shorts feed).
+
+Rotation is stateless: bank[date.toordinal() % len(bank)], so a day never repeats until the whole bank has
+been shown, and concurrent runs can never clobber a rotation counter. These are paraphrased teachings tied to
+the named story, not verbatim quotations.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import date
+
+from mahanavi.content.alert_seo import _CHANNEL_FOOTER_EN, _CHANNEL_FOOTER_TE
+from mahanavi.content.request_shorts import RequestShort, Slide
+
+
+@dataclass(frozen=True)
+class Word:
+    word: str      # the motivation word / short phrase (big on the card)
+    reason: str    # one line, why (story)
+    source: str    # Purana / Itihasa and story
+
+
+WORDS: tuple[Word, ...] = (
+    Word("ధైర్యమే బలం", "ప్రహ్లాదుడు భయపడలేదు, నారసింహుడు రక్షించాడు", "ప్రహ్లాద చరిత్ర · భాగవతం"),
+    Word("పట్టుదల విడవకు", "చిన్నవాడైన ధ్రువుడు తపస్సుతో శిఖరం చేరాడు", "ధ్రువ చరిత్ర · విష్ణు పురాణం"),
+    Word("సత్యమే నిలుస్తుంది", "హరిశ్చంద్రుడు సత్యం కోసం సర్వం వదిలాడు", "హరిశ్చంద్ర కథ · మార్కండేయ పురాణం"),
+    Word("అహంకారం పతనం", "రావణుని అహంకారమే అతని అంతమైంది", "రామాయణం"),
+    Word("చిన్న సేవ గొప్పదే", "ఉడుత చేసిన సాయం రాముని ప్రేమను పొందింది", "రామాయణం"),
+    Word("భక్తికి లొంగును దైవం", "శబరి ఇచ్చిన పండ్లను రాముడు ప్రేమగా స్వీకరించాడు", "రామాయణం"),
+    Word("శరణాగతే రక్ష", "గజేంద్రుడు మనసారా పిలవగానే హరి వచ్చాడు", "గజేంద్ర మోక్షం · భాగవతం"),
+    Word("తల్లిదండ్రులే దైవం", "తల్లిదండ్రుల చుట్టూ తిరిగి గణపతి విజయం సాధించాడు", "గణపతి కథ · శివ పురాణం"),
+    Word("సంకల్పమే శక్తి", "పార్వతి తపస్సుతో శివుని పొందింది", "పార్వతి తపస్సు · శివ పురాణం"),
+    Word("కృషితో సాధ్యం", "భగీరథుడు ప్రయత్నంతో గంగను భువికి తెచ్చాడు", "భగీరథ ప్రయత్నం · పురాణాలు"),
+    Word("లక్ష్యంపై దృష్టి", "అర్జునుడికి పక్షి కన్ను మాత్రమే కనిపించింది", "మహాభారతం"),
+    Word("కర్మ చెయ్యి, ఫలం వదులు", "ఫలాపేక్ష లేని పని మనసుకు శాంతినిస్తుంది", "భగవద్గీత"),
+    Word("కోపం శత్రువు", "కోపం వివేకాన్ని కప్పేస్తుంది", "పురాణ బోధ"),
+    Word("దానమే ధనం", "ఇచ్చే చేయి ఎప్పుడూ నిండుగా ఉంటుంది", "పురాణ బోధ"),
+    Word("భక్తి మృత్యుంజయం", "మార్కండేయుడు శివభక్తితో మృత్యువును జయించాడు", "మార్కండేయ చరిత్ర · పురాణాలు"),
+    Word("సేవే సాధన", "హనుమంతుని నిస్వార్థ సేవ ఆయనను చిరంజీవిని చేసింది", "రామాయణం"),
+    Word("ఓర్పు ఫలిస్తుంది", "పాండవులు ఓర్పుతో కష్టకాలాన్ని గెలిచారు", "మహాభారతం"),
+    Word("మంచి చెడుపై గెలుస్తుంది", "దేవి మహిషాసురుని సంహరించింది", "దేవీ మహాత్మ్యం · మార్కండేయ పురాణం"),
+    Word("త్యాగమే గొప్పతనం", "శిబి చక్రవర్తి శరణు కోరిన పావురాన్ని కాపాడాడు", "శిబి కథ · మహాభారతం"),
+    Word("గురువే దారి చూపుతాడు", "గురు ఉపదేశంతోనే శిష్యుడు శిఖరం చేరతాడు", "పురాణ బోధ"),
+    Word("ధర్మమే రక్ష", "ధర్మాన్ని కాపాడితే ధర్మం మనల్ని కాపాడుతుంది", "పురాణ బోధ"),
+    Word("విశ్వాసమే వెలుగు", "నమ్మకం ఉన్నవాడికి చీకటిలోనూ దారి కనిపిస్తుంది", "పురాణ బోధ"),
+    Word("అహింసే పరమ ధర్మం", "ప్రాణులందరిపై దయ చూపడమే గొప్ప ధర్మం", "పురాణ బోధ"),
+    Word("కృతజ్ఞత మరువకు", "చేసిన సాయాన్ని గుర్తుంచుకునేవాడే నిజమైన భక్తుడు", "రామాయణం"),
+    Word("మాట నిలబెట్టుకో", "దశరథుడు ఇచ్చిన మాట కోసం ప్రాణం విడిచాడు", "రామాయణం"),
+    Word("శ్రద్ధే విజయం", "ఏకలవ్యుడు శ్రద్ధతో విలువిద్యలో నిపుణుడయ్యాడు", "మహాభారతం"),
+    Word("వినయమే భూషణం", "వినయం ఉన్నవారిని దేవుడు ప్రేమిస్తాడు", "పురాణ బోధ"),
+    Word("కష్టంలో కూడా నమ్ము", "సీతమ్మ కష్టంలోనూ రాముని నమ్మింది", "రామాయణం"),
+    Word("స్నేహమే శక్తి", "కృష్ణ కుచేలుల స్నేహం కాలం గడిచినా నిలిచింది", "కుచేల కథ · భాగవతం"),
+    Word("నిస్వార్థ ప్రేమ", "గోపికల ప్రేమ ఏ ఫలమూ ఆశించలేదు", "భాగవతం"),
+)
+
+CHANNEL = dict(token_file="youtube_token.json", expected="Mahanavi", watermark="@MahanaviSpirituals")
+SLIDE_SECONDS = 2.0
+
+
+def pick(d: date) -> Word:
+    return WORDS[d.toordinal() % len(WORDS)]
+
+
+def build(d: date) -> RequestShort:
+    w = pick(d)
+    label = "నేటి పురాణ ప్రేరణ"
+    title = f"{w.word} | నేటి పురాణ ప్రేరణ | Purana Motivation"
+    desc = (f"🙏 నేటి పురాణ ప్రేరణ: {w.word}\n{w.reason}\n— {w.source}\n\n"
+            "రోజూ రాత్రి 9 గంటలకు ఒక కొత్త పురాణ ప్రేరణ పదం. సబ్‌స్క్రైబ్ చేయండి.")
+    desc_en = (f"Daily Purana motivation word ({d.strftime('%d %b %Y')}): {w.word}. {w.reason}. Source: {w.source}.")
+    return RequestShort(
+        slug=f"motivation_{d.isoformat()}", handle="", comment_id="", deity_te=w.word,
+        bg_top=(10, 6, 40), bg_mid=(60, 24, 110), bg_bottom=(10, 6, 40), glow=(255, 190, 90),
+        slides=(Slide("mantra", SLIDE_SECONDS, label, w.word, w.source, w.reason),),
+        title=title, title_en=f"Purana Motivation of the Day - {d.strftime('%d %b %Y')}",
+        description_te=desc, description_en=desc_en,
+        hashtags=["#Shorts", "#Motivation", "#Puranas", "#TeluguMotivation", "#Devotional"],
+        tags=["purana motivation", "telugu motivation", "puranas", "ప్రేరణ", "పురాణ ప్రేరణ", w.word, "mahanavi spirituals", "shorts"],
+        lang="te", token_file=CHANNEL["token_file"], expected_channel=CHANNEL["expected"], watermark=CHANNEL["watermark"],
+        header=d.strftime("%d %b %Y"), tag_footer="రోజూ రాత్రి 9 గంటలకు · సబ్‌స్క్రైబ్",
+        cta_lines=(), footer_main=_CHANNEL_FOOTER_TE, footer_en=_CHANNEL_FOOTER_EN,
+    )
