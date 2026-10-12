@@ -49,6 +49,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 
@@ -255,7 +256,7 @@ class AlertCardRenderer:
             line_gap = int(height * 0.012)
             max_gap = int(height * 0.045)
 
-            def plan(font_scale: float, gap: int):
+            def plan(font_scale: float, gap: int) -> tuple[Any, Any, Any, list[tuple[list[str], list[str]]], list[str], int]:
                 """Wrap every block at its estimated y (zone-aware) for a given inter-block gap."""
                 label_font = self._fonts.get_font(size=max(int(width * LABEL_FONT_FRAC * font_scale), 18), weight="Regular")
                 value_font = self._fonts.get_font(size=max(int(width * VALUE_FONT_FRAC * font_scale), 22), weight="Bold")
