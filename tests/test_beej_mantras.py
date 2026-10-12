@@ -11,9 +11,14 @@ from mahanavi.images.request_card_renderer import SAFE_BOTTOM, SAFE_L, SAFE_R, S
 
 @pytest.mark.parametrize("d,tithi,key", [
     (date(2026, 10, 11), "Shukla Pratipada", "durga"),      # Navaratri
-    (date(2026, 10, 15), "Shukla Panchami", "lakshmi"),
-    (date(2026, 10, 18), "Shukla Saptami", "saraswati"),
-    (date(2026, 10, 20), "Shukla Dashami", "durga"),         # Vijayadashami
+    (date(2026, 10, 12), "Shukla Dwitiya", "bala"),
+    (date(2026, 10, 13), "Shukla Tritiya", "gayatri"),
+    (date(2026, 10, 14), "Shukla Chaturthi", "annapurna"),
+    (date(2026, 10, 15), "Shukla Panchami", "lalita"),
+    (date(2026, 10, 16), "Shukla Shashthi", "lakshmi"),
+    (date(2026, 10, 18), "Shukla Ashtami", "durgadevi"),
+    (date(2026, 10, 19), "Shukla Navami", "mahishasuramardini"),
+    (date(2026, 10, 20), "Shukla Dashami", "rajarajeshwari"),  # Vijayadashami
     (date(2026, 10, 10), "Krishna Amavasya", "shani"),       # Shani Amavasya (Saturday)
     (date(2026, 10, 24), "Shukla Chaturthi", "ganesha"),
     (date(2026, 10, 25), "Shukla Pratipada", "surya"),       # Sunday, no tithi rule
@@ -50,3 +55,11 @@ def test_every_day_to_year_end_builds_and_titles_fit():
             spec = bm.build(ch, d, "Shukla Saptami")
             assert len(spec.title) <= 100
         d += timedelta(days=1)
+
+
+def test_navaratri_never_repeats_a_mantra():
+    seen = []
+    for day in range(11, 21):
+        dei, _, _ = bm.pick(date(2026, 10, day), "Shukla Pratipada")
+        seen.append(dei.mantra_te)
+    assert len(seen) == len(set(seen))
