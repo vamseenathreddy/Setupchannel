@@ -117,7 +117,31 @@ def main() -> int:
         except RuntimeError as exc:
             print(f"::error::FAILED {str(exc)[:300]}")
             rc = 1
+    if not dry:
+        rc = max(rc, _verify(key, repo))
     return rc
+
+
+def _verify(key: str, repo: str) -> int:
+    """One summary annotation: for every target workflow, each matching cron-job.org job's enabled flag,
+    repo match, and first/last ping time -- so a mis-pointed or mis-scheduled job shows up immediately."""
+    jobs = _api_request("GET", "/jobs", key).get("jobs", [])
+    parts, bad = [], 0
+    for fragment, _title, hours, minutes in TARGETS:
+        want_h = hours
+        for j in jobs:
+            if fragment not in j.get("url", ""):
+                continue
+            time.sleep(0.6)
+            d = _api_request("GET", f"/jobs/{j['jobId']}", key).get("jobDetails", {})
+            sch = d.get("schedule", {})
+            ok = (d.get("enabled") and repo.lower() in d.get("url", "").lower()
+                  and sorted(sch.get("hours", [])) == sorted(want_h))
+            bad += 0 if ok else 1
+            parts.append(f"{fragment}#{j['jobId']}:{'OK' if ok else 'BAD'} en={d.get('enabled')} "
+                         f"h={sch.get('hours')} m={sch.get('minutes')}")
+    print("::notice::VERIFY " + " ; ".join(parts))
+    return 1 if bad else 0
 
 
 if __name__ == "__main__":
