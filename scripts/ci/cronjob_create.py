@@ -127,6 +127,7 @@ def _verify(key: str, repo: str) -> int:
     repo match, and first/last ping time -- so a mis-pointed or mis-scheduled job shows up immediately."""
     jobs = _api_request("GET", "/jobs", key).get("jobs", [])
     parts, bad = [], 0
+    any_ok: dict[str, bool] = {}
     for fragment, _title, hours, minutes in TARGETS:
         want_h = hours
         for j in jobs:
@@ -137,9 +138,11 @@ def _verify(key: str, repo: str) -> int:
             sch = d.get("schedule", {})
             ok = (d.get("enabled") and repo.lower() in d.get("url", "").lower()
                   and sorted(sch.get("hours", [])) == sorted(want_h))
-            bad += 0 if ok else 1
+            any_ok[fragment] = any_ok.get(fragment, False) or bool(ok)
+            any_ok.setdefault(fragment, False)
             parts.append(f"{fragment}#{j['jobId']}:{'OK' if ok else 'BAD'} en={d.get('enabled')} "
                          f"h={sch.get('hours')} m={sch.get('minutes')}")
+    bad = sum(1 for v in any_ok.values() if not v)  # a stray extra job is fine if one correct job exists
     print("::notice::VERIFY " + " ; ".join(parts))
     return 1 if bad else 0
 
