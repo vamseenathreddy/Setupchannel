@@ -226,6 +226,11 @@ class Settings(BaseSettings):
     # regardless of which account it belongs to), an optional dedicated
     # Blogger blog, and an optional playlist. All unset = silently skipped,
     # same convention as every field above.
+    jesus_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_jesus.json")
+    jesus_blogger_blog_id: str | None = Field(default=None)
+    jesus_playlist_id: str | None = Field(default=None)        # Bible Quotes playlist (morning Short)
+    jesus_quiz_playlist_id: str | None = Field(default=None)   # Bible Quiz playlist (evening Short)
+
     mantra_sangam_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_mantra_sangam.json")
     mantra_sangam_blogger_blog_id: str | None = Field(default=None)
     mantra_sangam_playlist_id: str | None = Field(default=None)

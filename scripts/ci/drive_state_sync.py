@@ -206,6 +206,9 @@ STATE_FILES = [
     "mantra_sangam_durm_state.json",
     "mantra_sangam_purana_state.json",
     "mantra_sangam_rashi_state.json",
+    "youtube_token_jesus.json",
+    "jesus_state.json",
+    "jesus_quiz_state.json",  # evening Bible Quiz Short (shares youtube_token_jesus.json); MUST be pre-created containing {}
     "beej_state_mahanavi.json",  # per-channel beej state (own concurrency group each); MUST be pre-created
     "beej_state_sangam.json",
     "beej_state_trance.json",

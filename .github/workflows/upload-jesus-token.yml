@@ -1,0 +1,54 @@
+name: Setup | Upload Jesus YouTube Token to Drive
+
+# Same idea as upload-local-token.yml but ONLY touches data/youtube_token_jesus.json (Jesus Worship Waves).
+# 1. Run `python -m mahanavi.scripts.youtube_shorts_auth_setup --token-file data/youtube_token_jesus.json` locally.
+# 2. Copy the whole contents of data/youtube_token_jesus.json into a repo secret named LOCAL_JESUS_TOKEN_JSON.
+# 3. Run this workflow, then delete the secret.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  upload-local-token:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Overwrite youtube_token_jesus.json from secret
+        env:
+          LOCAL_JESUS_TOKEN_JSON: ${{ secrets.LOCAL_JESUS_TOKEN_JSON }}
+        run: |
+          python3 -c "
+          import json, os, sys
+          content = os.environ.get('LOCAL_JESUS_TOKEN_JSON', '').strip()
+          if not content:
+              print('LOCAL_JESUS_TOKEN_JSON secret is empty -- add it first.', file=sys.stderr)
+              sys.exit(1)
+          json.loads(content)  # validate it's real JSON before writing
+          with open('data/youtube_token_jesus.json', 'w', encoding='utf-8') as f:
+              f.write(content)
+          print('Wrote data/youtube_token_jesus.json from secret.')
+          "
+
+      - name: Push state to Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py push
