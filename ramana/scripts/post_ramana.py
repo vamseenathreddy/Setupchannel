@@ -56,6 +56,19 @@ def main():
 
     rows = common.load_rows()
     special = common.special_for(date) if args.slot == "quote" else None
+    if not args.row and not args.dry_run:
+        # Duplicate guard: a test/forced post or a lost state entry must never lead to the same line
+        # being posted twice. Any row whose English line already appears in a recent upload title is
+        # treated as used (and recorded as such).
+        from mahanavi.publishers.recent_titles import is_posted, recent_titles
+
+        from src import upload as _upload
+
+        titles = recent_titles(_upload.service(get_settings().ramana_youtube_token_file), limit=200)
+        seen = [r["id"] for r in rows if r["id"] not in st["used_ids"] and is_posted(titles, r["english"].split("|")[0].removeprefix("Q:").strip()[:40])]
+        if seen:
+            print(f"Duplicate guard: already on the channel, marking used: {', '.join(seen)}")
+            st["used_ids"] = list(st["used_ids"]) + seen
     if args.row:
         row, reason = next((r for r in rows if r["id"] == args.row), None), "forced"
     else:
