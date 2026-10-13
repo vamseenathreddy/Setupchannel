@@ -21,7 +21,7 @@ on:
         default: ''
 
 concurrency:
-  group: post-beej-mantra
+  group: post-motivation-mahanavi
   cancel-in-progress: false
 
 permissions:

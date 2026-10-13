@@ -1,7 +1,7 @@
 name: Channel A | Beej Mantra Short (6 AM IST)
 
 # Daily 6 AM beej (seed) mantra Short, deity chosen by festival / tithi / weekday
-# (src/mahanavi/content/beej_mantras.py). Shares data/beej_state.json with the other two channels (one
+# (src/mahanavi/content/beej_mantras.py). Uses its own data/beej_state_mahanavi.json and concurrency group (one
 # POST_SLOT each, serialised by the shared concurrency group). cron-job.org pings every 10 min 6:00-6:50 IST.
 # Posts PUBLIC by default.
 on:
@@ -23,7 +23,7 @@ on:
         default: ''
 
 concurrency:
-  group: post-beej-mantra
+  group: post-beej-mahanavi
   cancel-in-progress: false
 
 permissions:
@@ -53,7 +53,7 @@ jobs:
       - name: Decide whether this call should post today
         id: gate
         env:
-          STATE_FILE: data/beej_state.json
+          STATE_FILE: data/beej_state_mahanavi.json
           BEEJ_CHANNEL: mahanavi
           POST_SLOT: mahanavi
           FORCE_POST: ${{ inputs.bypass_gate && 'true' || 'false' }}
@@ -73,7 +73,7 @@ jobs:
       - name: Build and upload the beej mantra Short
         if: steps.gate.outputs.post == 'true'
         env:
-          STATE_FILE: data/beej_state.json
+          STATE_FILE: data/beej_state_mahanavi.json
           POST_SLOT: mahanavi
           MAHANAVI_IMAGES_ROOT: ./Images
           MAHANAVI_ASSETS_DIR: ./assets

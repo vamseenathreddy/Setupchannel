@@ -206,6 +206,9 @@ STATE_FILES = [
     "mantra_sangam_durm_state.json",
     "mantra_sangam_purana_state.json",
     "mantra_sangam_rashi_state.json",
+    "beej_state_mahanavi.json",  # per-channel beej state (own concurrency group each); MUST be pre-created
+    "beej_state_sangam.json",
+    "beej_state_trance.json",
     "beej_state.json",  # daily 6 AM beej mantra Shorts (3 channels, one POST_SLOT each); MUST be pre-created containing {}
     "youtube_token_mantra_sangam.json",
     "mantra_sangam_state.json",
