@@ -43,7 +43,7 @@ class ChannelPipeline:
     playlist_id: str | None = None
     playlist_title: str = ""         # used (find or create) when playlist_id is empty
     playlist_description: str = ""
-    duration: float = 5.0
+    duration: float = 4.9
 
 
 def run(ch: ChannelPipeline, argv=None) -> int:

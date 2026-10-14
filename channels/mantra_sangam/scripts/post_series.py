@@ -35,7 +35,7 @@ def main():
         playlist_id=None,
         playlist_title=title,
         playlist_description=desc,
-        duration=12.0,
+        duration=4.9,
     )
     return run(pipeline)
 

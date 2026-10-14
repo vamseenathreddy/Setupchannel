@@ -63,3 +63,12 @@ def test_navaratri_never_repeats_a_mantra():
         dei, _, _ = bm.pick(date(2026, 10, day), "Shukla Pratipada")
         seen.append(dei.mantra_te)
     assert len(seen) == len(set(seen))
+
+
+def test_every_short_is_under_five_seconds():
+    """Owner rule (2026-10-14): any Short on any channel is under 5 seconds."""
+    s = get_settings()
+    for name in ("alert", "rashi_mantra", "purana", "purana_concept", "gita_sloka"):
+        assert getattr(s, f"{name}_short_duration_seconds") < 5
+    for ch in ("mahanavi", "mantra_sangam", "trance_beats"):
+        assert bm.build(ch, date(2026, 10, 14), "").total_seconds < 5

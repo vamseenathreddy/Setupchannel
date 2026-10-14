@@ -331,7 +331,7 @@ def pick_music(rng, cfg: ChannelConfig, date_key=None):
     return rng.choice(clips)
 
 
-def render(row, out_mp4, date_key, cfg: ChannelConfig, special=None, workdir="out", duration=5.0):
+def render(row, out_mp4, date_key, cfg: ChannelConfig, special=None, workdir="out", duration=4.9):
     rng = random.Random(_seed(row, date_key))
     layout_idx = rng.randrange(len(cfg.layouts))
     layout = cfg.layouts[layout_idx]

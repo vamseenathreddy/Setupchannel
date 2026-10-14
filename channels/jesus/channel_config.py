@@ -40,7 +40,7 @@ PALETTES = [  # fallback gradients (no real photos yet) -- soft heavenly blues
     ((14, 22, 40), (50, 86, 130)),
 ]
 
-SHORT_SECONDS = 5.0    # every Short is 5 seconds (owner request); BGM clips are cut to this length
+SHORT_SECONDS = 4.9    # every Short is 5 seconds (owner request); BGM clips are cut to this length
 VERSE_SIZE = 92        # English and Telugu verse use the SAME size
 APPLY_SIZE = 44
 

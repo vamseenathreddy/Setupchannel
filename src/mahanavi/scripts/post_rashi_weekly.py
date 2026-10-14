@@ -30,7 +30,7 @@ from mahanavi.video.assembler import (
     assemble_short,
 )
 
-WEEKLY_SECONDS = 5.0  # owner request 2026-10-11: the weekly Rashi table Short must be only 5 seconds
+WEEKLY_SECONDS = 4.9  # owner request 2026-10-11: the weekly Rashi table Short must be only 5 seconds
 
 
 def build_seo(date_text: str, rows: list[dict]) -> ShortSeoContent:

@@ -310,11 +310,11 @@ def render(row, out_mp4, date_key, special=None, workdir="out"):
     fc = bg_f + "[1:v]format=rgba[tx];[bg][tx]overlay=format=auto,format=yuv420p[v]"  # text is static for the full 5 s
     cmd = [
         "ffmpeg", "-y", "-v", "error",
-        "-loop", "1", "-framerate", "30", "-t", "5", "-i", str(bg_path),
-        "-loop", "1", "-framerate", "30", "-t", "5", "-i", str(tx_path),
+        "-loop", "1", "-framerate", "30", "-t", "4.9", "-i", str(bg_path),
+        "-loop", "1", "-framerate", "30", "-t", "4.9", "-i", str(tx_path),
         "-i", music,
         "-filter_complex", fc, "-map", "[v]", "-map", "2:a",
-        "-t", "5", "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-r", "30",
+        "-t", "4.9", "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-r", "30",
         "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-shortest", "-movflags", "+faststart",
         str(out_mp4),
     ]

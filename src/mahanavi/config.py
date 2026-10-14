@@ -105,7 +105,7 @@ class Settings(BaseSettings):
     # count and completion/loop rate, not raw length, so there is no
     # benefit to a longer card, only more loops needed to re-count as a
     # fresh view. Was 10.0 before this change.
-    alert_short_duration_seconds: float = Field(default=5.0, gt=0)
+    alert_short_duration_seconds: float = Field(default=4.9, gt=0)
     # Deliberately shorter than a comfortable full read of a Rashi Mantra
     # card (5-6 text blocks, ~10-14s to read once) -- short enough that
     # most viewers loop 2-3x to finish reading, which YouTube Shorts
@@ -118,7 +118,7 @@ class Settings(BaseSettings):
     # Standardized to 5 seconds along with every other series (explicit
     # request, 2026-10-03, see alert_short_duration_seconds above) -- was
     # 8.0 before this change.
-    rashi_mantra_short_duration_seconds: float = Field(default=5.0, gt=0)
+    rashi_mantra_short_duration_seconds: float = Field(default=4.9, gt=0)
 
     # Purana Story Shorts (post_purana_short.py) -- same loop-friendly,
     # no-fade design as the Rashi Mantra Shorts above. Explicitly set to
@@ -126,7 +126,7 @@ class Settings(BaseSettings):
     # without fade") -- deliberately shorter than a comfortable read of
     # the full story, so viewers loop 2-3x to finish, with the loop
     # seam kept invisible (LOOP_FRIENDLY_FADE_*_SECONDS, both 0.0).
-    purana_short_duration_seconds: float = Field(default=5.0, gt=0)
+    purana_short_duration_seconds: float = Field(default=4.9, gt=0)
 
     # Purana Concept Shorts (post_concept_short.py) -- the sixth series,
     # 11 AM-1 PM IST window, rotating through 6 non-story concepts drawn
@@ -134,7 +134,7 @@ class Settings(BaseSettings):
     # from all 18 puranas in another short between 11 am to 1 pm"). Same
     # loop-friendly, no-fade, short-duration design as every other Short
     # on this channel.
-    purana_concept_short_duration_seconds: float = Field(default=5.0, gt=0)
+    purana_concept_short_duration_seconds: float = Field(default=4.9, gt=0)
 
     # Bhagavad Gita Sloka Shorts (post_gita_sloka_short.py) -- the
     # seventh series, 3-4 PM IST window, one verse + Telugu meaning per
@@ -144,7 +144,7 @@ class Settings(BaseSettings):
     # channel. Standardized to 5 seconds along with every other series
     # (explicit request, 2026-10-03, see alert_short_duration_seconds
     # above) -- was 6.0 before this change.
-    gita_sloka_short_duration_seconds: float = Field(default=5.0, gt=0)
+    gita_sloka_short_duration_seconds: float = Field(default=4.9, gt=0)
 
     # Real Krishna-Arjuna chariot artwork (user-supplied, 2026-10-03),
     # replacing the abstract line-art chariot watermark as the Gita

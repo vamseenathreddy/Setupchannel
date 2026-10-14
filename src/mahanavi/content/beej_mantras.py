@@ -226,7 +226,7 @@ def build(channel: str, d: date, tithi: str) -> RequestShort:
         slug=f"beej_{channel}_{d.isoformat()}", handle="", comment_id="", deity_te=name,
         bg_top=bg_top, bg_mid=bg_mid, bg_bottom=bg_bottom, glow=glow,
         slides=(  # ONE card, 12 s: date + tithi on top, then the mantra, transliteration and count
-            Slide("mantra", 12.0, f"{name} {kind}", mantra, dei.translit, count),
+            Slide("mantra", 4.9, f"{name} {kind}", mantra, dei.translit, count),
         ),
         title=title, title_en=f"{dei.key.title()} {kind_en} Mantra - {d.strftime('%d %b %Y')} | Chant 108 Times",
         description_te=desc_head, description_en=desc_en, hashtags=hashtags, tags=tags,
