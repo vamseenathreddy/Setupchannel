@@ -58,7 +58,10 @@ def upload_video(yt, path, title, description, tags, localizations=None, publish
     privacy_status: "public" or "unlisted" (added 2026-10 to match this repo's --public-by-default-off
     testing convention -- see post_rashi_mantra_short.py's --public flag). Ignored when publish_at is set
     (a scheduled release is always uploaded "private" until it goes live)."""
+    from mahanavi.content import card_text
     from mahanavi.publishers import post_ledger
+    description = card_text.description(description)
+    yt._tags = list(tags or [])
     tf = getattr(yt, "_token_file", None)
     if tf:
         post_ledger.check(tf, title, description)  # raises DuplicatePost
@@ -99,5 +102,8 @@ def add_to_playlist(yt, video_id, playlist_id):
 
 
 def add_comment(yt, video_id, text):
+    from mahanavi.content import card_text
+    from mahanavi.publishers.post_ledger import channel_name
+    text = card_text.comment(text, channel_name(getattr(yt, "_token_file", "")), card_text.related_from_tags(getattr(yt, "_tags", [])))
     body = {"snippet": {"videoId": video_id, "topLevelComment": {"snippet": {"textOriginal": text}}}}
     return _retry(lambda: yt.commentThreads().insert(part="snippet", body=body).execute())["id"]

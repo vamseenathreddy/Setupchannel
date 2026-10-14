@@ -57,6 +57,9 @@ class UploadableSeoContent(Protocol):
     @property
     def hashtags(self) -> list[str]: ...
 
+    @property
+    def description(self) -> str: ...
+
     def full_caption(self) -> str: ...
 
 
@@ -89,7 +92,11 @@ class YouTubeShortsUploader:
             )
 
         from mahanavi.publishers import post_ledger
-        _title, _desc = brand_title(seo.title), seo.full_caption()
+        from mahanavi.content import card_text
+        self._hashtags = list(seo.hashtags)
+        _title = brand_title(seo.title)
+        _base = getattr(seo, "description", None)
+        _desc = (f"{card_text.description(_base)}\n\n{' '.join(seo.hashtags)}" if _base else seo.full_caption())
         try:
             post_ledger.check(self._settings.youtube_token_file, _title, _desc)
         except post_ledger.DuplicatePost as dup:
@@ -101,7 +108,7 @@ class YouTubeShortsUploader:
             body = {
                 "snippet": {
                     "title": brand_title(seo.title),
-                    "description": seo.full_caption(),
+                    "description": _desc,
                     "tags": brand_tags([tag.lstrip("#") for tag in seo.hashtags]),
                     "categoryId": self._category_id,
                 },
@@ -161,6 +168,8 @@ class YouTubeShortsUploader:
         a failed comment shouldn't fail the whole posting pipeline -- the
         video itself already uploaded successfully by the time this is
         called."""
+        from mahanavi.content import card_text
+        text = card_text.comment(text, "mahanavi", getattr(self, "_hashtags", []))
         try:
             youtube = self._build_service()
         except YouTubeUploadError as exc:
