@@ -88,6 +88,15 @@ class YouTubeShortsUploader:
                 error_message=f"Missing packages: {exc}. Run: pip install google-api-python-client",
             )
 
+        from mahanavi.publishers import post_ledger
+        _title, _desc = brand_title(seo.title), seo.full_caption()
+        try:
+            post_ledger.check(self._settings.youtube_token_file, _title, _desc)
+        except post_ledger.DuplicatePost as dup:
+            logger.warning("DUPLICATE BLOCKED, nothing uploaded: %s", dup)
+            return UploadResult(target=PublishTarget.YOUTUBE, success=False,
+                                error_message=f"DUPLICATE BLOCKED (not uploaded): {dup}")
+
         try:
             body = {
                 "snippet": {
@@ -122,6 +131,8 @@ class YouTubeShortsUploader:
             )
 
         video_id = response.get("id")
+        if video_id:
+            post_ledger.record(self._settings.youtube_token_file, _title, _desc, video_id)
         # /watch?v= (not /shorts/) since this uploader now serves both
         # genuine Shorts AND long-form Puranam videos -- a real upload
         # confirmed the old hardcoded /shorts/ URL was wrong for a

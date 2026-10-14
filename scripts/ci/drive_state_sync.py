@@ -213,6 +213,12 @@ STATE_FILES = [
     "beej_state_sangam.json",
     "beej_state_trance.json",
     "beej_state.json",  # daily 6 AM beej mantra Shorts (3 channels, one POST_SLOT each); MUST be pre-created containing {}
+    # Strict pre-upload duplicate ledgers, one per channel (mahanavi.publishers.post_ledger); MUST be pre-created ({}).
+    "posted_ledger_mahanavi.json",
+    "posted_ledger_mantra_sangam.json",
+    "posted_ledger_trance_beats.json",
+    "posted_ledger_ramana.json",
+    "posted_ledger_jesus.json",
     "youtube_token_mantra_sangam.json",
     "mantra_sangam_state.json",
     "youtube_token_trance_beats.json",
@@ -288,8 +294,19 @@ def push() -> None:
         if pulled.get(name) == _sha(local_path):
             print(f"[drive-sync] {name}: unchanged this run, not pushed")
             continue
-        media = MediaFileUpload(str(local_path), resumable=False)
         file_id = _find_file_id(drive, name)
+        if name.startswith("posted_ledger_") and file_id:
+            # Merge with what Drive holds NOW so a concurrent run's new entries are never lost.
+            remote = DATA_DIR / (name + ".remote")
+            with io.FileIO(remote, "wb") as fh:
+                dl = MediaIoBaseDownload(fh, drive.files().get_media(fileId=file_id))
+                done = False
+                while not done:
+                    _, done = dl.next_chunk()
+            from mahanavi.publishers.post_ledger import merge_files
+            local_path.write_text(json.dumps(merge_files(remote, local_path), ensure_ascii=False, indent=0), encoding="utf-8")
+            remote.unlink(missing_ok=True)
+        media = MediaFileUpload(str(local_path), resumable=False)
         if file_id:
             drive.files().update(fileId=file_id, media_body=media).execute()
         else:

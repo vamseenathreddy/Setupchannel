@@ -40,7 +40,9 @@ def service(token_file: Path):
     if credentials.expired and credentials.refresh_token:
         credentials.refresh(Request())
         Path(token_file).write_text(credentials.to_json(), encoding="utf-8")
-    return build("youtube", "v3", credentials=credentials, cache_discovery=False)
+    yt = build("youtube", "v3", credentials=credentials, cache_discovery=False)
+    yt._token_file = str(token_file)  # used by the duplicate ledger
+    return yt
 
 
 def _retry(fn, attempts=5):
@@ -59,6 +61,10 @@ def upload_video(yt, path, title, description, tags, localizations=None, publish
     privacy_status: "public" or "unlisted" (added 2026-10 to match this repo's --public-by-default-off
     testing convention -- see post_rashi_mantra_short.py's --public flag). Ignored when publish_at is set
     (a scheduled release is always uploaded "private" until it goes live)."""
+    from mahanavi.publishers import post_ledger
+    tf = getattr(yt, "_token_file", None)
+    if tf:
+        post_ledger.check(tf, title, description)  # raises DuplicatePost
     status = {"selfDeclaredMadeForKids": False, "containsSyntheticMedia": True}  # realistic AI artwork must be disclosed
     if publish_at:
         status["privacyStatus"] = "private"
@@ -81,6 +87,8 @@ def upload_video(yt, path, title, description, tags, localizations=None, publish
     response = None
     while response is None:
         _, response = _retry(req.next_chunk)
+    if tf:
+        post_ledger.record(tf, title, description, response["id"])
     return response["id"]
 
 

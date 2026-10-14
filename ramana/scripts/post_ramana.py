@@ -90,6 +90,7 @@ def main():
     if args.dry_run:
         return 0
 
+    from mahanavi.publishers.post_ledger import DuplicatePost
     from src import upload  # imported late so dry runs need no Google credentials
 
     settings = get_settings()
@@ -98,8 +99,16 @@ def main():
     # Pass --private for a draft test run.
     privacy_status = "private" if args.private and not args.public else "public"
     print(f"Uploading as {privacy_status.upper()}.")
-    video_id = upload.upload_video(yt, str(out / "short.mp4"), meta["title"], meta["description"], meta["tags"],
-                                    meta["localizations"], privacy_status=privacy_status)
+    try:
+        video_id = upload.upload_video(yt, str(out / "short.mp4"), meta["title"], meta["description"], meta["tags"],
+                                        meta["localizations"], privacy_status=privacy_status)
+    except DuplicatePost as dup:
+        # Strict: never upload an identical Short. Retire this row so the next tick picks a fresh one.
+        print(f"::warning::DUPLICATE BLOCKED, nothing uploaded: {dup}")
+        if row["id"] not in st["used_ids"]:
+            st["used_ids"].append(row["id"])
+        state_mod.save(st)
+        return 0
     print(f"UPLOADED ({privacy_status}) {video_id}")
     print(f"Watch: https://www.youtube.com/watch?v={video_id}")
     state_mod.mark_posted(st, date.isoformat(), row["id"], video_id, bool(row["special"]), now.isoformat(timespec="seconds"))

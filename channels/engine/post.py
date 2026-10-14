@@ -99,6 +99,8 @@ def run(ch: ChannelPipeline, argv=None) -> int:
     if args.dry_run:
         return 0
 
+    from mahanavi.publishers.post_ledger import DuplicatePost
+
     from . import upload
     from mahanavi.config import get_settings
     from mahanavi.publishers.blogger_publisher import post_to_blogger
@@ -113,9 +115,17 @@ def run(ch: ChannelPipeline, argv=None) -> int:
     privacy_status = "public" if args.public else "unlisted"
     if not args.public:
         print("Uploading as UNLISTED (default). Pass --public once you're happy with the result.")
-    video_id = upload.upload_video(yt, str(out / "short.mp4"), meta["title"], meta["description"], meta["tags"],
-                                    meta.get("localizations"), privacy_status=privacy_status,
-                                    language=meta.get("language"))
+    try:
+        video_id = upload.upload_video(yt, str(out / "short.mp4"), meta["title"], meta["description"], meta["tags"],
+                                        meta.get("localizations"), privacy_status=privacy_status,
+                                        language=meta.get("language"))
+    except DuplicatePost as dup:
+        # Strict: never upload an identical Short. Retire this row so the next tick picks a fresh one.
+        print(f"::warning::DUPLICATE BLOCKED, nothing uploaded: {dup}")
+        if row["id"] not in st["used_ids"]:
+            st["used_ids"].append(row["id"])
+        state_mod.save(st)
+        return 0
     print(f"UPLOADED ({privacy_status}) {video_id}")
     print(f"Watch: https://www.youtube.com/watch?v={video_id}")
     state_mod.mark_posted(st, date.isoformat(), row["id"], video_id, bool(row["special"]), now.isoformat(timespec="seconds"))
