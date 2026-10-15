@@ -228,6 +228,22 @@ STATE_FILES = [
 ]
 
 
+def _retry(fn, attempts: int = 6):
+    """Many workflows pull/push ~45 files at the same minute, so Drive sometimes answers with a transient
+    rate-limit/5xx/network error (this failed a Ramana and a Bhagavatam run on 2026-10-14/15). Back off and retry."""
+    import random
+    import time as _t
+    for i in range(attempts):
+        try:
+            return fn()
+        except Exception as exc:  # noqa: BLE001 - HttpError, SSL, socket, timeout: all worth another try
+            if i == attempts - 1:
+                raise
+            wait = min(60, 2 ** i) + random.random() * 2
+            print(f"[drive-sync] transient error ({type(exc).__name__}), retry {i + 1}/{attempts - 1} in {wait:.0f}s")
+            _t.sleep(wait)
+
+
 def _drive_client():
     key_json = os.environ["GDRIVE_SA_KEY_JSON"]
     key_path = Path("/tmp/gdrive_sa_key.json")
@@ -242,9 +258,27 @@ def _folder_id() -> str:
     return os.environ["GDRIVE_FOLDER_ID"]
 
 
+_ID_CACHE: dict[str, str] = {}
+
+
 def _find_file_id(drive, name: str) -> str | None:
+    """One folder listing per process (not one query per file): ~45 state files x ~10 simultaneous workflows
+    was enough to trip Drive's rate limit. Falls back to a per-name query if the listing misses a name."""
+    if not _ID_CACHE:
+        token = None
+        while True:
+            resp = _retry(lambda: drive.files().list(
+                q=f"'{_folder_id()}' in parents and trashed = false", fields="nextPageToken, files(id, name)",
+                pageSize=1000, pageToken=token).execute(num_retries=5))
+            for f in resp.get("files", []):
+                _ID_CACHE.setdefault(f["name"], f["id"])
+            token = resp.get("nextPageToken")
+            if not token:
+                break
+    if name in _ID_CACHE:
+        return _ID_CACHE[name]
     query = f"'{_folder_id()}' in parents and name = '{name}' and trashed = false"
-    resp = drive.files().list(q=query, fields="files(id, name)").execute()
+    resp = _retry(lambda: drive.files().list(q=query, fields="files(id, name)").execute(num_retries=5))
     files = resp.get("files", [])
     return files[0]["id"] if files else None
 
@@ -271,7 +305,7 @@ def pull() -> None:
             downloader = MediaIoBaseDownload(fh, request)
             done = False
             while not done:
-                _, done = downloader.next_chunk()
+                _, done = _retry(lambda: downloader.next_chunk(num_retries=5))
         pulled[name] = _sha(target)
         print(f"[drive-sync] restored {name} <- Drive")
     _HASHES.write_text(json.dumps(pulled), encoding="utf-8")
@@ -302,16 +336,16 @@ def push() -> None:
                 dl = MediaIoBaseDownload(fh, drive.files().get_media(fileId=file_id))
                 done = False
                 while not done:
-                    _, done = dl.next_chunk()
+                    _, done = _retry(lambda: dl.next_chunk(num_retries=5))
             from mahanavi.publishers.post_ledger import merge_files
             local_path.write_text(json.dumps(merge_files(remote, local_path), ensure_ascii=False, indent=0), encoding="utf-8")
             remote.unlink(missing_ok=True)
         media = MediaFileUpload(str(local_path), resumable=False)
         if file_id:
-            drive.files().update(fileId=file_id, media_body=media).execute()
+            _retry(lambda: drive.files().update(fileId=file_id, media_body=media).execute(num_retries=5))
         else:
             metadata = {"name": name, "parents": [_folder_id()]}
-            drive.files().create(body=metadata, media_body=media, fields="id").execute()
+            _retry(lambda: drive.files().create(body=metadata, media_body=media, fields="id").execute(num_retries=5))
         print(f"[drive-sync] pushed {name} -> Drive")
 
 
