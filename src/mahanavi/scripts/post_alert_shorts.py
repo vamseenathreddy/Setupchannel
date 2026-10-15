@@ -382,7 +382,7 @@ def _process_one(
         assemble_short(
             image_path, video_path,
             duration_seconds=settings.alert_short_duration_seconds,
-            audio_path=settings.alert_short_music_path,
+            audio_path=settings.alert_loop_music_path or settings.alert_short_music_path,
             fade_in_seconds=LOOP_FRIENDLY_FADE_IN_SECONDS,
             fade_out_seconds=LOOP_FRIENDLY_FADE_OUT_SECONDS,
         )

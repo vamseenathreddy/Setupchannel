@@ -81,6 +81,7 @@ class Settings(BaseSettings):
     # audio/mixer.py raises Channel AError rather than silently shipping
     # a silent-audio-track Short.
     alert_short_music_path: Path | None = Field(default=PROJECT_ROOT / "assets" / "music" / "alert_bgm.mp3")
+    alert_loop_music_path: Path | None = Field(default=PROJECT_ROOT / "assets" / "music" / "alert_loop.wav")
 
     # Sarvam AI Telugu voiceover (long-form Puranam videos) -- get a key
     # at sarvam.ai/try/tts-api. "meera" is Sarvam's own recommended
@@ -105,7 +106,10 @@ class Settings(BaseSettings):
     # count and completion/loop rate, not raw length, so there is no
     # benefit to a longer card, only more loops needed to re-count as a
     # fresh view. Was 10.0 before this change.
-    alert_short_duration_seconds: float = Field(default=4.9, gt=0)
+    # TRIAL 2026-10-15 (owner request): the 3 timing alerts are exactly one seamless loop of the owner's own bgm
+    # (assets/music/alert_loop.wav, cut at the track's own period so the wrap has no click and needs no fade).
+    # Video length == audio length, so the Short loops with no audible or visible seam.
+    alert_short_duration_seconds: float = Field(default=2.833333, gt=0)
     # Deliberately shorter than a comfortable full read of a Rashi Mantra
     # card (5-6 text blocks, ~10-14s to read once) -- short enough that
     # most viewers loop 2-3x to finish reading, which YouTube Shorts
