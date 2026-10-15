@@ -78,6 +78,7 @@ from mahanavi.publishers.youtube_shorts_uploader import YouTubeShortsUploader
 from mahanavi.video.assembler import assemble_short
 from mahanavi.video.watermark import GITA_POSITIONS_Y
 
+QUIZ_ENABLED = False  # owner request 2026-10-15: no Gita Quiz Shorts for now (set True to resume)
 STATE_FILE = Path("data") / "last_gita_sloka_index.txt"
 
 
@@ -198,6 +199,14 @@ def main() -> int:
         )
         mode = "verse"
 
+    if mode == "quiz" and not QUIZ_ENABLED and args.mode is None:
+        # Owner request 2026-10-15: stop the Gita Quiz Short (verses continue on their own days).
+        # The quiz turn is skipped and the rotation moves on to the next verse.
+        next_index = (target_index + 1) % len(GITA_SLOKAS)
+        _write_state("verse", next_index)
+        print(f"Gita quiz is switched off (QUIZ_ENABLED=False): nothing posted, next run posts VERSE {next_index}.")
+        return 0
+
     tz = ZoneInfo(settings.timezone)
     today = datetime.now(tz).date()
 
@@ -209,7 +218,7 @@ def main() -> int:
             # Reveal yesterday's quiz answer on every verse-day card
             # except the very first run ever (no previous quiz exists).
             previous_quiz_sloka: GitaSloka | None = None
-            if len(GITA_SLOKAS) > 1 and (had_prior_state or forced):
+            if QUIZ_ENABLED and len(GITA_SLOKAS) > 1 and (had_prior_state or forced):
                 previous_quiz_sloka = GITA_SLOKAS[(target_index - 1) % len(GITA_SLOKAS)]
 
             verse_card = GitaSlokaCard(
@@ -304,7 +313,9 @@ def main() -> int:
                 print("Note: could not post to Blogger (non-fatal).")
 
         if not forced:
-            if mode == "verse":
+            if mode == "verse" and not QUIZ_ENABLED:
+                _write_state("quiz", target_index)  # next turn is a quiz turn, which is skipped (see above)
+            elif mode == "verse":
                 _write_state("quiz", target_index)
                 print(f"State advanced: next run will QUIZ on verse {target_index} ({sloka.chapter}.{sloka.verse})")
             else:
