@@ -116,3 +116,30 @@ def test_telugu_has_no_missing_glyphs():
     for r in ROWS:
         for ch in r["telugu"].replace("|", " "):
             assert ch in quotes or ord(ch) in cmap or ch in "‌‍", (r["id"], repr(ch))
+
+
+def test_playlist_add_once_never_duplicates():
+    from src import playlists, upload
+
+    class Req:
+        def __init__(self, v): self.v = v
+        def execute(self): return self.v
+
+    class Items:
+        def __init__(self): self.rows, self.inserted = ["A"], []
+        def list(self, **kw): return Req({"items": [{"contentDetails": {"videoId": v}} for v in self.rows]})
+        def insert(self, part, body):
+            v = body["snippet"]["resourceId"]["videoId"]
+            self.inserted.append(v); self.rows.append(v)
+            return Req({"id": "x"})
+
+    class YT:
+        def __init__(self): self.i = Items()
+        def playlistItems(self): return self.i
+
+    yt = YT()
+    assert playlists.add_once(yt, "A", "PL") is False
+    assert playlists.add_once(yt, "B", "PL") is True
+    assert playlists.add_once(yt, "B", "PL") is False  # second try in the same run is also skipped
+    assert yt.i.inserted == ["B"]
+    assert len(playlists.TITLE) <= 150 and len(playlists.DESCRIPTION) <= 5000

@@ -120,12 +120,12 @@ def main():
             print(f"caption {lang} added")
         except Exception as e:  # noqa: BLE001
             print(f"::warning::caption {lang} failed: {e}")
-    if settings.ramana_playlist_id:
-        try:
-            upload.add_to_playlist(yt, video_id, settings.ramana_playlist_id)
-            print("added to playlist")
-        except Exception as e:  # noqa: BLE001
-            print(f"::warning::playlist failed: {e}")
+    try:  # every Short goes into the one SEO playlist (created on first use); never listed twice
+        from src import playlists
+        pid = settings.ramana_playlist_id or playlists.ensure_playlist(yt)
+        print("added to playlist" if playlists.add_once(yt, video_id, pid) else "already in playlist")
+    except Exception as e:  # noqa: BLE001
+        print(f"::warning::playlist failed: {e}")
     try:
         upload.add_comment(yt, video_id, meta["comment"])
         print("seed comment posted")

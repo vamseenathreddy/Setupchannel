@@ -1,0 +1,46 @@
+name: Setup | Ramana Maharshi TV Playlist (create and add all Shorts)
+
+# Creates (or finds, by exact title) the SEO playlist for Ramana Maharshi TV and adds every Short already on
+# the channel, oldest first, skipping anything already in it. Idempotent. New Shorts join it automatically
+# from post_ramana.py. The log goes to the Drive file recent_uploads_log.txt.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Create playlist and add all Ramana Shorts
+        run: |
+          set -o pipefail
+          python scripts/ci/setup_ramana_playlist.py 2>&1 | tee data/ramana_playlist_log.txt
+
+      - name: Push log to Drive
+        if: always()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/push_drive_asset.py data/ramana_playlist_log.txt recent_uploads_log.txt
