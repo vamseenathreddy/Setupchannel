@@ -28,3 +28,4 @@ requests-mock>=1.12,<2.0
 
 # --- Trending news channel ---
 googlenewsdecoder>=0.1.7
+selectolax>=0.3,<1.0  # googlenewsdecoder needs the old parser backend
