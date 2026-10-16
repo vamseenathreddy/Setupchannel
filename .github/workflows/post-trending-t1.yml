@@ -1,6 +1,6 @@
-name: Trending | Slot 1 (5 AM IST)
+name: Trending | Slot 1 (00:00 IST)
 
-# Trending news Shorts, one channel in six languages (channels/trending/). Four slots a day, every 6 hours, each at a
+# Trending news Shorts, one channel in six languages (channels/trending/). Twelve slots a day, one every 2 hours from midnight, each at a
 # random minute inside its first 40 minutes (channels/trending/scripts/ci/gate.py). cron-job.org pings this workflow
 # every 10 minutes through the window; the gate posts once, on the first ping past the day's random minute.
 # Language and niche rotate with a counter in trending_state.json. Posts PUBLIC by default.
@@ -91,4 +91,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python scripts/ci/notify_failure.py "Trending | Slot 1 (5 AM IST)"
+        run: python scripts/ci/notify_failure.py "Trending | Slot 1 (00:00 IST)"

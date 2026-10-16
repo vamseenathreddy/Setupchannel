@@ -23,7 +23,7 @@ def hashtags(lang: str, niche: str) -> list[str]:
 
 
 def title(story: Story, lang: str, niche: str) -> str:
-    tail = f" | {cfg.NICHE_EN[niche]} | {cfg.BRAND}" if lang != "en" else f" | {cfg.BRAND}"
+    tail = f" | Trending {cfg.NICHE_EN[niche]} India | {cfg.BRAND}" if lang != "en" else f" | Trending India | {cfg.BRAND}"
     head = story.headline
     if len(head) + len(tail) <= 100:
         return head + tail
@@ -53,7 +53,9 @@ def source_line(story: Story) -> str:
 
 
 def description(story: Story, lang: str, niche: str) -> str:
-    more = [story.summary, ""] if story.summary else []
+    more = [f"Ranked #{story.rank} in today's top 10 trending {cfg.NICHE_EN[niche].lower()} stories "
+            f"({cfg.LANG_EN[lang]}, India).", ""] if story.rank else []
+    more += [story.summary, ""] if story.summary else []
     if story.related:
         more += ["Also reported:"] + [f"- {h} ({p})" for h, p in story.related] + [""]
     return "\n".join([
@@ -87,7 +89,7 @@ def row_for(story: Story, lang: str, niche: str) -> dict:
     kind = "YouTube" if story.kind == "yt" else "Source"
     related = "\n".join(f"• {h}" for h, _ in story.related)
     return {"id": story.key, "category": niche, "special": "",
-            "label": ("TRENDING • " + cfg.NICHE_EN[niche].upper()) if lang == "en"
-            else f"{cfg.niche_label(lang, niche)} • {cfg.NICHE_EN[niche]}",
+            "label": (f"TRENDING #{story.rank} • " if story.rank else "TRENDING • ") + (
+                cfg.NICHE_EN[niche].upper() if lang == "en" else cfg.niche_label(lang, niche)),
             "text_primary": head, "text_summary": story.summary, "text_related": related,
             "text_secondary": f"{kind}: {story.publisher}"}

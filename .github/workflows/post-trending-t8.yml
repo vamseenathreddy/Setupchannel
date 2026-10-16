@@ -1,0 +1,94 @@
+name: Trending | Slot 8 (14:00 IST)
+
+# Trending news Shorts, one channel in six languages (channels/trending/). Twelve slots a day, one every 2 hours from midnight, each at a
+# random minute inside its first 40 minutes (channels/trending/scripts/ci/gate.py). cron-job.org pings this workflow
+# every 10 minutes through the window; the gate posts once, on the first ping past the day's random minute.
+# Language and niche rotate with a counter in trending_state.json. Posts PUBLIC by default.
+on:
+  workflow_dispatch:
+    inputs:
+      public:
+        description: "Upload as public. Uncheck for an unlisted test run."
+        required: false
+        type: boolean
+        default: true
+      bypass_gate:
+        description: "Post immediately, ignoring the window and this slot's already-posted marker (testing only)."
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: post-trending
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  post-trending:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      POST_SLOT: t8
+      STATE_FILE: data/trending_state.json
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync + gate
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Decide whether this call should post
+        id: gate
+        env:
+          FORCE_POST: ${{ inputs.bypass_gate && 'true' || 'false' }}
+        run: python -m channels.trending.scripts.ci.gate
+
+      - name: Install ffmpeg + text shaping libs
+        if: steps.gate.outputs.post == 'true'
+        run: |
+          bash scripts/ci/apt_install.sh ffmpeg libraqm0 libfribidi0 libharfbuzz0b
+
+      - name: Install full Python dependencies
+        if: steps.gate.outputs.post == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Post the trending Short
+        if: steps.gate.outputs.post == 'true'
+        env:
+          MAHANAVI_TRENDING_YOUTUBE_TOKEN_FILE: ./data/youtube_token_pulse_boosting.json
+          FORCE_POST: ${{ inputs.bypass_gate && 'true' || 'false' }}
+        run: |
+          ARGS=""
+          if [ "${{ inputs.public }}" != "false" ]; then
+            ARGS="$ARGS --public"
+          fi
+          python3 -m channels.trending.post $ARGS
+
+      - name: Push state to Drive
+        if: always() && steps.gate.outputs.post == 'true'
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py push
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/ci/notify_failure.py "Trending | Slot 8 (14:00 IST)"

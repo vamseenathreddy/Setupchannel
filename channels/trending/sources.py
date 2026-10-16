@@ -36,6 +36,7 @@ SCRIPT_RANGE = {"te": (0x0C00, 0x0C7F), "hi": (0x0900, 0x097F), "ta": (0x0B80, 0
 NEWS_TOPIC = {"breaking": "NATION", "sports": "SPORTS", "cinema": "ENTERTAINMENT", "technology": "TECHNOLOGY",
               "business": "BUSINESS", "health": "HEALTH", "viral": "NATION"}
 YT_CATEGORY = {"breaking": "25", "sports": "17", "cinema": "24", "technology": "28", "viral": None}
+TOP_N = 10
 # order of sources to try per niche
 SOURCE_ORDER = {"cinema": ("news", "yt"), "viral": ("yt", "news")}
 
@@ -49,6 +50,7 @@ class Story:
     kind: str = "news"  # "news" | "yt"
     summary: str = ""   # the publisher's own one or two line summary (meta description), when available
     related: tuple = ()  # (headline, publisher) pairs from the same story cluster
+    rank: int = 0        # position in the source's own trending order (1 = top); 0 = unknown
 
     @property
     def key(self) -> str:
@@ -74,7 +76,7 @@ def clean_title(title: str, publisher: str = "") -> str:
 def parse_rss(xml_text: str) -> list[Story]:
     root = ET.fromstring(xml_text)
     out = []
-    for item in root.findall("./channel/item"):
+    for position, item in enumerate(root.findall("./channel/item"), start=1):
         src = item.find("source")
         publisher = _strip_html(src.text) if src is not None and src.text else ""
         title = clean_title(item.findtext("title") or "", publisher)
@@ -88,7 +90,7 @@ def parse_rss(xml_text: str) -> list[Story]:
                 when = None
         if title and link:
             out.append(Story(title, publisher or "Google News", link, when, "news",
-                             related=_related(item.findtext("description") or "", title)))
+                             related=_related(item.findtext("description") or "", title), rank=position))
     return out
 
 
@@ -159,6 +161,7 @@ def youtube_stories(yt, niche: str, lang: str) -> list[Story]:
             pass
         s = Story(title, sn.get("channelTitle", "YouTube"), f"https://www.youtube.com/watch?v={v['id']}", when, "yt")
         if is_informative(s):
+            s.rank = len(out) + 1  # position among the language's trending videos
             out.append(s)
     return out
 
@@ -189,10 +192,12 @@ def article_summary(link: str, lang: str, headline: str, timeout: int = 15) -> s
         res = gnewsdecoder(link, interval=1)
         url = res.get("decoded_url") if res.get("status") else ""
         if not url:
+            print(f"::notice::no summary (link not decoded: {str(res)[:120]})")
             return ""
         page = _get(url, timeout)[:400_000]
         text = _meta_description(page)
         if not text or not matches_language(text, lang) or text.casefold().startswith(headline.casefold()[:40]):
+            print(f"::notice::no summary (page meta unusable: {text[:60]!r})")
             return ""
         return trim(text, 200)
     except Exception as exc:  # noqa: BLE001
@@ -224,8 +229,10 @@ def pick_story(niche: str, lang: str, used: set[str], yt=None, now: datetime | N
             print(f"::warning::{src} source failed for {niche}/{lang}: {type(exc).__name__}: {exc}")
     for hours in (8, 30):
         for pool in pools:
-            # short headlines read better on a 5 second card: try those first, in feed order
-            for s in sorted(pool, key=lambda x: len(x.headline) > 85):
+            # Only the source's top 10. Widest coverage first (most outlets carrying the story = most reach), then
+            # shorter headlines (they read better on a 5 second card), then the source's own order.
+            top = [x for x in pool if 0 < x.rank <= TOP_N or x.rank == 0]
+            for s in sorted(top, key=lambda x: (-len(x.related), len(x.headline) > 85, x.rank)):
                 if s.key not in used and fresh_enough(s, now, hours):
                     return s
     return None

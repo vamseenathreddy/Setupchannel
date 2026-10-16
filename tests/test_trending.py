@@ -46,17 +46,41 @@ def test_labels_cover_every_language_and_niche():
             assert len(t) <= 150 and len(d) <= 5000 and "<" not in t + d
 
 
-def test_pick_story_skips_used_and_stale_and_prefers_short():
+def test_pick_story_skips_used_and_stale_and_prefers_short():  # equal coverage and rank order, short first
     now = datetime(2026, 10, 16, 12, 0, tzinfo=timezone.utc)
     long_ = Story("A very long headline " * 6, "P", "l1", now - timedelta(hours=1))
     stale = Story("Stale but fine headline here", "P", "l2", now - timedelta(hours=40))
     used = Story("Already posted headline right here", "P", "l3", now - timedelta(hours=1))
     short = Story("Fresh short headline for today", "P", "l4", now - timedelta(hours=2))
+    long_.rank, stale.rank, used.rank, short.rank = 1, 2, 3, 4
     got = pick_story("sports", "en", {used.key}, None, now, fetch_news=lambda n, l: [long_, stale, used, short])
     assert got is short
     assert pick_story("sports", "en", {short.key, used.key, long_.key}, None, now,
                       fetch_news=lambda n, l: [stale, used, short, long_]) is None
     assert not fresh_enough(stale, now, 30) and fresh_enough(stale, now, 48)
+
+
+def test_only_top_10_and_widest_coverage_first():
+    now = datetime(2026, 10, 16, 12, 0, tzinfo=timezone.utc)
+    mk = lambda h, rank, rel=(): Story(h, "P", f"l{rank}", now - timedelta(hours=1), rank=rank, related=rel)  # noqa: E731
+    low = mk("Rank twelve headline that is out of the top ten", 12, (("a", "x"),) * 5)
+    plain = mk("Rank one headline with no other outlets", 1)
+    wide = mk("Rank four headline carried by several outlets", 4, (("a", "x"), ("b", "y")))
+    got = pick_story("sports", "en", set(), None, now, fetch_news=lambda n, l: [low, plain, wide])
+    assert got is wide  # outranks rank 1 on coverage; rank 12 is outside the top 10
+    assert pick_story("sports", "en", {plain.key, wide.key}, None, now, fetch_news=lambda n, l: [low, plain, wide]) is None
+
+
+def test_rank_shows_on_card_and_in_description():
+    s = Story("Fresh short headline for today", "Eenadu", "l", None, rank=3)
+    row = metadata.row_for(s, "en", "sports")
+    assert row["label"] == "TRENDING #3 • SPORTS"
+    assert "Ranked #3 in today's top 10 trending sports stories" in metadata.description(s, "en", "sports")
+    assert "Trending India" in metadata.title(s, "en", "sports")
+
+
+def test_twelve_two_hourly_slots_from_midnight():
+    assert [h for h, _ in cfg.SLOTS] == list(range(0, 24, 2)) and len({s for _, s in cfg.SLOTS}) == 12
 
 
 def test_failing_source_does_not_stop_the_slot():

@@ -36,24 +36,25 @@ LANG_TAG = {"te": "TeluguNews", "hi": "HindiNews", "en": "IndiaNews", "ta": "Tam
             "ml": "MalayalamNews"}
 # (subscribe line, comment-your-opinion line), drawn under the headline
 CTA = {
-    "te": ("ప్రతి 6 గంటలకు తాజా వార్తలు. సబ్‌స్క్రైబ్ చేయండి", "ఈ వార్తపై మీ అభిప్రాయం కామెంట్ చేయండి"),
-    "hi": ("हर 6 घंटे में ताज़ा खबरें। सब्सक्राइब करें", "इस खबर पर अपनी राय कमेंट करें"),
-    "en": ("Fresh trending news every 6 hours. Subscribe", "Comment your opinion on this news"),
-    "ta": ("ஒவ்வொரு 6 மணி நேரமும் புதிய செய்திகள். சப்ஸ்க்ரைப் செய்யுங்கள்", "இந்த செய்தி குறித்து உங்கள் கருத்தைப் பதிவிடுங்கள்"),
-    "kn": ("ಪ್ರತಿ 6 ಗಂಟೆಗೆ ಹೊಸ ಸುದ್ದಿ. ಸಬ್‌ಸ್ಕ್ರೈಬ್ ಮಾಡಿ", "ಈ ಸುದ್ದಿಯ ಬಗ್ಗೆ ನಿಮ್ಮ ಅಭಿಪ್ರಾಯ ಕಾಮೆಂಟ್ ಮಾಡಿ"),
-    "ml": ("ഓരോ 6 മണിക്കൂറിലും പുതിയ വാർത്തകൾ. സബ്‌സ്ക്രൈബ് ചെയ്യൂ", "ഈ വാർത്തയെക്കുറിച്ച് നിങ്ങളുടെ അഭിപ്രായം കമന്റ് ചെയ്യൂ"),
+    "te": ("ప్రతి 2 గంటలకు తాజా వార్తలు. సబ్‌స్క్రైబ్ చేయండి", "ఈ వార్తపై మీ అభిప్రాయం కామెంట్ చేయండి"),
+    "hi": ("हर 2 घंटे में ताज़ा खबरें। सब्सक्राइब करें", "इस खबर पर अपनी राय कमेंट करें"),
+    "en": ("Fresh trending news every 2 hours. Subscribe", "Comment your opinion on this news"),
+    "ta": ("ஒவ்வொரு 2 மணி நேரமும் புதிய செய்திகள். சப்ஸ்க்ரைப் செய்யுங்கள்", "இந்த செய்தி குறித்து உங்கள் கருத்தைப் பதிவிடுங்கள்"),
+    "kn": ("ಪ್ರತಿ 2 ಗಂಟೆಗೆ ಹೊಸ ಸುದ್ದಿ. ಸಬ್‌ಸ್ಕ್ರೈಬ್ ಮಾಡಿ", "ಈ ಸುದ್ದಿಯ ಬಗ್ಗೆ ನಿಮ್ಮ ಅಭಿಪ್ರಾಯ ಕಾಮೆಂಟ್ ಮಾಡಿ"),
+    "ml": ("ഓരോ 2 മണിക്കൂറിലും പുതിയ വാർത്തകൾ. സബ്‌സ്ക്രൈബ് ചെയ്യൂ", "ഈ വാർത്തയെക്കുറിച്ച് നിങ്ങളുടെ അഭിപ്രായം കമന്റ് ചെയ്യൂ"),
 }
 INTRO = {  # one line about the channel in the viewer's language
-    "te": "తాజా ట్రెండింగ్ వార్తలు, ప్రతి 6 గంటలకు ఒక షార్ట్.",
-    "hi": "ताज़ा ट्रेंडिंग खबरें, हर 6 घंटे में एक शॉर्ट।",
-    "en": "The latest trending news, one Short every 6 hours.",
-    "ta": "சமீபத்திய டிரெண்டிங் செய்திகள், ஒவ்வொரு 6 மணி நேரமும் ஒரு ஷார்ட்.",
-    "kn": "ತಾಜಾ ಟ್ರೆಂಡಿಂಗ್ ಸುದ್ದಿ, ಪ್ರತಿ 6 ಗಂಟೆಗೆ ಒಂದು ಶಾರ್ಟ್.",
-    "ml": "പുതിയ ട്രെൻഡിംഗ് വാർത്തകൾ, ഓരോ 6 മണിക്കൂറിലും ഒരു ഷോർട്ട്.",
+    "te": "తాజా ట్రెండింగ్ వార్తలు, ప్రతి 2 గంటలకు ఒక షార్ట్.",
+    "hi": "ताज़ा ट्रेंडिंग खबरें, हर 2 घंटे में एक शॉर्ट।",
+    "en": "The latest trending news, one Short every 2 hours.",
+    "ta": "சமீபத்திய டிரெண்டிங் செய்திகள், ஒவ்வொரு 2 மணி நேரமும் ஒரு ஷார்ட்.",
+    "kn": "ತಾಜಾ ಟ್ರೆಂಡಿಂಗ್ ಸುದ್ದಿ, ಪ್ರತಿ 2 ಗಂಟೆಗೆ ಒಂದು ಶಾರ್ಟ್.",
+    "ml": "പുതിയ ട്രെൻഡിംഗ് വാർത്തകൾ, ഓരോ 2 മണിക്കൂറിലും ഒരു ഷോർട്ട്.",
 }
 
-# (window start hour IST, slot id): one post per slot, a random minute inside the first 40 minutes
-SLOTS = [(5, "t1"), (11, "t2"), (17, "t3"), (23, "t4")]
+# (window start hour IST, slot id): one post every 2 hours from midnight, at a random minute inside the first
+# 40 minutes of its window. The language rotates each post, so the first six posts (00:00 to 10:00) cover all six.
+SLOTS = [(2 * i, f"t{i + 1}") for i in range(12)]
 WINDOW_MINUTES = 40
 
 WHITE, GOLD, SOFT = (255, 255, 255), (255, 210, 120), (225, 220, 225)
@@ -125,7 +126,7 @@ def plan(seq: int) -> tuple[str, str]:
 def playlist_for(lang: str, niche: str) -> tuple[str, str]:
     nat, en, ln = niche_label(lang, niche), NICHE_EN[niche], LANG_NATIVE[lang]
     title = f"{en} | {nat} ({LANG_EN[lang]}) - {BRAND}"[:150]
-    desc = (f"{INTRO[lang]}\n\nTrending {en.lower()} news in {LANG_EN[lang]} ({ln}), one Short every 6 hours. "
+    desc = (f"{INTRO[lang]}\n\nTrending {en.lower()} news in {LANG_EN[lang]} ({ln}), one Short every 2 hours. "
             f"Every Short names its source and links the original story. Subscribe to {BRAND} for fresh "
             f"{en.lower()} updates in Telugu, Hindi, English, Tamil, Kannada and Malayalam.\n\n"
             f"#{NICHE_TAG[niche]} #{LANG_TAG[lang]} #Trending #Shorts #PulseBoosting")

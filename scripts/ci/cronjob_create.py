@@ -52,11 +52,20 @@ TARGETS = [
     # PAUSED 2026-10-14 (one Jesus Short a day): ("post-jesus-bible-quote-pm.yml", "Jesus - Bible Quote Short 2 (5-6 PM)", *_every_10(17, 0, 6)),
     # PAUSED by the owner 2026-10-13: ("post-motivation-mahanavi.yml", "Mahanavi - Purana Motivation Word Short (9 PM)", *_every_10(21, 0, 6)),
     # (job 8633677 is disabled on cron-job.org; move this line back into TARGETS and re-run to resume)
-    # Trending news channel (one channel, six languages): 4 slots a day, every 6 hours; the gate picks a random minute.
-    ("post-trending-t1.yml", "Trending - Slot 1 (5-6 AM)", *_every_10(5, 0, 6)),
-    ("post-trending-t2.yml", "Trending - Slot 2 (11 AM-12)", *_every_10(11, 0, 6)),
-    ("post-trending-t3.yml", "Trending - Slot 3 (5-6 PM)", *_every_10(17, 0, 6)),
-    ("post-trending-t4.yml", "Trending - Slot 4 (11 PM-12)", *_every_10(23, 0, 6)),
+    # Trending news channel (one channel, six languages): a PUBLIC Short every 2 hours from midnight; the gate picks a
+    # random minute in the first 40 minutes of each window, pings continue through the 2 hours as a safety net.
+    ("post-trending-t1.yml", "Trending - Slot 1 (00:00)", *_every_10(0, 0, 12)),
+    ("post-trending-t2.yml", "Trending - Slot 2 (02:00)", *_every_10(2, 0, 12)),
+    ("post-trending-t3.yml", "Trending - Slot 3 (04:00)", *_every_10(4, 0, 12)),
+    ("post-trending-t4.yml", "Trending - Slot 4 (06:00)", *_every_10(6, 0, 12)),
+    ("post-trending-t5.yml", "Trending - Slot 5 (08:00)", *_every_10(8, 0, 12)),
+    ("post-trending-t6.yml", "Trending - Slot 6 (10:00)", *_every_10(10, 0, 12)),
+    ("post-trending-t7.yml", "Trending - Slot 7 (12:00)", *_every_10(12, 0, 12)),
+    ("post-trending-t8.yml", "Trending - Slot 8 (14:00)", *_every_10(14, 0, 12)),
+    ("post-trending-t9.yml", "Trending - Slot 9 (16:00)", *_every_10(16, 0, 12)),
+    ("post-trending-t10.yml", "Trending - Slot 10 (18:00)", *_every_10(18, 0, 12)),
+    ("post-trending-t11.yml", "Trending - Slot 11 (20:00)", *_every_10(20, 0, 12)),
+    ("post-trending-t12.yml", "Trending - Slot 12 (22:00)", *_every_10(22, 0, 12)),
     ("post-beej-mahanavi.yml", "Mahanavi - Beej Mantra Short (6 AM)", *_every_10(6, 0, 6)),
     ("post-beej-mantra-sangam.yml", "Mantra Sangam - Beej Mantra Short (6 AM)", *_every_10(6, 0, 6)),
     ("post-beej-trance-beats.yml", "Trance Beats - Beej Mantra Short (6 AM)", *_every_10(6, 0, 6)),
