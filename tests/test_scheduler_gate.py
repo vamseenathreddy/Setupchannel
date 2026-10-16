@@ -38,6 +38,33 @@ def isolated_data_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return tmp_path / "data"
 
 
+@pytest.fixture(autouse=True)
+def _no_random_delay(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Existing tests assume 'due as soon as the hour starts'; randomness is tested separately below."""
+    monkeypatch.setattr(scheduler_gate, "target_minute", lambda which, date: 0)
+
+
+class TestRandomTarget:
+    def test_waits_until_target_minute(self, isolated_data_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(scheduler_gate, "target_minute", lambda which, date: 27)
+        (isolated_data_dir / "last_run_date_rahu_kalam.txt").write_text("2026-10-17")
+        assert scheduler_gate._decide(_ist(2026, 10, 17, 1, 20), "") == "none"
+        assert scheduler_gate._decide(_ist(2026, 10, 17, 1, 30), "") == "shubha_ghadiyalu"
+
+    def test_earlier_hour_miss_catches_up_without_waiting(
+        self, isolated_data_dir: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(scheduler_gate, "target_minute", lambda which, date: 40)
+        assert scheduler_gate._decide(_ist(2026, 10, 17, 1, 5), "") == "rahu_kalam"
+
+    def test_minute_varies_by_day_and_stays_in_range(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.undo()
+        from datetime import date, timedelta
+
+        mins = {scheduler_gate.target_minute("rahu_kalam", date(2026, 10, 1) + timedelta(days=i)) for i in range(30)}
+        assert len(mins) > 10 and min(mins) >= 2 and max(mins) <= 49
+
+
 def _mark(data_dir: Path, which: str, date_str: str) -> None:
     (data_dir / f"last_run_date_{which}.txt").write_text(date_str)
 

@@ -86,10 +86,27 @@ def _decide(now: datetime, force_target: str) -> str:
     # Each Short owns its own hour (Rahu 12-1 AM, Shubh 1-2 AM, Durm 2-3 AM IST). A tick never
     # posts a later Short early, so extra pings inside the 12-1 AM hour cannot burn the others.
     h = now.hour  # 0, 1 or 2 inside the window
-    for w in ("rahu_kalam", "shubha_ghadiyalu", "durmuhurtham")[:h + 1]:  # earlier misses catch up first
-        if not _posted_today(w, today):
-            return w
+    for i, w in enumerate(("rahu_kalam", "shubha_ghadiyalu", "durmuhurtham")[:h + 1]):
+        if _posted_today(w, today):
+            continue
+        if i < h:
+            return w  # an earlier hour's miss catches up immediately
+        # Current hour's Short: only once today's random minute has been reached (never a fixed time).
+        return w if now.minute >= target_minute(w, now.date()) else "none"
     return "none"
+
+
+# Pings arrive every 10 minutes (:00, :10 ... :50), so the random minute stays in 2..49 and a ping
+# always exists after it inside the same hour.
+TARGET_MIN, TARGET_SPAN = 2, 48
+
+
+def target_minute(which: str, date) -> int:
+    """Day-seeded minute inside the Short's own hour: varies daily, same value for every ping that day."""
+    import random
+
+    salt = {"rahu_kalam": 11, "shubha_ghadiyalu": 23, "durmuhurtham": 37}[which]
+    return TARGET_MIN + random.Random(date.toordinal() * 100 + salt).randrange(TARGET_SPAN)
 
 
 def main() -> int:
