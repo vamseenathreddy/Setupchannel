@@ -225,6 +225,9 @@ STATE_FILES = [
     "trance_beats_state.json",
     "trance_bhagavatam_state.json",
     "trance_mantra_state.json",
+    "youtube_token_pulse_boosting.json",  # trending news channel (channels/trending/)
+    "trending_state.json",                # its posted/used_ids/seq state
+    "posted_ledger_pulse_boosting.json",  # its duplicate ledger
 ]
 
 

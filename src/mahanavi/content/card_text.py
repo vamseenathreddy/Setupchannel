@@ -116,6 +116,7 @@ CHANNEL_TAGS: dict[str, list[str]] = {
     "mantra_sangam": ["#DivineMantraSangam", "#HindiDevotional", "#SanatanaDharma", "#Shorts"],
     "trance_beats": ["#DevotionalTranceBeats", "#HindiDevotional", "#Krishna", "#Shorts"],
     "ramana": ["#RamanaMaharshiTV", "#RamanaMaharshi", "#Advaita", "#Shorts"],
+    "pulse_boosting": ["#PulseBoosting", "#TrendingNews", "#IndiaNews", "#Shorts"],
     "jesus": ["#JesusWorshipWaves", "#Jesus", "#ChristianShorts", "#Shorts"],
 }
 

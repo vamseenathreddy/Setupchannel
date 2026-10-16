@@ -1,0 +1,77 @@
+name: Trending | Render an example (no upload)
+
+# Fetches a real story with the live sources, renders the Short, and hands a small preview image and the metadata to Drive
+# (trending_example_meta.json, preview as base64). Nothing is uploaded to YouTube and no state is changed.
+on:
+  workflow_dispatch:
+    inputs:
+      lang:
+        description: "Language code: te, hi, en, ta, kn, ml"
+        required: false
+        default: "te"
+      niche:
+        description: "Niche: breaking, sports, cinema, technology, business, health, viral"
+        required: false
+        default: "sports"
+
+permissions:
+  contents: read
+
+jobs:
+  example:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      STATE_FILE: data/trending_state.json
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Install ffmpeg + text shaping libs
+        run: bash scripts/ci/apt_install.sh ffmpeg libraqm0 libfribidi0 libharfbuzz0b
+
+      - name: Install full Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Render the example
+        env:
+          MAHANAVI_TRENDING_YOUTUBE_TOKEN_FILE: ./data/youtube_token_pulse_boosting.json
+        run: |
+          set -o pipefail
+          mkdir -p out
+          python3 -m channels.trending.post --dry-run --lang "${{ inputs.lang }}" --niche "${{ inputs.niche }}" 2>&1 | tee out/run.log || true
+          python3 - <<'PY'
+          from PIL import Image
+          bg = Image.open("out/bg.png").convert("RGBA")
+          tx = Image.open("out/text.png").convert("RGBA")
+          import base64, io, json
+          buf = io.BytesIO()
+          Image.alpha_composite(bg, tx).convert("RGB").resize((360, 640)).save(buf, "JPEG", quality=72)
+          meta = json.load(open("out/meta.json", encoding="utf-8"))
+          meta["preview_jpeg_base64"] = base64.b64encode(buf.getvalue()).decode()
+          json.dump(meta, open("out/example_meta.json", "w", encoding="utf-8"), ensure_ascii=False)
+          PY
+
+      - name: Hand the example to Drive
+        if: always()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: |
+          python scripts/ci/push_drive_asset.py out/example_meta.json trending_example_meta.json

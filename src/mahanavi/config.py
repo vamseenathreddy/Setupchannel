@@ -237,6 +237,8 @@ class Settings(BaseSettings):
     mantra_sangam_blogger_blog_id: str | None = Field(default=None)
     mantra_sangam_playlist_id: str | None = Field(default=None)
 
+    # Trending news channel (Pulse Boosting): one channel, six languages (channels/trending/).
+    trending_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_pulse_boosting.json")
     trance_beats_youtube_token_file: Path = Field(default=PROJECT_ROOT / "data" / "youtube_token_trance_beats.json")
     trance_beats_blogger_blog_id: str | None = Field(default=None)
     trance_beats_playlist_id: str | None = Field(default=None)

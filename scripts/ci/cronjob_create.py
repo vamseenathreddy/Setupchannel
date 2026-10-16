@@ -52,6 +52,11 @@ TARGETS = [
     # PAUSED 2026-10-14 (one Jesus Short a day): ("post-jesus-bible-quote-pm.yml", "Jesus - Bible Quote Short 2 (5-6 PM)", *_every_10(17, 0, 6)),
     # PAUSED by the owner 2026-10-13: ("post-motivation-mahanavi.yml", "Mahanavi - Purana Motivation Word Short (9 PM)", *_every_10(21, 0, 6)),
     # (job 8633677 is disabled on cron-job.org; move this line back into TARGETS and re-run to resume)
+    # Trending news channel (one channel, six languages): 4 slots a day, every 6 hours; the gate picks a random minute.
+    ("post-trending-t1.yml", "Trending - Slot 1 (5-6 AM)", *_every_10(5, 0, 6)),
+    ("post-trending-t2.yml", "Trending - Slot 2 (11 AM-12)", *_every_10(11, 0, 6)),
+    ("post-trending-t3.yml", "Trending - Slot 3 (5-6 PM)", *_every_10(17, 0, 6)),
+    ("post-trending-t4.yml", "Trending - Slot 4 (11 PM-12)", *_every_10(23, 0, 6)),
     ("post-beej-mahanavi.yml", "Mahanavi - Beej Mantra Short (6 AM)", *_every_10(6, 0, 6)),
     ("post-beej-mantra-sangam.yml", "Mantra Sangam - Beej Mantra Short (6 AM)", *_every_10(6, 0, 6)),
     ("post-beej-trance-beats.yml", "Trance Beats - Beej Mantra Short (6 AM)", *_every_10(6, 0, 6)),
