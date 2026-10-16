@@ -106,10 +106,8 @@ class Settings(BaseSettings):
     # count and completion/loop rate, not raw length, so there is no
     # benefit to a longer card, only more loops needed to re-count as a
     # fresh view. Was 10.0 before this change.
-    # TRIAL 2026-10-15 (owner request): the 3 timing alerts are exactly one seamless loop of the owner's own bgm
-    # (assets/music/alert_loop.wav, cut at the track's own period so the wrap has no click and needs no fade).
-    # Video length == audio length, so the Short loops with no audible or visible seam.
-    alert_short_duration_seconds: float = Field(default=2.833333, gt=0)
+    # Back to 4.9s on 2026-10-16 (owner request; the 2.83s loop trial is switched off, see alert_loop_music_path).
+    alert_short_duration_seconds: float = Field(default=4.9, gt=0)
     # Deliberately shorter than a comfortable full read of a Rashi Mantra
     # card (5-6 text blocks, ~10-14s to read once) -- short enough that
     # most viewers loop 2-3x to finish reading, which YouTube Shorts
