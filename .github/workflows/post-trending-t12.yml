@@ -41,7 +41,7 @@ jobs:
           cache: "pip"
 
       - name: Install minimal deps for state sync + gate
-        run: pip install google-auth google-api-python-client
+        run: pip install google-auth google-api-python-client pillow
 
       - name: Restore persistent state from Google Drive
         env:
