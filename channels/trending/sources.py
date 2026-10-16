@@ -47,6 +47,8 @@ class Story:
     link: str
     published: datetime | None = None
     kind: str = "news"  # "news" | "yt"
+    summary: str = ""   # the publisher's own one or two line summary (meta description), when available
+    related: tuple = ()  # (headline, publisher) pairs from the same story cluster
 
     @property
     def key(self) -> str:
@@ -85,8 +87,20 @@ def parse_rss(xml_text: str) -> list[Story]:
             except (TypeError, ValueError):
                 when = None
         if title and link:
-            out.append(Story(title, publisher or "Google News", link, when, "news"))
+            out.append(Story(title, publisher or "Google News", link, when, "news",
+                             related=_related(item.findtext("description") or "", title)))
     return out
+
+
+def _related(description_html: str, main_title: str) -> tuple:
+    """Google News lists the other outlets' headlines for the same story in <description>. Real headlines only."""
+    out = []
+    for href_text, pub in re.findall(r"<a [^>]*>(.*?)</a>(?:&nbsp;|\s)*<font[^>]*>(.*?)</font>", description_html, re.S):
+        head = clean_title(href_text, _strip_html(pub))
+        pub = _strip_html(pub)
+        if head and head.casefold() != main_title.casefold() and len(head) >= 18:
+            out.append((head, pub))
+    return tuple(out)
 
 
 def is_informative(s: Story, min_chars: int = 18, min_words: int = 3) -> bool:
@@ -147,6 +161,51 @@ def youtube_stories(yt, niche: str, lang: str) -> list[Story]:
         if is_informative(s):
             out.append(s)
     return out
+
+
+def _meta_description(page_html: str) -> str:
+    for pat in (r'<meta[^>]+property=["\']og:description["\'][^>]+content=["\'](.*?)["\']',
+                r'<meta[^>]+content=["\'](.*?)["\'][^>]+property=["\']og:description["\']',
+                r'<meta[^>]+name=["\']description["\'][^>]+content=["\'](.*?)["\']'):
+        m = re.search(pat, page_html, re.S | re.I)
+        if m:
+            return re.sub(r"\s+", " ", html.unescape(m.group(1))).strip()
+    return ""
+
+
+def trim(text: str, limit: int) -> str:
+    text = text.strip()
+    if len(text) <= limit:
+        return text
+    return text[:limit].rsplit(" ", 1)[0].rstrip(",.:;-") + "…"
+
+
+def article_summary(link: str, lang: str, headline: str, timeout: int = 15) -> str:
+    """The publisher's own summary line (its meta description) for the story, or ''. Resolves Google News' encoded
+    link first. Never copies article body text. Any failure returns ''."""
+    try:
+        from googlenewsdecoder import gnewsdecoder
+
+        res = gnewsdecoder(link, interval=1)
+        url = res.get("decoded_url") if res.get("status") else ""
+        if not url:
+            return ""
+        page = _get(url, timeout)[:400_000]
+        text = _meta_description(page)
+        if not text or not matches_language(text, lang) or text.casefold().startswith(headline.casefold()[:40]):
+            return ""
+        return trim(text, 200)
+    except Exception as exc:  # noqa: BLE001
+        print(f"::notice::no summary ({type(exc).__name__}: {exc})")
+        return ""
+
+
+def enrich(story: Story, lang: str) -> Story:
+    """Add reading matter: the publisher's summary and up to two related headlines in the same language."""
+    if story.kind == "news":
+        story.summary = article_summary(story.link, lang, story.headline)
+    story.related = tuple((trim(h, 80), p) for h, p in story.related if matches_language(h, lang))[:2]
+    return story
 
 
 def pick_story(niche: str, lang: str, used: set[str], yt=None, now: datetime | None = None,

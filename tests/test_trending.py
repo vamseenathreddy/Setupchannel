@@ -93,3 +93,34 @@ def test_metadata_names_source_and_mixes_english():
 def test_long_title_is_trimmed_to_100():
     s = Story("word " * 60, "P", "l", None)
     assert len(metadata.title(s, "en", "breaking")) <= 100
+
+
+def test_related_headlines_come_from_the_story_cluster():
+    desc = ('&lt;ol&gt;&lt;li&gt;&lt;a href="x"&gt;ఇది రెండవ పత్రిక శీర్షిక ఇక్కడ&lt;/a&gt;&amp;nbsp;&amp;nbsp;'
+            '&lt;font color="#6f6f6f"&gt;Sakshi&lt;/font&gt;&lt;/li&gt;&lt;/ol&gt;')
+    rss = (f'<rss><channel><item><title>ప్రధాన శీర్షిక ఇక్కడ ఉంది - Eenadu</title><link>https://n/1</link>'
+           f'<description>{desc}</description><source url="x">Eenadu</source></item></channel></rss>')
+    got = parse_rss(rss)[0].related
+    assert got == (("ఇది రెండవ పత్రిక శీర్షిక ఇక్కడ", "Sakshi"),)
+
+
+def test_meta_description_and_trim():
+    from channels.trending.sources import _meta_description, trim
+    page = '<html><head><meta property="og:description" content="Gill &amp; co named for the tour."></head></html>'
+    assert _meta_description(page) == "Gill & co named for the tour."
+    assert _meta_description('<meta name="description" content="Plain one">') == "Plain one"
+    assert len(trim("word " * 100, 50)) <= 51 and trim("short", 50) == "short"
+
+
+def test_enrich_keeps_only_same_language_related_and_row_has_source_last():
+    from channels.trending.sources import enrich
+    s = Story("భారత్ ఘన విజయం, కోహ్లీ సెంచరీ", "Eenadu", "l", None, "news",
+              related=(("భారత్ గెలుపు, అభిమానుల సంబరాలు", "Sakshi"), ("India win the final in style", "Hindu"),
+                       ("మరో తెలుగు శీర్షిక ఇక్కడ ఉంది", "A"), ("ఇంకొక తెలుగు శీర్షిక ఇక్కడ ఉంది", "B")))
+    import channels.trending.sources as src
+    src.article_summary = lambda *a, **k: "ఇది ప్రచురణకర్త సారాంశం"
+    enrich(s, "te")
+    assert len(s.related) == 2 and all("India" not in h for h, _ in s.related)
+    row = metadata.row_for(s, "te", "sports")
+    assert row["text_summary"] and row["text_related"].startswith("• ") and row["text_secondary"] == "Source: Eenadu"
+    assert "Also reported:" in metadata.description(s, "te", "sports")

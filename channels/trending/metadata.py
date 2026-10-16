@@ -53,8 +53,12 @@ def source_line(story: Story) -> str:
 
 
 def description(story: Story, lang: str, niche: str) -> str:
+    more = [story.summary, ""] if story.summary else []
+    if story.related:
+        more += ["Also reported:"] + [f"- {h} ({p})" for h, p in story.related] + [""]
     return "\n".join([
         story.headline, "",
+        *more,
         source_line(story), "",
         cfg.INTRO[lang],
         cfg.INTRO["en"] if lang != "en" else "", "",
@@ -76,12 +80,14 @@ def bundle(story: Story, lang: str, niche: str) -> dict:
 
 
 def row_for(story: Story, lang: str, niche: str) -> dict:
-    """The card: label, headline (trimmed to a readable length), and the source."""
+    """The card: label, headline, the publisher's summary, related headlines, and a small source line."""
     head = story.headline
     if len(head) > 110:
         head = head[:110].rsplit(" ", 1)[0].rstrip(",.:;-") + "…"
-    src = f"{'YouTube' if story.kind == 'yt' else 'Source'}: {story.publisher}"
+    kind = "YouTube" if story.kind == "yt" else "Source"
+    related = "\n".join(f"• {h}" for h, _ in story.related)
     return {"id": story.key, "category": niche, "special": "",
             "label": ("TRENDING • " + cfg.NICHE_EN[niche].upper()) if lang == "en"
             else f"{cfg.niche_label(lang, niche)} • {cfg.NICHE_EN[niche]}",
-            "text_primary": head, "text_secondary": src}
+            "text_primary": head, "text_summary": story.summary, "text_related": related,
+            "text_secondary": f"{kind}: {story.publisher}"}

@@ -17,7 +17,7 @@ from channels.engine import render
 from channels.engine import state as state_mod
 from channels.trending import config as cfg
 from channels.trending import metadata, playlists
-from channels.trending.sources import Story, pick_story
+from channels.trending.sources import Story, enrich, pick_story
 
 IST = ZoneInfo("Asia/Kolkata")
 USED_CAP = 2000
@@ -75,6 +75,8 @@ def main(argv=None) -> int:
         print("No fresh unused story found in any niche for this language; skipping this slot.")
         return 0
 
+    if not args.sample:
+        story = enrich(story, lang)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     row = metadata.row_for(story, lang, niche)
