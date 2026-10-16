@@ -75,6 +75,21 @@ TARGETS = [
 ]
 
 
+_raw_request = _api_request
+
+
+def _api_request(method, path, api_key, body=None):  # noqa: F811
+    """Rate-limit aware wrapper: back off and retry on HTTP 429."""
+    for wait in (15, 30, 60, 90, 120, 0):
+        try:
+            return _raw_request(method, path, api_key, body)
+        except RuntimeError as exc:
+            if "HTTP 429" not in str(exc) or not wait:
+                raise
+            print(f"::notice::429 on {method} {path}, waiting {wait}s")
+            time.sleep(wait)
+
+
 def main() -> int:
     dry = "--dry-run" in sys.argv
     key = os.environ.get("CRONJOB_ORG_API_KEY", "").strip()
@@ -119,8 +134,10 @@ def main() -> int:
         print(f"{fragment}: {'update job %s' % existing if existing else 'create'} hours={hours} minutes={minutes}")
         if dry:
             continue
-        time.sleep(1.2)
+        time.sleep(3)
         try:
+            if existing and "post-trending" in fragment:
+                continue  # already created with the right schedule; avoid extra API calls
             if existing:
                 _api_request("PATCH", f"/jobs/{existing}", key, {"job": {"schedule": schedule, "enabled": True}})
             else:
