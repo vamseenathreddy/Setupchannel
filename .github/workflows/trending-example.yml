@@ -1,7 +1,6 @@
 name: Trending | Render an example (no upload)
 
-# Fetches a real story with the live sources, renders the Short, and hands a small preview image and the metadata to Drive
-# (trending_example_meta.json, preview as base64). Nothing is uploaded to YouTube and no state is changed.
+# Fetches a real story with the live sources, renders the Short, and hands the metadata (trending_example_meta.json) and the run log (recent_uploads_log.txt) to Drive. Nothing is uploaded to YouTube and no state is changed.
 on:
   workflow_dispatch:
     inputs:
@@ -56,17 +55,6 @@ jobs:
           set -o pipefail
           mkdir -p out
           python3 -m channels.trending.post --dry-run --lang "${{ inputs.lang }}" --niche "${{ inputs.niche }}" 2>&1 | tee out/run.log || true
-          python3 - <<'PY'
-          from PIL import Image
-          bg = Image.open("out/bg.png").convert("RGBA")
-          tx = Image.open("out/text.png").convert("RGBA")
-          import base64, io, json
-          buf = io.BytesIO()
-          Image.alpha_composite(bg, tx).convert("RGB").resize((360, 640)).save(buf, "JPEG", quality=72)
-          meta = json.load(open("out/meta.json", encoding="utf-8"))
-          meta["preview_jpeg_base64"] = base64.b64encode(buf.getvalue()).decode()
-          json.dump(meta, open("out/example_meta.json", "w", encoding="utf-8"), ensure_ascii=False)
-          PY
 
       - name: Hand the example to Drive
         if: always()
@@ -74,4 +62,5 @@ jobs:
           GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
         run: |
-          python scripts/ci/push_drive_asset.py out/example_meta.json trending_example_meta.json
+          python scripts/ci/push_drive_asset.py out/run.log recent_uploads_log.txt
+          python scripts/ci/push_drive_asset.py out/meta.json trending_example_meta.json
