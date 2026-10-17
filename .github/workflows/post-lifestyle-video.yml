@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       lang:
-        description: "te (Mahanavi Spirituals), hi (Divine Mantra Sangam) or both"
+        description: "te (Mahanavi), hi (Divine Mantra Sangam), tb (Devotional Trance Beats, Hindi) or all"
         required: true
         default: te
       privacy:
@@ -69,10 +69,9 @@ jobs:
           set -o pipefail
           EXTRA=""
           if [ "$RENDER_ONLY" = "true" ]; then EXTRA="--render-only"; fi
-          if [ "$LANGS" = "both" ]; then LIST="te hi"; else LIST="$LANGS"; fi
+          if [ "$LANGS" = "all" ] || [ "$LANGS" = "both" ]; then LIST="te hi tb"; else LIST="$LANGS"; fi
           for L in $LIST; do
-            if [ "$L" = "te" ]; then export STATE_FILE=data/lifestyle_state_te.json MAHANAVI_YOUTUBE_TOKEN_FILE=./data/youtube_token.json;
-            else export STATE_FILE=data/lifestyle_state_hi.json MAHANAVI_YOUTUBE_TOKEN_FILE=./data/youtube_token_mantra_sangam.json; fi
+            export STATE_FILE=data/lifestyle_state_$L.json
             export POST_SLOT=lifestyle_$L
             PYTHONPATH=src:. python3 -m channels.lifestyle.post --lang "$L" --privacy "$PRIVACY" $EXTRA
           done

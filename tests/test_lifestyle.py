@@ -29,9 +29,16 @@ def test_strip_has_one_top_per_point_and_chapters_are_spaced_for_youtube():
 
 def test_metadata_title_fits_and_description_has_chapters_and_disclaimer():
     th = topics.THEMES[0]
-    for lang in ("te", "hi"):
+    for key in ("te", "hi", "tb"):
+        lang = post.CHANNELS[key]["lang"]
         tops: list = []
         strip = render.build_strip(lang, th, tops)
-        meta = post.metadata(lang, th, render.chapter_seconds(tops, strip.height))
+        meta = post.metadata(key, th, render.chapter_seconds(tops, strip.height))
         assert len(meta["title"]) <= 100
         assert "0:00" in meta["description"] and topics.DISCLAIMER[lang] in meta["description"]
+
+
+def test_trance_beats_uses_its_own_backgrounds_and_music():
+    ch = post.CHANNELS["tb"]
+    assert sorted(ch["assets"].glob(ch["bg_glob"])) and sorted(ch["assets"].glob(ch["music_glob"]))
+    assert ch["assets"] != post.CHANNELS["hi"]["assets"]
