@@ -12,6 +12,7 @@ from datetime import date
 from typing import Any
 
 from mahanavi.content.alert_seo import _CHANNEL_FOOTER_EN, _CHANNEL_FOOTER_TE
+from mahanavi.content.beej_benefits import benefits_for
 from mahanavi.content.request_shorts import _HI_FOOTER, RequestShort, Slide
 
 
@@ -202,7 +203,8 @@ def build(channel: str, d: date, tithi: str) -> RequestShort:
     if len(title) > 100:
         title = title[:99] + "…"
     desc_head = (f"🙏 {date_line}\n{why}" + (f" ({tithi_line})" if tithi_line and tithi_line not in why else "") +
-                 f"\n\n{name} {kind}: {mantra}\n{dei.translit}\n\n{gain}\n{count}")
+                 f"\n\n{name} {kind}: {mantra}\n{dei.translit}\n\n{gain}\n{count}"
+                 f"\n\n" + "\n".join(f"• {b}" for b in benefits_for(dei.key, hi)))
     desc_en = (f"{dei.key.title()} {kind_en} mantra for {d.day} {d.strftime('%B %Y')}: {dei.translit}\n"
                f"Chant 108 times (at least 11) with a calm mind. Chosen by today's festival / tithi / weekday.")
     base_tags = [f"{dei.key} mantra", f"{dei.key} beej mantra", f"{dei.key} beeja mantra", "beej mantra", "beeja mantra",
@@ -226,7 +228,7 @@ def build(channel: str, d: date, tithi: str) -> RequestShort:
         slug=f"beej_{channel}_{d.isoformat()}", handle="", comment_id="", deity_te=name,
         bg_top=bg_top, bg_mid=bg_mid, bg_bottom=bg_bottom, glow=glow,
         slides=(  # ONE card, 12 s: date + tithi on top, then the mantra, transliteration and count
-            Slide("mantra", 4.9, f"{name} {kind}", mantra, dei.translit, count),
+            Slide("mantra", 4.9, f"{name} {kind}", mantra, dei.translit, count, benefits_for(dei.key, hi)),
         ),
         title=title, title_en=f"{dei.key.title()} {kind_en} Mantra - {d.strftime('%d %b %Y')} | Chant 108 Times",
         description_te=desc_head, description_en=desc_en, hashtags=hashtags, tags=tags,

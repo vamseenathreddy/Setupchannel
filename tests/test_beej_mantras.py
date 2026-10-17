@@ -72,3 +72,31 @@ def test_every_short_is_under_five_seconds():
         assert getattr(s, f"{name}_short_duration_seconds") < 5
     for ch in ("mahanavi", "mantra_sangam", "trance_beats"):
         assert bm.build(ch, date(2026, 10, 14), "").total_seconds < 5
+
+
+def test_every_deity_has_six_benefit_lines_in_both_languages():
+    from mahanavi.content.beej_benefits import BENEFITS
+    assert set(BENEFITS) == set(bm.DEITIES)
+    for key, (te, hi) in BENEFITS.items():
+        assert len(te) == 6 and len(hi) == 6, key
+        assert all(":" in line for line in te + hi), key
+
+
+@pytest.mark.parametrize("channel", ["mahanavi", "mantra_sangam"])
+def test_benefit_lines_big_inside_safe_zone_and_never_overlap(channel: str, tmp_path: Path):
+    """All 22 deities, both languages: six benefit lines drawn, in the safe zone, no two text boxes overlapping."""
+    r = RequestCardRenderer(get_settings())
+    for key in bm.DEITIES:
+        spec = bm.build(channel, date(2026, 10, 24), "Shukla Chaturthi")
+        spec = type(spec)(**{**spec.__dict__, "slides": (type(spec.slides[0])(
+            "mantra", 4.9, spec.slides[0].label, bm.DEITIES[key].mantra_hi if spec.lang == "hi" else bm.DEITIES[key].mantra_te,
+            bm.DEITIES[key].translit, spec.slides[0].meaning,
+            __import__("mahanavi.content.beej_benefits", fromlist=["x"]).benefits_for(key, spec.lang == "hi")),)})
+        rendered = r.render_all(spec, tmp_path / key)[0]
+        boxes = sorted(rendered.boxes, key=lambda b: b[1])
+        for x0, y0, x1, y1 in boxes:
+            assert x0 >= SAFE_L - 4 and x1 <= SAFE_R + 4 and y0 >= SAFE_TOP and y1 <= SAFE_BOTTOM, key
+        for a, b in zip(boxes, boxes[1:]):
+            assert b[1] >= a[3] - 6, (key, a, b)  # next line starts below the previous one (small glyph slack)
+        # benefit lines are large: 6 of them fit with a line height of at least ~40px
+        assert sum(1 for b in boxes if b[1] > 800) >= 6, key

@@ -176,6 +176,22 @@ class RequestCardRenderer:
         d.line((W // 2 + 26, y, W // 2 + 190, y), fill=GOLD, width=3)
         d.polygon([(W // 2, y - 13), (W // 2 + 13, y), (W // 2, y + 13), (W // 2 - 13, y)], fill=GOLD)
 
+    def _benefit_lines(self, layer: Image.Image, boxes: list[Box], items: list[str], top: int, bottom: int) -> None:
+        """All lines at ONE size, as big as fits between top and bottom (wrapping, never overlapping)."""
+        gap = 16
+        size = 54
+        while True:
+            font = self._font(size)
+            lh = int(size * 1.3)
+            wrapped = [self._wrap(it, font) for it in items]
+            total = sum(len(w) * lh for w in wrapped) + gap * (len(items) - 1)
+            if total <= bottom - top or size <= 30:
+                break
+            size -= 2
+        y = top
+        for i, lines in enumerate(wrapped):
+            y = self._block(layer, boxes, lines, font, lh, y, CREAM if i % 2 == 0 else SOFT) + gap
+
     def render(self, spec: RequestShort, index: int, out: Path) -> RenderedSlide:
         self.lang = spec.lang
         slide: Slide = spec.slides[index]
@@ -202,24 +218,29 @@ class RequestCardRenderer:
                     self._block(layer, boxes, lines, font, lh, 250, SOFT)
             if total > 1:
                 self._dots(layer, mantra_idx, total, 345)
-            lines, font, lh = self._fit(slide.label, 76, 52, 110)
-            self._block(layer, boxes, lines, font, lh, 420, GOLD)
+            compact = bool(slide.benefits)  # benefits card: tighter top so six big lines fit above the footer
+            lines, font, lh = self._fit(slide.label, 70 if compact else 76, 50 if compact else 52, 110)
+            self._block(layer, boxes, lines, font, lh, 330 if compact else 420, GOLD)
             # Fit the three blocks into the band between the heading and the footer tag: shrink the mantra a
             # little at a time until the whole stack fits, so a long verse never crowds the footer.
-            budget = 430
+            stack_top, stack_h = (430, 330) if compact else (STACK_TOP, STACK_H)
+            budget = 240 if compact else 430
             while True:
-                m_lines, m_font, m_lh = self._fit(slide.text, 92, 44, budget)
+                m_lines, m_font, m_lh = self._fit(slide.text, 80 if compact else 92, 44, budget)
                 t_lines, t_font, t_lh = self._fit(slide.translit, 42, 28, 190, 1.35)
                 n_lines, n_font, n_lh = self._fit(slide.meaning, 44, 30, 150)
                 heights = (len(m_lines) * m_lh, 60, len(t_lines) * t_lh, 40, len(n_lines) * n_lh)
-                if sum(heights) <= STACK_H or budget <= 200:
+                if sum(heights) <= stack_h or budget <= 200:
                     break
                 budget -= 30
-            y = STACK_TOP + max(0, (STACK_H - sum(heights)) // 2)
+            y = stack_top + max(0, (stack_h - sum(heights)) // 2)
             y = self._block(layer, boxes, m_lines, m_font, m_lh, y, CREAM)
             self._ornament(layer, y + 30)
             y = self._block(layer, boxes, t_lines, t_font, t_lh, y + 60, SOFT)
-            self._block(layer, boxes, n_lines, n_font, n_lh, y + 40, GOLD)
+            y = self._block(layer, boxes, n_lines, n_font, n_lh, y + 40, GOLD)
+            if compact:
+                self._ornament(layer, y + 30)
+                self._benefit_lines(layer, boxes, list(slide.benefits), y + 70, 1285)
             if spec.tag_footer:
                 lines, font, lh = self._fit(spec.tag_footer, 38, 24, 60)
                 self._block(layer, boxes, lines, font, lh, 1318, SOFT)

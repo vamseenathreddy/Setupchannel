@@ -27,6 +27,7 @@ class Slide:
     text: str = ""
     translit: str = ""
     meaning: str = ""
+    benefits: tuple[str, ...] = ()   # kind "mantra": "who it is for" lines, drawn big under the mantra
 
 
 @dataclass(frozen=True)
