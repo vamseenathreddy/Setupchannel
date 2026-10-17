@@ -1,0 +1,48 @@
+name: Tools | Beej Mantra Playlists
+
+# Creates (or reuses) the daily beej mantra playlist on each of the three mantra channels, removes dead or
+# duplicate entries, and adds every public beej Short exactly once. Never deletes a video.
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Make the changes. Leave off to only report what exists."
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  playlists:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+      - run: pip install google-auth google-api-python-client
+      - name: Restore state from Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+      - name: Install full Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+      - name: Set up the playlists
+        run: |
+          ARGS=""
+          if [ "${{ inputs.apply }}" != "false" ]; then ARGS="--apply"; fi
+          PYTHONPATH=src:. python scripts/ci/setup_beej_playlists.py $ARGS
+      - name: Push state to Drive (refreshed tokens)
+        if: always()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py push

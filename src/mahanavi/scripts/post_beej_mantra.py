@@ -72,6 +72,13 @@ def main(argv: list[str] | None = None) -> int:
         state = state_mod.load()
         state_mod.mark_posted(state, today.isoformat(), spec.slug, video_id, True, dt.datetime.now(IST).isoformat())
         state_mod.save(state)
+        try:  # the channel's one beej mantra playlist; a failure here must never lose the upload
+            from channels.beej import playlists as beej_playlists
+
+            added = beej_playlists.add_new_video(youtube, args.channel, video_id)
+            print(f"Playlist: {'added' if added else 'already listed'}")
+        except Exception as exc:  # noqa: BLE001
+            print(f"WARNING: could not add to the beej playlist: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 0
     except (MahanaviError, YouTubeUploadError) as exc:
         print(f"FAILED: {exc}", file=sys.stderr)
