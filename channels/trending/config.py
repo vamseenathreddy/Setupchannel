@@ -96,8 +96,8 @@ def render_cfg(lang: str, niche: str) -> ChannelConfig:
         # 2026-10-17: no "TRENDING #n" label on the Short (rank and niche live in the description); bigger text,
         # more reading matter (summary + up to four related headlines) filling the space the label and big logo used.
         blocks=[TextBlock(field="text_primary", font=main, size=104, color_key="primary", bold=True),
-                TextBlock(field="text_summary", font=main, size=68, color_key="secondary", bold=False),
-                TextBlock(field="text_related", font=main, size=62, color_key="secondary", bold=False)],
+                TextBlock(field="text_summary", font=main, size=82, color_key="secondary", bold=False),
+                TextBlock(field="text_related", font=main, size=74, color_key="secondary", bold=False)],
         corner_field="text_secondary",
         font_channel_label=main,
         telugu_font=native,
