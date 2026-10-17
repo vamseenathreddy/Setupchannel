@@ -9,6 +9,7 @@ JOBS = {  # name: (file, rect as fractions x0,y0,x1,y1 of the subject, max side)
     "cbn": ("5b583899-image.jpg", (0.05, 0.02, 0.97, 1.0)),
     "lokesh": ("caebb933-image.webp", (0.05, 0.02, 0.95, 1.0)),
     "ntr": ("8b9c2919-image.jpg", (0.52, 0.0, 1.0, 1.0)),
+    "pawan": ("244ed264-image.jpg", (0.28, 0.12, 0.99, 1.0)),
     "me": ("cc2fb980-image.jpg", (0.12, 0.12, 0.98, 1.0)),
 }
 OUT = "channels/trending/assets/people/"
@@ -36,6 +37,8 @@ def cut(name, f, r):
     n, lab, stats, _ = cv2.connectedComponentsWithStats(m)
     if n > 1:
         m = np.where(lab == 1 + np.argmax(stats[1:, 4]), 255, 0).astype(np.uint8)
+    cs, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # fill holes (eyes, buttons)
+    cv2.drawContours(m, cs, -1, 255, cv2.FILLED)
     m = cv2.GaussianBlur(m, (5, 5), 0)
     rgba = np.dstack([a[:, :, ::-1], m])
     img = Image.fromarray(rgba, "RGBA")

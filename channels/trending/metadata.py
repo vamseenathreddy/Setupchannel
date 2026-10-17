@@ -17,6 +17,9 @@ ANGLE = {  # one positive-angle line per niche, shown on the card and in the des
     "nda": "డబుల్ ఇంజిన్ సహకారంతో రాష్ట్రానికి లాభం",
     "development": "రాష్ట్ర అభివృద్ధికి, ఉపాధికి ఊతం",
     "innovations": "సాంకేతికతతో పాలనలో కొత్త ఒరవడి",
+    "join": "తెలుగుదేశంతో కలిసి అడుగేయండి",
+    "voice": "మీ నియోజకవర్గం, మీ గళం",
+    "janasena": "కూటమి బలం: జనసేన, టీడీపీ, బీజేపీ",
 }
 
 
@@ -33,6 +36,11 @@ def hashtags(lang: str, niche: str, story: Story | None = None) -> list[str]:
     """YouTube shows the first three above the title: keep those the strongest. Then the district tags for this post."""
     tags = ["#TDP", "#AndhraPradesh", "#ChandrababuNaidu", "#PulseBoosting", "#Shorts", f"#{cfg.NICHE_TAG[niche]}",
             "#NaraLokesh", "#TeluguNews", "#TeluguDesam"]
+    if niche == "janasena":
+        tags[:3] = ["#Janasena", "#PawanKalyan", "#AndhraPradesh"]
+        tags += ["#TDP"]
+    if niche == "join":
+        tags += ["#JoinTDP", "#TDPMembership"]
     if story is not None:
         for _te, en, region in regions.for_post(story.key, f"{story.headline} {story.summary}", 3):
             tags += ["#" + en.replace(" ", ""), "#" + region]
@@ -45,7 +53,7 @@ def hashtags(lang: str, niche: str, story: Story | None = None) -> list[str]:
 
 
 def title(story: Story, lang: str, niche: str) -> str:
-    tail = f" | TDP | {cfg.BRAND}"
+    tail = f" | {'Janasena' if niche == 'janasena' else 'TDP'} | {cfg.BRAND}"
     head = story.headline
     if len(head) + len(tail) <= 100:
         return head + tail
@@ -57,6 +65,8 @@ def tags(lang: str, niche: str, story: Story | None = None) -> list[str]:
     words = [cfg.BRAND, cfg.NICHE_EN[niche], cfg.niche_label(lang, niche), "TDP", "తెలుగుదేశం పార్టీ", "Telugu Desam Party",
              "Chandrababu Naidu", "చంద్రబాబు నాయుడు", "Nara Lokesh", "నారా లోకేశ్", "Andhra Pradesh", "ఆంధ్రప్రదేశ్",
              "Telugu news", "తెలుగు వార్తలు", "AP news", "AP politics", "AP assembly constituencies", "అన్ని నియోజకవర్గాలు", "shorts"]
+    if niche == "janasena":
+        words += ["Janasena", "జనసేన", "Pawan Kalyan", "పవన్ కళ్యాణ్", "Deputy CM Pawan Kalyan"]
     if story is not None:
         for te, en, region in regions.for_post(story.key, f"{story.headline} {story.summary}", 5):
             words += [en, te, f"{en} news"]

@@ -8,7 +8,8 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 PEOPLE = Path(__file__).resolve().parent / "assets/people"
 W, H = 1080, 1920
 WHO = {"chandrababu": ("cbn", "lokesh"), "lokesh": ("lokesh", "cbn"), "tdp": ("cbn", "lokesh"),
-       "nda": ("cbn", "lokesh"), "development": ("cbn", "lokesh"), "innovations": ("lokesh", "cbn")}
+       "nda": ("cbn", "lokesh"), "development": ("cbn", "lokesh"), "innovations": ("lokesh", "cbn"), "join": ("cbn", "lokesh"), "voice": ("lokesh", "cbn"),
+       "janasena": ("pawan", "lokesh")}
 
 
 def _person(name: str, height: int) -> Image.Image:

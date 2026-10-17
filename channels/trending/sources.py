@@ -38,13 +38,15 @@ NEWS_TOPIC = {"breaking": "NATION", "sports": "SPORTS", "cinema": "ENTERTAINMENT
 YT_CATEGORY = {"breaking": "25", "sports": "17", "cinema": "24", "technology": "28", "viral": None}
 TOP_N = 10
 # order of sources to try per niche
-SOURCE_ORDER = {"innovations": ("bank", "news"), "development": ("news", "bank")}
+SOURCE_ORDER = {"innovations": ("bank", "news"), "development": ("news", "bank"), "join": ("bank",), "voice": ("bank",),
+                "janasena": ("news", "bank")}
 DEFAULT_ORDER = ("news", "bank")
 
 # TDP-supportive channel (2026-10-17): Telugu political search feeds, keyword-filtered.
 POLITICAL_QUERY = {
     "chandrababu": "చంద్రబాబు నాయుడు", "lokesh": "నారా లోకేశ్", "tdp": "తెలుగుదేశం పార్టీ",
     "nda": "కూటమి ప్రభుత్వం ఆంధ్రప్రదేశ్ జనసేన బీజేపీ టీడీపీ",
+    "janasena": "జనసేన పవన్ కళ్యాణ్ ఉప ముఖ్యమంత్రి",
     "development": "ఆంధ్రప్రదేశ్ అభివృద్ధి పెట్టుబడులు", "innovations": "ఆంధ్రప్రదేశ్ ప్రభుత్వం కొత్త పథకం సాంకేతికత",
 }
 # Headlines that are about the opposition or about trouble are skipped: the channel only carries positive stories.
