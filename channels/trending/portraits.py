@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 PEOPLE = Path(__file__).resolve().parent / "assets/people"
 W, H = 1080, 1920
-WHO = {"chandrababu": ("cbn", "lokesh"), "lokesh": ("lokesh", "cbn"), "tdp": ("ntr", "cbn"),
+WHO = {"chandrababu": ("cbn", "lokesh"), "lokesh": ("lokesh", "cbn"), "tdp": ("cbn", "lokesh"),
        "nda": ("cbn", "lokesh"), "development": ("cbn", "lokesh"), "innovations": ("lokesh", "cbn")}
 
 
@@ -50,6 +50,9 @@ def make_overlay(font_path: str):
         bg = bg.convert("RGBA")
         a, b = WHO.get(row.get("category", ""), ("cbn", "lokesh"))
         big, small = _person(a, 520), _person(b, 400)
+        if row.get("category") == "tdp":  # the party's founder in the middle of the two leaders
+            ntr = _person("ntr", 330)
+            bg.alpha_composite(ntr, ((W - ntr.width) // 2, H - ntr.height + 30))
         bg.alpha_composite(big, (-10, H - big.height + 30))
         bg.alpha_composite(small, (W - small.width + 10, H - small.height + 30))
         _badge(bg, font_path)
