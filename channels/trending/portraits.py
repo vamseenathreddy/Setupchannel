@@ -32,6 +32,9 @@ def _person(name: str, height: int) -> Image.Image:
     return out
 
 
+# False = the red reporter badge top-left (live). True = the owner's face as a very light copyright watermark instead
+# (previewed 2026-10-17, awaiting approval).
+FACE_WATERMARK = False
 FACE_BOX = {"pawan": (255, 92, 595, 432), "pawan_front": (0, 0, 470, 470)}   # square around the face in the cut-out (it is a wide photo)
 
 
@@ -72,6 +75,32 @@ def _badge(bg: Image.Image, font_path: str) -> None:
     d.text((x + 134, y + 58), "తెలుగు వార్తలు", font=f2, fill=(255, 235, 150, 255))
 
 
+def _face_mark(bg: Image.Image, font_path: str) -> None:
+    """Copyright watermark: the owner's face, very light, with the channel handle. A small one top-left and one large,
+    barely visible, behind the text."""
+    face = Image.open(PEOPLE / "me_face.png").convert("RGBA")
+
+    def disc(d: int, alpha: float, feather: int = 0) -> Image.Image:
+        im = face.resize((d, d), Image.LANCZOS)
+        m = Image.new("L", (d * 2, d * 2), 0)
+        ImageDraw.Draw(m).ellipse((feather, feather, d * 2 - 1 - feather, d * 2 - 1 - feather), fill=int(255 * alpha))
+        if feather:
+            m = m.filter(ImageFilter.GaussianBlur(feather / 2))
+        out = Image.new("RGBA", (d, d), (0, 0, 0, 0))
+        out.paste(im, (0, 0), m.resize((d, d), Image.LANCZOS))
+        return out
+
+    small = disc(112, 0.60)
+    ring = Image.new("RGBA", (120, 120), (0, 0, 0, 0))
+    ImageDraw.Draw(ring).ellipse((0, 0, 119, 119), outline=(255, 255, 255, 150), width=4)
+    bg.alpha_composite(small, (40, 154))
+    bg.alpha_composite(ring, (36, 150))
+    d = ImageDraw.Draw(bg)
+    f = ImageFont.truetype(font_path, 26)
+    d.text((166, 190), "@PulseBoosting", font=f, fill=(90, 30, 0, 150))
+    bg.alpha_composite(disc(760, 0.12, feather=150), ((W - 760) // 2, 600))
+
+
 def make_overlay(font_path: str):
     def overlay(bg: Image.Image, row: dict) -> Image.Image:
         bg = bg.convert("RGBA")
@@ -88,6 +117,6 @@ def make_overlay(font_path: str):
         else:  # Janasena cards: Pawan Kalyan only, bottom-left
             pk = _person(a, 330)
             bg.alpha_composite(pk, (0, H - pk.height - 150))
-        _badge(bg, font_path)
+        (_face_mark if FACE_WATERMARK else _badge)(bg, font_path)
         return bg
     return overlay
