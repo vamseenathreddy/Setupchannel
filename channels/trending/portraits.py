@@ -9,7 +9,7 @@ PEOPLE = Path(__file__).resolve().parent / "assets/people"
 W, H = 1080, 1920
 WHO = {"chandrababu": ("cbn", "lokesh"), "lokesh": ("lokesh", "cbn"), "tdp": ("cbn", "lokesh"),
        "nda": ("cbn", "lokesh"), "development": ("cbn", "lokesh"), "innovations": ("lokesh", "cbn"), "join": ("cbn", "lokesh"), "voice": ("lokesh", "cbn"),
-       "janasena": ("pawan", "lokesh")}
+       "janasena": ("pawan", None)}  # Janasena cards: Pawan Kalyan only
 
 
 def _person(name: str, height: int) -> Image.Image:
@@ -71,11 +71,13 @@ def make_overlay(font_path: str):
     def overlay(bg: Image.Image, row: dict) -> Image.Image:
         bg = bg.convert("RGBA")
         a, b = WHO.get(row.get("category", ""), ("cbn", "lokesh"))
-        big, small = _person(a, 430), _person(b, 340)
-        ntr = _coin("ntr", 170)  # NTR as a round coin, top-right corner on every card
-        bg.alpha_composite(ntr, (W - ntr.width - 40, 150))
+        big, small = _person(a, 430), (_person(b, 340) if b else None)
+        if b:  # NTR's round coin, top-right, on the TDP cards only
+            ntr = _coin("ntr", 170)
+            bg.alpha_composite(ntr, (W - ntr.width - 40, 150))
         bg.alpha_composite(big, (-10, H - big.height - 150))
-        bg.alpha_composite(small, (W - small.width + 10, H - small.height - 150))
+        if small:
+            bg.alpha_composite(small, (W - small.width + 10, H - small.height - 150))
         _badge(bg, font_path)
         return bg
     return overlay

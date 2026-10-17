@@ -10,6 +10,12 @@ DISCLOSURE = ("ఈ ఛానెల్ తెలుగుదేశం పార�
               "This channel is run from a pro-TDP point of view. The analysis is our opinion; the facts come from the "
               "sources named above. All rights belong to the original publishers.")
 
+DISCLOSURE_JSP = ("ఈ పోస్ట్ జనసేన పార్టీ దృక్పథంతో ఉంది. ఇందులోని విశ్లేషణ మా అభిప్రాయం; వార్తలు పేర్కొన్న మూలాల నుంచి "
+                  "తీసుకున్నవి. హక్కులు ఆయా ప్రచురణకర్తలవి.\n"
+                  "This post is from a Janasena point of view. The analysis is our opinion; the facts come from the "
+                  "sources named above. All rights belong to the original publishers.")
+INTRO_JSP = "జనసేన, పవన్ కళ్యాణ్ గారి కార్యక్రమాలు, ప్రజా సమస్యలపై వార్తలు."
+
 ANGLE = {  # one positive-angle line per niche, shown on the card and in the description (opinion, labelled as such)
     "chandrababu": "దూరదృష్టితో కూడిన పాలనకు ఇది మరో ఉదాహరణ",
     "lokesh": "యువతకు అవకాశాలు పెంచే దిశగా ఒక అడుగు",
@@ -19,7 +25,7 @@ ANGLE = {  # one positive-angle line per niche, shown on the card and in the des
     "innovations": "సాంకేతికతతో పాలనలో కొత్త ఒరవడి",
     "join": "తెలుగుదేశంతో కలిసి అడుగేయండి",
     "voice": "మీ నియోజకవర్గం, మీ గళం",
-    "janasena": "కూటమి బలం: జనసేన, టీడీపీ, బీజేపీ",
+    "janasena": "ప్రజల పక్షాన జనసేన గళం",
 }
 
 
@@ -36,9 +42,9 @@ def hashtags(lang: str, niche: str, story: Story | None = None) -> list[str]:
     """YouTube shows the first three above the title: keep those the strongest. Then the district tags for this post."""
     tags = ["#TDP", "#AndhraPradesh", "#ChandrababuNaidu", "#PulseBoosting", "#Shorts", f"#{cfg.NICHE_TAG[niche]}",
             "#NaraLokesh", "#TeluguNews", "#TeluguDesam"]
-    if niche == "janasena":
-        tags[:3] = ["#Janasena", "#PawanKalyan", "#AndhraPradesh"]
-        tags += ["#TDP"]
+    if niche == "janasena":  # Janasena point of view only: no TDP tags
+        tags = ["#Janasena", "#PawanKalyan", "#AndhraPradesh", "#PulseBoosting", "#Shorts", "#TeluguNews",
+                "#JanaSenaParty", "#DeputyCM"]
     if niche == "join":
         tags += ["#JoinTDP", "#TDPMembership"]
     if story is not None:
@@ -66,7 +72,8 @@ def tags(lang: str, niche: str, story: Story | None = None) -> list[str]:
              "Chandrababu Naidu", "చంద్రబాబు నాయుడు", "Nara Lokesh", "నారా లోకేశ్", "Andhra Pradesh", "ఆంధ్రప్రదేశ్",
              "Telugu news", "తెలుగు వార్తలు", "AP news", "AP politics", "AP assembly constituencies", "అన్ని నియోజకవర్గాలు", "shorts"]
     if niche == "janasena":
-        words += ["Janasena", "జనసేన", "Pawan Kalyan", "పవన్ కళ్యాణ్", "Deputy CM Pawan Kalyan"]
+        words = [cfg.BRAND, "Janasena", "జనసేన", "Pawan Kalyan", "పవన్ కళ్యాణ్", "Deputy CM Pawan Kalyan", "Janasena Party",
+                 "Andhra Pradesh", "ఆంధ్రప్రదేశ్", "Telugu news", "తెలుగు వార్తలు", "AP news", "AP politics", "shorts"]
     if story is not None:
         for te, en, region in regions.for_post(story.key, f"{story.headline} {story.summary}", 5):
             words += [en, te, f"{en} news"]
@@ -104,11 +111,11 @@ def description(story: Story, lang: str, niche: str) -> str:
         story.headline, "",
         *more,
         source_line(story), "",
-        cfg.INTRO[lang],
-        cfg.INTRO["en"], "",
+        INTRO_JSP if niche == "janasena" else cfg.INTRO[lang],
+        "" if niche == "janasena" else cfg.INTRO["en"], "",
         *area_lines(story),
         *join_lines(), *([""] if join_lines() else []),
-        DISCLOSURE, "",
+        DISCLOSURE_JSP if niche == "janasena" else DISCLOSURE, "",
         f"{cfg.BRAND}: like, share and subscribe.", "",
         " ".join(hashtags(lang, niche, story)),
     ])
