@@ -131,7 +131,7 @@ def run(ch: ChannelPipeline, argv=None) -> int:
     state_mod.mark_posted(st, date.isoformat(), row["id"], video_id, bool(row["special"]), now.isoformat(timespec="seconds"))
     state_mod.save(st)  # marked done immediately, before the optional extras below
 
-    for lang, text in caps.items():
+    for lang, text in (caps.items() if upload.UPLOAD_CAPTIONS else ()):
         try:
             upload.add_caption(yt, video_id, lang, lang.upper(), text)
             print(f"caption {lang} added")

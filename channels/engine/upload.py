@@ -95,6 +95,11 @@ def upload_video(yt, path, title, description, tags, localizations=None, publish
     return response["id"]
 
 
+# 2026-10-17: caption uploads cost 400 quota units each (a Short's playlist add or comment costs 50) and exhausted the
+# project's 10,000 units/day. The card text is already in the title and description, so they are off everywhere.
+UPLOAD_CAPTIONS = False
+
+
 def add_caption(yt, video_id, language, name, srt_text):
     media = MediaIoBaseUpload(io.BytesIO(srt_text.encode("utf-8")), mimetype="application/octet-stream")
     body = {"snippet": {"videoId": video_id, "language": language, "name": name, "isDraft": False}}

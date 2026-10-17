@@ -90,6 +90,9 @@ def upload_video(yt, path, title, description, tags, localizations=None, publish
     return response["id"]
 
 
+UPLOAD_CAPTIONS = False  # 400 quota units each; off 2026-10-17 (see channels/engine/upload.py)
+
+
 def add_caption(yt, video_id, language, name, srt_text):
     media = MediaIoBaseUpload(io.BytesIO(srt_text.encode("utf-8")), mimetype="application/octet-stream")
     body = {"snippet": {"videoId": video_id, "language": language, "name": name, "isDraft": False}}
