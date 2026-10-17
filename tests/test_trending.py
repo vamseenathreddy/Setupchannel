@@ -159,3 +159,36 @@ def test_news_stories_drops_other_language_headlines(monkeypatch):
     monkeypatch.setattr(src, "_get", lambda *a, **k: xml)
     got = src.news_stories("breaking", "kn")
     assert [s.link for s in got] == ["a"]
+
+
+def test_playlist_add_waits_for_a_new_playlist_instead_of_failing(monkeypatch):
+    import channels.trending.playlists as pl
+    from googleapiclient.errors import HttpError
+
+    class Resp:
+        status = 404
+        reason = "Not Found"
+
+    calls = {"n": 0}
+
+    def flaky():
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise HttpError(Resp(), b"playlistNotFound")
+        return "ok"
+
+    monkeypatch.setattr(pl.time, "sleep", lambda s: None)
+    assert pl._settled(flaky) == "ok" and calls["n"] == 3
+    always = lambda: (_ for _ in ()).throw(HttpError(Resp(), b"x"))  # noqa: E731
+    assert pl._settled(always, empty={"items": []}) == {"items": []}
+
+
+def test_summary_accepts_decoder_success_key(monkeypatch):
+    import sys
+    import types
+    import channels.trending.sources as src
+    mod = types.ModuleType("googlenewsdecoder")
+    mod.gnewsdecoder = lambda link, interval=1: {"success": True, "decoded_url": "https://example.com/a"}
+    monkeypatch.setitem(sys.modules, "googlenewsdecoder", mod)
+    monkeypatch.setattr(src, "_get", lambda *a, **k: '<meta property="og:description" content="ఇది ప్రచురణకర్త సారాంశం మరియు మరిన్ని వివరాలు ఇక్కడ">')
+    assert src.article_summary("l", "te", "వేరే శీర్షిక") != ""

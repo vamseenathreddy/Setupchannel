@@ -192,7 +192,8 @@ def article_summary(link: str, lang: str, headline: str, timeout: int = 15) -> s
         from googlenewsdecoder import gnewsdecoder
 
         res = gnewsdecoder(link, interval=1)
-        url = res.get("decoded_url") if res.get("status") else ""
+        ok = res.get("status", res.get("success"))  # the decoder library reports it as "success" in newer versions
+        url = res.get("decoded_url") if ok else ""
         if not url:
             print(f"::notice::no summary (link not decoded: {str(res)[:120]})")
             return ""
