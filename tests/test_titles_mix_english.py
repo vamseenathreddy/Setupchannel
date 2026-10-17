@@ -25,3 +25,27 @@ def _title_lists():
 @pytest.mark.parametrize("f,name,title", list(_title_lists()))
 def test_title_has_english_word(f, name, title):
     assert re.search(r"[A-Za-z]{3,}", re.sub(r"\{[^}]*\}", "", title)), f"{f}:{name}: {title!r} has no English word"
+
+
+def test_dated_titles_are_unique_per_day_and_carry_date_and_tithi():
+    from datetime import date, timedelta
+
+    from mahanavi.content.alert_seo import dated_title
+
+    start = date(2026, 10, 17)
+    for kind in ("rahu_kalam", "shubha_ghadiyalu", "durmuhurtham"):
+        titles = {dated_title(kind, start + timedelta(days=i), "Shukla Saptami", (start + timedelta(days=i)).toordinal())
+                  for i in range(120)}
+        assert len(titles) == 120  # no repeat across 120 days
+        t = dated_title(kind, start, "Shukla Saptami", start.toordinal())
+        assert "అక్టోబర్" in t and "శుద్ధ సప్తమి" in t and len(t) <= 100
+
+
+def test_special_tithi_leads_the_title():
+    from datetime import date
+
+    from mahanavi.content.alert_seo import dated_title
+
+    d = date(2026, 10, 20)
+    assert dated_title("rahu_kalam", d, "Shukla Ekadashi", d.toordinal()).startswith("శుద్ధ ఏకాదశి")
+    assert dated_title("durmuhurtham", d, "Amavasya", d.toordinal()).startswith("అమావాస్య")

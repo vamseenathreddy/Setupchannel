@@ -188,6 +188,68 @@ _DURMUHURTHAM_TITLES = [
     "ఈరోజు దుర్ముహూర్తం - Plan Your Day",
 ]
 
+
+# ---- Dated titles (2026-10-17) -------------------------------------------------------------
+# The fixed pools above repeated every 20 to 35 days and were near-identical wording. Titles are now
+# built from the real date, weekday and sunrise tithi plus one proven hook phrase, so no two days
+# can ever share a title. Special tithis lead the title because people search for them by name.
+_TELUGU_MONTHS = ["", "జనవరి", "ఫిబ్రవరి", "మార్చి", "ఏప్రిల్", "మే", "జూన్", "జూలై", "ఆగస్టు",
+                  "సెప్టెంబర్", "అక్టోబర్", "నవంబర్", "డిసెంబర్"]
+_SPECIAL_TITHIS = {"Ekadashi", "Purnima", "Amavasya", "Trayodashi", "Chaturdashi"}
+
+_TITLE_FORMATS: dict[str, list[str]] = {
+    # placeholders: {d} date, {wd} weekday, {t} tithi (may be empty), {n} Telugu name of the Short
+    "rahu_kalam": [
+        "{d} {wd}{t} - రాహు కాలం | Avoid This Time",
+        "రాహు కాలం {d}{t} - Check Before You Start",
+        "{wd} {d}{t} - Rahu Kalam Today | రాహు కాలం",
+    ],
+    "shubha_ghadiyalu": [
+        "{d} {wd}{t} - శుభ ఘడియలు | Good Time Today",
+        "శుభ ముహూర్తం {d}{t} - Auspicious Time Today",
+        "{wd} {d}{t} - Abhijit/Amrit Kaal | శుభ సమయం",
+    ],
+    "durmuhurtham": [
+        "{d} {wd}{t} - దుర్ముహూర్తం | Avoid This Time",
+        "దుర్ముహూర్తం {d}{t} - Check Before You Start",
+        "{wd} {d}{t} - Durmuhurtham Today | దుర్ముహూర్తం",
+    ],
+}
+_SPECIAL_LEAD = {
+    "rahu_kalam": "{tt} {d} {wd} - రాహు కాలం | Avoid This Time",
+    "shubha_ghadiyalu": "{tt} {d} {wd} - శుభ ఘడియలు | Good Time Today",
+    "durmuhurtham": "{tt} {d} {wd} - దుర్ముహూర్తం | Avoid This Time",
+}
+
+
+def telugu_tithi(tithi: str) -> tuple[str, bool]:
+    """('శుద్ధ పంచమి', special?) from the provider's English tithi such as 'Shukla Panchami'."""
+    from mahanavi.images.telugu_text import translate_tithi
+
+    words = tithi.split()
+    if not words:
+        return "", False
+    paksha = {"Shukla": "శుద్ధ", "Sukla": "శుద్ధ", "Krishna": "బహుళ"}.get(words[0], "")
+    name = words[-1]
+    te = translate_tithi(name)
+    if name in ("Purnima", "Amavasya"):
+        return te, True
+    return (f"{paksha} {te}".strip(), name in _SPECIAL_TITHIS)
+
+
+def dated_title(kind: str, d: date, tithi: str, ordinal: int) -> str:
+    """Date + weekday + tithi title for a muhurta Short; stays well under 100 chars."""
+    te_tithi, special = telugu_tithi(tithi)
+    date_s = f"{d.day} {_TELUGU_MONTHS[d.month]}"
+    wd = _TELUGU_WEEKDAYS[d.weekday()]
+    if te_tithi and special:
+        title = _SPECIAL_LEAD[kind].format(tt=te_tithi, d=date_s, wd=wd)
+    else:
+        fmt = _TITLE_FORMATS[kind][ordinal % 3]
+        title = fmt.format(d=date_s, wd=wd, t=f", {te_tithi}" if te_tithi else "")
+    return title[:100]
+
+
 # Opening hook line, prepended to each description -- this is the part
 # that shows in the high-visibility snippet before YouTube's "...more"
 # cutoff on mobile, so it earns a real hook rather than starting cold
@@ -369,10 +431,10 @@ def _pick_rotating_pair(pool_te: list[str], pool_en: list[str], for_date_ordinal
 
 
 def build_rahu_kalam_seo(
-    rahu_kalam_range: str, for_date_ordinal: int, comment_prompt_te: str, festival: str | None = None,
+    rahu_kalam_range: str, for_date_ordinal: int, comment_prompt_te: str, festival: str | None = None, tithi: str = "",
 ) -> ShortSeoContent:
-    title = _pick_rotating(_RAHU_KALAM_TITLES, for_date_ordinal)
     d = date.fromordinal(for_date_ordinal)
+    title = dated_title("rahu_kalam", d, tithi, for_date_ordinal)
     weekday_te, weekday_en = _TELUGU_WEEKDAYS[d.weekday()], _ENGLISH_WEEKDAYS[d.weekday()]
     cta_te, cta_en = _pick_rotating_pair(_RAHU_KALAM_CTAS, _RAHU_KALAM_CTAS_EN, for_date_ordinal, offset=1)
     hook_te, hook_en = _pick_rotating_pair(_RAHU_KALAM_HOOKS_TE, _RAHU_KALAM_HOOKS_EN, for_date_ordinal, offset=2)
@@ -404,9 +466,10 @@ def build_shubha_ghadiyalu_seo(
     for_date_ordinal: int,
     comment_prompt_te: str,
     festival: str | None = None,
+    tithi: str = "",
 ) -> ShortSeoContent:
-    title = _pick_rotating(_SHUBHA_GHADIYALU_TITLES, for_date_ordinal)
     d = date.fromordinal(for_date_ordinal)
+    title = dated_title("shubha_ghadiyalu", d, tithi, for_date_ordinal)
     weekday_te, weekday_en = _TELUGU_WEEKDAYS[d.weekday()], _ENGLISH_WEEKDAYS[d.weekday()]
     lines = ", ".join(f"{label} {value}" for label, value in good_muhurtams)
     cta_te, cta_en = _pick_rotating_pair(_SHUBHA_GHADIYALU_CTAS, _SHUBHA_GHADIYALU_CTAS_EN, for_date_ordinal, offset=1)
@@ -435,7 +498,7 @@ def build_shubha_ghadiyalu_seo(
 
 
 def build_durmuhurtham_seo(
-    durmuhurtham_range: str, for_date_ordinal: int, comment_prompt_te: str, festival: str | None = None,
+    durmuhurtham_range: str, for_date_ordinal: int, comment_prompt_te: str, festival: str | None = None, tithi: str = "",
 ) -> ShortSeoContent:
     """SEO content for the Durmuhurtham alert Short -- same structure as
     build_rahu_kalam_seo (another "avoid this time" inauspicious-period
@@ -444,8 +507,8 @@ def build_durmuhurtham_seo(
     channel's two best performers, while this pipeline had only ever
     shown Durmuhurtham as small secondary text on the Rahu Kalam card,
     never as its own titled Short."""
-    title = _pick_rotating(_DURMUHURTHAM_TITLES, for_date_ordinal)
     d = date.fromordinal(for_date_ordinal)
+    title = dated_title("durmuhurtham", d, tithi, for_date_ordinal)
     weekday_te, weekday_en = _TELUGU_WEEKDAYS[d.weekday()], _ENGLISH_WEEKDAYS[d.weekday()]
     cta_te, cta_en = _pick_rotating_pair(_DURMUHURTHAM_CTAS, _DURMUHURTHAM_CTAS_EN, for_date_ordinal, offset=1)
     hook_te, hook_en = _pick_rotating_pair(_DURMUHURTHAM_HOOKS_TE, _DURMUHURTHAM_HOOKS_EN, for_date_ordinal, offset=2)

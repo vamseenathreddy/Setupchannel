@@ -498,7 +498,7 @@ def main() -> int:
         # the description echoes it instead of posing a second, different
         # ask (see alert_seo.build_rahu_kalam_seo's docstring note).
         rahu_seo = build_rahu_kalam_seo(
-            panchang.rahu_kalam, for_date_ordinal=for_date.toordinal(), comment_prompt_te=rahu_comment_prompt,
+            panchang.rahu_kalam, for_date_ordinal=for_date.toordinal(), comment_prompt_te=rahu_comment_prompt, tithi=panchang.tithi,
         )
         rahu_ok = _process_one(
             "Rahu Kalam", rahu_card, rahu_seo, renderer, settings, for_date, uploader, privacy_status,
@@ -527,7 +527,7 @@ def main() -> int:
             quote_text=shubha_quote, quote_source=shubha_quote_source,
         )
         shubha_seo = build_shubha_ghadiyalu_seo(
-            shubha_lines, for_date_ordinal=for_date.toordinal(), comment_prompt_te=shubha_comment_prompt,
+            shubha_lines, for_date_ordinal=for_date.toordinal(), comment_prompt_te=shubha_comment_prompt, tithi=panchang.tithi,
         )
         shubha_ok = _process_one(
             "Shubha Ghadiyalu", shubha_card, shubha_seo, renderer, settings, for_date, uploader, privacy_status,
@@ -555,7 +555,7 @@ def main() -> int:
             quote_text=durmuhurtham_quote, quote_source=durmuhurtham_quote_source,
         )
         durmuhurtham_seo = build_durmuhurtham_seo(
-            panchang.durmuhurtham, for_date_ordinal=for_date.toordinal(), comment_prompt_te=durmuhurtham_comment_prompt,
+            panchang.durmuhurtham, for_date_ordinal=for_date.toordinal(), comment_prompt_te=durmuhurtham_comment_prompt, tithi=panchang.tithi,
         )
         durmuhurtham_ok = _process_one(
             "Durmuhurtham", durmuhurtham_card, durmuhurtham_seo, renderer, settings, for_date, uploader, privacy_status,

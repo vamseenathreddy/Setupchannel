@@ -46,6 +46,7 @@ not doing that.
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -80,17 +81,17 @@ COLOR_DURMUHURTHAM_TOP = (130, 70, 10)
 COLOR_DURMUHURTHAM_BOTTOM = (75, 38, 5)
 COLOR_TEXT_LIGHT = (255, 250, 240)
 
-ICON_SIZE = int(ALERT_CARD_WIDTH * 0.16)
+ICON_SIZE = int(ALERT_CARD_WIDTH * 0.125)
 ICON_GAP = int(ALERT_CARD_WIDTH * 0.06)
-ICON_ROW_TOP = int(ALERT_CARD_HEIGHT * 0.06)
+ICON_ROW_TOP = int(ALERT_CARD_HEIGHT * 0.035)
 
 # Fixed, generous sizes (fraction of width) -- long content WRAPS instead
 # of shrinking these, so a short line always stays this large.
 TITLE_FONT_FRAC = 0.10
-LABEL_FONT_FRAC = 0.048
-VALUE_FONT_FRAC = 0.062
-SUBSCRIBE_FONT_FRAC = 0.045
-SECONDARY_FONT_FRAC = 0.032  # notably smaller than LABEL_FONT_FRAC -- for de-emphasized extra info
+LABEL_FONT_FRAC = 0.056
+VALUE_FONT_FRAC = 0.074
+SUBSCRIBE_FONT_FRAC = 0.050
+SECONDARY_FONT_FRAC = 0.048  # 2026-10-17: was 0.032; older viewers could not read it. Close to LABEL size now.
 QUOTE_FONT_FRAC = 0.036  # devotional quote, filling the gap above the footer -- see quote_text below
 QUOTE_SOURCE_FONT_FRAC = 0.026
 COLOR_QUOTE_TEXT = (235, 215, 170)  # soft gold -- distinct from the plain white body text, matches DATE_BADGE_BG tone
@@ -121,6 +122,9 @@ DATE_BADGE_PAD_Y_FRAC = 0.012
 # as those pools) in case this renderer is ever called directly without
 # one.
 DEFAULT_SUBSCRIBE_TEXT = "ప్రతిరోజు ముహూర్తాలకొరకు సబ్‌స్క్రైబ్ చేసి బెల్ ఐకాన్ నొక్కండి"  # "Subscribe and press the bell icon for daily muhurtams"
+
+
+_REDUNDANT_LABELS = {"సమయం", "మంత్రం"}
 
 
 @dataclass(frozen=True, slots=True)
@@ -170,7 +174,7 @@ class AlertCardRenderer:
             # the shrink-to-fit/gap-distribution math further down, since
             # it has its own fixed size and position rather than flowing
             # with the rest of the card's content.
-            badge_top_y = icons_bottom + int(height * 0.035) if icons_bottom else 0
+            badge_top_y = icons_bottom + int(height * 0.02) if icons_bottom else 0
             badge_bottom = self._draw_date_badge(draw, card.date_text, width, content_width, badge_top_y)
 
             title_font = self._fit_font_to_width(
@@ -211,7 +215,7 @@ class AlertCardRenderer:
             # comment line above it when present) -- kept fixed regardless
             # of whether comment_prompt_text is set, so the subscribe line
             # always lands in the same already-validated-safe spot.
-            footer_bottom = int(height * 0.68)
+            footer_bottom = int(height * 0.715)  # 2026-10-17: was 0.68; uses the blank band, still above y~1385
             footer_line_gap = int(height * 0.015)
             # Fixed engagement line at the very bottom of the footer block (2026-10-08 request).
             opinion_font = self._fit_font_to_width(
@@ -223,14 +227,14 @@ class AlertCardRenderer:
                               + (comment_h + footer_line_gap if card.comment_prompt_text else 0))
             footer_top = footer_bottom - footer_block_h
 
-            content_top = badge_bottom + int(height * 0.04) if card.date_text else (
+            content_top = badge_bottom + int(height * 0.025) if card.date_text else (
                 icons_bottom + int(height * 0.05) if icons_bottom else int(height * 0.30)
             )
             available_bottom = footer_top - int(height * 0.03)
             available_height = max(available_bottom - content_top, 0)
 
             n_gaps = len(card.lines) + 1 + (1 if card.secondary_info else 0)
-            min_gap = 2
+            min_gap = 14  # 2026-10-17: was 2; lines were touching
             line_gap = int(height * 0.012)
 
             # Shrink-to-fit loop: moving the safe zone up (above) means
@@ -250,24 +254,30 @@ class AlertCardRenderer:
 
                 wrapped_lines = []
                 for label, value in card.lines:
-                    label_wrapped = self._wrap_text(draw, label, label_font, content_width)
+                    # Generic labels ("సమయం", "మంత్రం") only repeat what the title already says; dropping
+                    # them frees room so every remaining line can be big (2026-10-17).
+                    label_wrapped = [] if label in _REDUNDANT_LABELS else self._wrap_text(draw, label, label_font, content_width)
                     value_wrapped = self._wrap_text(draw, value, value_font, content_width)
-                    label_h = self._block_height(draw, label_wrapped, label_font)
+                    label_h = self._block_height(draw, label_wrapped, label_font) if label_wrapped else 0
                     value_h = self._block_height(draw, value_wrapped, value_font)
-                    wrapped_lines.append((label_wrapped, value_wrapped, label_h + line_gap + value_h))
+                    wrapped_lines.append((label_wrapped, value_wrapped, label_h + (line_gap if label_wrapped else 0) + value_h))
 
-                secondary_wrapped = []
+                secondary_wrapped: list[str] = []
                 secondary_h = 0
                 if card.secondary_info:
-                    secondary_wrapped = self._wrap_text(draw, card.secondary_info, secondary_font, content_width)
+                    # One period per line ("Yamagandam: ... | Gulika: ...") instead of one long run-on
+                    # paragraph, so every item is large and easy to find.
+                    secondary_wrapped = []
+                    for part in re.split(r"\s*\|\s*", card.secondary_info):
+                        secondary_wrapped.extend(self._wrap_text(draw, part.strip(), secondary_font, content_width))
                     secondary_h = self._block_height(draw, secondary_wrapped, secondary_font)
 
                 total_lines_height = sum(h for _, _, h in wrapped_lines)
                 needed_at_min_gap = title_h + secondary_h + n_gaps * min_gap + total_lines_height
 
-                if needed_at_min_gap <= available_height or font_scale <= 0.65:
+                if needed_at_min_gap <= available_height or font_scale <= 0.8:
                     break
-                font_scale -= 0.08
+                font_scale -= 0.05
 
             # Correct formula: solve directly for the gap that makes
             # content_fixed_height + n_gaps*gap == available_height,
@@ -302,8 +312,9 @@ class AlertCardRenderer:
             cursor_y += title_h + gap
 
             for label_wrapped, value_wrapped, _ in wrapped_lines:
-                cursor_y = self._draw_centered_block(draw, label_wrapped, label_font, width, cursor_y)
-                cursor_y += line_gap
+                if label_wrapped:
+                    cursor_y = self._draw_centered_block(draw, label_wrapped, label_font, width, cursor_y)
+                    cursor_y += line_gap
                 cursor_y = self._draw_centered_block(draw, value_wrapped, value_font, width, cursor_y)
                 cursor_y += gap
 
