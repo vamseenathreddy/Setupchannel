@@ -32,9 +32,9 @@ def test_language_matching():
     assert matches_language("ഇന്ത്യ ജയിച്ചു", "ml") and matches_language("भारत जीता", "hi")
 
 
-def test_every_language_niche_pair_is_planned_once_in_42():
-    seen = {cfg.plan(i) for i in range(42)}
-    assert len(seen) == 42 and {l for l, _ in seen} == set(cfg.LANGS) and {n for _, n in seen} == set(cfg.NICHES)
+def test_plan_is_telugu_only_and_cycles_every_niche():
+    seen = [cfg.plan(i) for i in range(12)]
+    assert {l for l, _ in seen} == {"te"} and cfg.LANGS == ["te"] and {n for _, n in seen} == set(cfg.NICHES)
 
 
 def test_labels_cover_every_language_and_niche():
@@ -53,10 +53,10 @@ def test_pick_story_skips_used_and_stale_and_prefers_short():  # equal coverage 
     used = Story("Already posted headline right here", "P", "l3", now - timedelta(hours=1))
     short = Story("Fresh short headline for today", "P", "l4", now - timedelta(hours=2))
     long_.rank, stale.rank, used.rank, short.rank = 1, 2, 3, 4
-    got = pick_story("sports", "en", {used.key}, None, now, fetch_news=lambda n, l: [long_, stale, used, short])
+    got = pick_story("development", "en", {used.key}, None, now, fetch_bank=lambda n: [], fetch_news=lambda n, l: [long_, stale, used, short])
     assert got is short
-    assert pick_story("sports", "en", {short.key, used.key, long_.key}, None, now,
-                      fetch_news=lambda n, l: [stale, used, short, long_]) is None
+    assert pick_story("development", "en", {short.key, used.key, long_.key}, None, now,
+                      fetch_bank=lambda n: [], fetch_news=lambda n, l: [stale, used, short, long_]) is None
     assert not fresh_enough(stale, now, 30) and fresh_enough(stale, now, 48)
 
 
@@ -66,17 +66,18 @@ def test_only_top_10_and_widest_coverage_first():
     low = mk("Rank twelve headline that is out of the top ten", 12, (("a", "x"),) * 5)
     plain = mk("Rank one headline with no other outlets", 1)
     wide = mk("Rank four headline carried by several outlets", 4, (("a", "x"), ("b", "y")))
-    got = pick_story("sports", "en", set(), None, now, fetch_news=lambda n, l: [low, plain, wide])
+    got = pick_story("development", "en", set(), None, now, fetch_bank=lambda n: [], fetch_news=lambda n, l: [low, plain, wide])
     assert got is wide  # outranks rank 1 on coverage; rank 12 is outside the top 10
-    assert pick_story("sports", "en", {plain.key, wide.key}, None, now, fetch_news=lambda n, l: [low, plain, wide]) is None
+    assert pick_story("development", "en", {plain.key, wide.key}, None, now, fetch_bank=lambda n: [], fetch_news=lambda n, l: [low, plain, wide]) is None
 
 
-def test_rank_only_in_description_not_on_card():
-    s = Story("Fresh short headline for today", "Eenadu", "l", None, rank=3)
-    row = metadata.row_for(s, "en", "sports")
-    assert "label" not in row and "TRENDING" not in "".join(str(v) for v in row.values())
-    assert "Ranked #3 in today's top 10 trending sports stories" in metadata.description(s, "en", "sports")
-    assert "Trending India" in metadata.title(s, "en", "sports")
+def test_card_has_positive_angle_and_description_has_disclosure():
+    s = Story("అమరావతిలో కొత్త ఐటీ పార్క్ ప్రారంభం", "Eenadu", "l", None, rank=3)
+    row = metadata.row_for(s, "te", "development")
+    assert "TRENDING" not in "".join(str(v) for v in row.values()) and "సానుకూల కోణం" in row["text_related"]
+    d = metadata.description(s, "te", "development")
+    assert "pro-TDP" in d and "Source: Eenadu" in d and "#TDP" in d
+    assert "| TDP |" in metadata.title(s, "te", "development")
 
 
 def test_twelve_two_hourly_slots_from_midnight():
@@ -85,11 +86,11 @@ def test_twelve_two_hourly_slots_from_midnight():
 
 def test_failing_source_does_not_stop_the_slot():
     now = datetime(2026, 10, 16, 12, 0, tzinfo=timezone.utc)
-    ok = Story("Trending video title worth showing", "Chan", "yt1", now - timedelta(hours=1), "yt")
+    ok = Story("Trending video title worth showing", "Chan", "yt1", now - timedelta(hours=1), "bank")
 
     def boom(*_):
         raise RuntimeError("down")
-    assert pick_story("cinema", "en", set(), object(), now, fetch_news=boom, fetch_yt=lambda y, n, l: [ok]) is ok
+    assert pick_story("nda", "en", set(), object(), now, fetch_news=boom, fetch_bank=lambda n: [ok]) is ok
 
 
 def test_choose_falls_through_to_other_niches():
@@ -98,25 +99,23 @@ def test_choose_falls_through_to_other_niches():
 
     def fetch(n, lang, used, yt):
         calls.append(n)
-        return story if n == "business" else None
-    niche, got = post.choose("en", "sports", set(), None, fetch=fetch)
-    assert got is story and niche == "business" and calls[0] == "sports"
+        return story if n == "tdp" else None
+    niche, got = post.choose("te", "development", set(), None, fetch=fetch)
+    assert got is story and niche == "tdp" and calls[0] == "development"
 
 
 def test_metadata_names_source_and_mixes_english():
     s = Story("ఆసియా కప్ ఫైనల్‌లో భారత్ ఘన విజయం", "Eenadu", "https://n/1", None)
-    m = metadata.bundle(s, "te", "sports")
-    assert len(m["title"]) <= 100 and "Sports" in m["title"] and "Pulse Boosting" in m["title"]
+    m = metadata.bundle(s, "te", "development")
+    assert len(m["title"]) <= 100 and "Pulse Boosting" in m["title"]
     assert "Source: Eenadu" in m["description"] and "https://n/1" in m["description"]
     assert "Link: https://n/1" in m["comment"] and m["language"] == "te"
-    assert len(metadata.hashtags("te", "sports")) <= 15 and sum(len(t) + 1 for t in m["tags"]) <= 500
-    yt = Story("Trending video", "Some Channel", "https://youtu.be/x", None, "yt")
-    assert "YouTube trending, creator: Some Channel" in metadata.description(yt, "en", "viral")
+    assert len(metadata.hashtags("te", "development")) <= 15 and sum(len(t) + 1 for t in m["tags"]) <= 500
 
 
 def test_long_title_is_trimmed_to_100():
     s = Story("word " * 60, "P", "l", None)
-    assert len(metadata.title(s, "en", "breaking")) <= 100
+    assert len(metadata.title(s, "te", "chandrababu")) <= 100
 
 
 def test_related_headlines_come_from_the_story_cluster():
@@ -145,9 +144,9 @@ def test_enrich_keeps_only_same_language_related_and_row_has_source_last():
     src.article_summary = lambda *a, **k: "ఇది ప్రచురణకర్త సారాంశం"
     enrich(s, "te")
     assert len(s.related) == 3 and all("India" not in h for h, _ in s.related)
-    row = metadata.row_for(s, "te", "sports")
-    assert row["text_summary"] and row["text_related"].startswith("• ") and row["text_secondary"] == "Source: Eenadu"
-    assert "Also reported:" in metadata.description(s, "te", "sports")
+    row = metadata.row_for(s, "te", "development")
+    assert row["text_summary"] and "• " in row["text_related"] and row["text_secondary"] == "Source: Eenadu"
+    assert "Also reported:" in metadata.description(s, "te", "development")
 
 
 def test_news_stories_drops_other_language_headlines(monkeypatch):
@@ -157,7 +156,7 @@ def test_news_stories_drops_other_language_headlines(monkeypatch):
            "<item><title>टेस्ला ने उड़ने वाली कार दिखाई, हवा में पलटी - दैनिक भास्कर</title><link>b</link><source>दैनिक भास्कर</source></item>"
            "</channel></rss>")
     monkeypatch.setattr(src, "_get", lambda *a, **k: xml)
-    got = src.news_stories("breaking", "kn")
+    got = src.news_stories("health", "kn")
     assert [s.link for s in got] == ["a"]
 
 
@@ -192,3 +191,24 @@ def test_summary_accepts_decoder_success_key(monkeypatch):
     monkeypatch.setitem(sys.modules, "googlenewsdecoder", mod)
     monkeypatch.setattr(src, "_get", lambda *a, **k: '<meta property="og:description" content="ఇది ప్రచురణకర్త సారాంశం మరియు మరిన్ని వివరాలు ఇక్కడ">')
     assert src.article_summary("l", "te", "వేరే శీర్షిక") != ""
+
+
+def test_political_filter_is_positive_and_excludes_opposition_and_sakshi(monkeypatch):
+    import channels.trending.sources as src
+    assert src.is_positive("అమరావతిలో కొత్త పెట్టుబడులు ప్రారంభం") and not src.is_positive("జగన్ పై విమర్శ అభివృద్ధి")
+    assert not src.is_positive("రోడ్డు ప్రమాదంలో ఇద్దరు మృతి")
+    xml = ("<rss><channel>"
+           "<item><title>చంద్రబాబు సమక్షంలో కొత్త పరిశ్రమ ఒప్పందం - సాక్షి</title><link>a</link><source>సాక్షి</source></item>"
+           "<item><title>చంద్రబాబు సమక్షంలో కొత్త పరిశ్రమ ఒప్పందం ఖరారు - ఆంధ్రజ్యోతి</title><link>b</link><source>ఆంధ్రజ్యోతి</source></item>"
+           "<item><title>చంద్రబాబు కొత్త పెట్టుబడులు ప్రారంభం - ఇతర</title><link>c</link><source>ఇతర</source></item>"
+           "</channel></rss>")
+    monkeypatch.setattr(src, "_get", lambda *a, **k: xml)
+    got = src.political_stories("chandrababu")
+    assert [x.link for x in got] == ["b", "c"] and got[0].rank == 1
+
+
+def test_bank_facts_are_complete_and_distinct():
+    from channels.trending.bank import bank_stories
+    b = bank_stories()
+    assert len(b) >= 12 and len({s.key for s in b}) == len(b)
+    assert all(s.summary and s.link.startswith("https://") and matches_language(s.headline, "te") for s in b)

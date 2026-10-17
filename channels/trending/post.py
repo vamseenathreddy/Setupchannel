@@ -21,8 +21,10 @@ from channels.trending.sources import Story, enrich, pick_story
 
 IST = ZoneInfo("Asia/Kolkata")
 USED_CAP = 2000
-SAMPLE = Story("Sample headline: a trending story appears here with its source named underneath",
-               "Example Publisher", "https://example.com/story", None, "news")
+SAMPLE = Story("విశాఖలో గూగుల్ ఏఐ హబ్: రాష్ట్రానికి భారీ పెట్టుబడి, వేలాది ఉద్యోగాలు",
+               "Eenadu", "https://example.com/story", None, "news",
+               summary="విశాఖపట్నంలో గూగుల్ ఏఐ డేటా సెంటర్ హబ్ ఏర్పాటుకు ప్రభుత్వం ఒప్పందం కుదుర్చుకుంది. ఐటీ రంగంలో కొత్త అవకాశాలు వస్తాయని అంచనా.",
+               related=(("ఏఐ హబ్‌తో ఆంధ్రప్రదేశ్‌కు కొత్త గుర్తింపు", "Andhra Jyothy"),))
 
 
 def choose(lang: str, niche: str, used: set, yt, fetch=pick_story):

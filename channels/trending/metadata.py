@@ -4,13 +4,33 @@ from __future__ import annotations
 from channels.trending import config as cfg
 from channels.trending.sources import Story
 
-DISCLOSURE = ("This Short surfaces a real headline from the source named above, linked in this description. "
-              "It makes no claims beyond that headline. All rights belong to the original publisher.")
+DISCLOSURE = ("ఈ ఛానెల్ తెలుగుదేశం పార్టీ అనుకూల దృక్పథంతో నడుస్తుంది. ఇందులోని విశ్లేషణ మా అభిప్రాయం; వార్తలు పేర్కొన్న "
+              "మూలాల నుంచి తీసుకున్నవి. హక్కులు ఆయా ప్రచురణకర్తలవి.\n"
+              "This channel is run from a pro-TDP point of view. The analysis is our opinion; the facts come from the "
+              "sources named above. All rights belong to the original publishers.")
+
+ANGLE = {  # one positive-angle line per niche, shown on the card and in the description (opinion, labelled as such)
+    "chandrababu": "సానుకూల కోణం: దూరదృష్టితో కూడిన పాలనకు ఇది మరో ఉదాహరణ",
+    "lokesh": "సానుకూల కోణం: యువతకు అవకాశాలు పెంచే దిశగా ఒక అడుగు",
+    "tdp": "సానుకూల కోణం: ప్రజాసేవలో పార్టీ చూపుతున్న నిబద్ధత",
+    "nda": "సానుకూల కోణం: డబుల్ ఇంజిన్ సహకారంతో రాష్ట్రానికి లాభం",
+    "development": "సానుకూల కోణం: రాష్ట్ర అభివృద్ధికి, ఉపాధికి ఊతం",
+    "innovations": "సానుకూల కోణం: సాంకేతికతతో పాలనలో కొత్త ఒరవడి",
+}
+
+
+def join_lines() -> list[str]:
+    out = []
+    if cfg.WHATSAPP_URL:
+        out.append(f"WhatsApp గ్రూప్: {cfg.WHATSAPP_URL}")
+    if cfg.TELEGRAM_URL:
+        out.append(f"Telegram గ్రూప్: {cfg.TELEGRAM_URL}")
+    return out
 
 
 def hashtags(lang: str, niche: str) -> list[str]:
     tags = ["#PulseBoosting", "#Shorts", f"#{cfg.NICHE_TAG[niche]}", f"#{cfg.LANG_TAG[lang]}", "#Trending",
-            "#IndiaNews", "#LatestNews", "#TrendingNow", "#NewsShorts"]
+            "#TDP", "#TeluguDesam", "#ChandrababuNaidu", "#NaraLokesh", "#AndhraPradesh", "#TeluguNews"]
     nat = cfg.niche_label(lang, niche).replace(" ", "")
     if lang != "en":
         tags.append("#" + nat)
@@ -23,7 +43,7 @@ def hashtags(lang: str, niche: str) -> list[str]:
 
 
 def title(story: Story, lang: str, niche: str) -> str:
-    tail = f" | Trending {cfg.NICHE_EN[niche]} India | {cfg.BRAND}" if lang != "en" else f" | Trending India | {cfg.BRAND}"
+    tail = f" | TDP | {cfg.BRAND}"
     head = story.headline
     if len(head) + len(tail) <= 100:
         return head + tail
@@ -33,8 +53,8 @@ def title(story: Story, lang: str, niche: str) -> str:
 
 def tags(lang: str, niche: str) -> list[str]:
     words = [cfg.BRAND, "Pulse Boosting news", cfg.NICHE_EN[niche], cfg.niche_label(lang, niche), cfg.LANG_EN[lang],
-             f"{cfg.LANG_EN[lang]} news", f"{cfg.NICHE_EN[niche]} news", "trending news", "news today", "India news",
-             "latest news", "news shorts", "breaking news", "trending now", "shorts"]
+             f"{cfg.LANG_EN[lang]} news", f"{cfg.NICHE_EN[niche]} news", "trending news", "TDP", "Telugu Desam Party",
+             "Chandrababu Naidu", "Nara Lokesh", "Andhra Pradesh", "Telugu news", "AP news", "shorts"]
     out, total, seen = [], 0, set()
     for w in words:
         k = w.lower()
@@ -48,13 +68,12 @@ def tags(lang: str, niche: str) -> list[str]:
 
 
 def source_line(story: Story) -> str:
-    kind = "YouTube trending, creator" if story.kind == "yt" else "Source"
+    kind = "Source"
     return f"{kind}: {story.publisher}\nLink: {story.link}"
 
 
 def description(story: Story, lang: str, niche: str) -> str:
-    more = [f"Ranked #{story.rank} in today's top 10 trending {cfg.NICHE_EN[niche].lower()} stories "
-            f"({cfg.LANG_EN[lang]}, India).", ""] if story.rank else []
+    more = [ANGLE[niche], ""]
     more += [story.summary, ""] if story.summary else []
     if story.related:
         more += ["Also reported:"] + [f"- {h} ({p})" for h, p in story.related] + [""]
@@ -63,10 +82,10 @@ def description(story: Story, lang: str, niche: str) -> str:
         *more,
         source_line(story), "",
         cfg.INTRO[lang],
-        cfg.INTRO["en"] if lang != "en" else "", "",
+        cfg.INTRO["en"], "",
+        *join_lines(), *([""] if join_lines() else []),
         DISCLOSURE, "",
-        f"{cfg.BRAND} brings trending news in Telugu, Hindi, English, Tamil, Kannada and Malayalam. "
-        "Like, share and subscribe.", "",
+        f"{cfg.BRAND}: like, share and subscribe.", "",
         " ".join(hashtags(lang, niche)),
     ])
 
@@ -76,7 +95,7 @@ def bundle(story: Story, lang: str, niche: str) -> dict:
         "title": title(story, lang, niche),
         "description": description(story, lang, niche),
         "tags": tags(lang, niche),
-        "comment": f"{source_line(story)}\n{cfg.CTA[lang][1]}",
+        "comment": f"{source_line(story)}\n{cfg.CTA[lang][2]}",
         "language": lang,
     }
 
@@ -86,8 +105,8 @@ def row_for(story: Story, lang: str, niche: str) -> dict:
     head = story.headline
     if len(head) > 110:
         head = head[:110].rsplit(" ", 1)[0].rstrip(",.:;-") + "…"
-    kind = "YouTube" if story.kind == "yt" else "Source"
-    related = "\n".join(f"• {h}" for h, _ in story.related)
+    kind = "Source"
+    related = "\n".join([ANGLE[niche]] + [f"• {h}" for h, _ in story.related[:2]])
     return {"id": story.key, "category": niche, "special": "",
             "text_primary": head, "text_summary": story.summary, "text_related": related,
             "text_secondary": f"{kind}: {story.publisher}"}

@@ -38,7 +38,46 @@ NEWS_TOPIC = {"breaking": "NATION", "sports": "SPORTS", "cinema": "ENTERTAINMENT
 YT_CATEGORY = {"breaking": "25", "sports": "17", "cinema": "24", "technology": "28", "viral": None}
 TOP_N = 10
 # order of sources to try per niche
-SOURCE_ORDER = {"cinema": ("news", "yt"), "viral": ("yt", "news")}
+SOURCE_ORDER = {"innovations": ("bank", "news"), "development": ("news", "bank")}
+DEFAULT_ORDER = ("news", "bank")
+
+# TDP-supportive channel (2026-10-17): Telugu political search feeds, keyword-filtered.
+POLITICAL_QUERY = {
+    "chandrababu": "చంద్రబాబు నాయుడు", "lokesh": "నారా లోకేశ్", "tdp": "తెలుగుదేశం పార్టీ",
+    "nda": "కూటమి ప్రభుత్వం ఆంధ్రప్రదేశ్ జనసేన బీజేపీ టీడీపీ",
+    "development": "ఆంధ్రప్రదేశ్ అభివృద్ధి పెట్టుబడులు", "innovations": "ఆంధ్రప్రదేశ్ ప్రభుత్వం కొత్త పథకం సాంకేతికత",
+}
+# Headlines that are about the opposition or about trouble are skipped: the channel only carries positive stories.
+EXCLUDE = ("వైఎస్ఆర్సీపీ", "వైసీపీ", "జగన్", "YSRCP", "YCP", "Jagan", "అరెస్ట్", "హత్య", "మృతి", "ప్రమాదం", "దాడి",
+           "అత్యాచారం", "విమర్శ", "ఆరోపణ", "కుంభకోణం", "వివాదం", "మరణ", "ఆత్మహత్య", "కేసు", "దుర్ఘటన", "నిరసన")
+POSITIVE = ("అభివృద్ధి", "పెట్టుబడ", "ఉద్యోగ", "ప్రారంభ", "శంకుస్థాపన", "ఒప్పందం", "పథకం", "నిధులు", "ప్రశంస",
+            "హర్షం", "శుభవార్త", "అమరావతి", "ఐటీ", "డేటా సెంటర్", "ఏఐ", "పరిశ్రమ", "రైతు", "మహిళ", "విద్య",
+            "అవార్డు", "కృషి", "ఆవిష్కరణ", "సాంకేతిక", "మంజూరు", "పెంపు", "భరోసా", "సంక్షేమ", "లక్ష")
+# Outlets preferred first (Eenadu, Andhra Jyothy, then other mainstream Telugu outlets).
+PREFERRED = ("ఈనాడు", "Eenadu", "ఆంధ్రజ్యోతి", "Andhra Jyothy", "Andhrajyothy", "సాక్షి_x", "Sakshi_x")
+BLOCKED_PUBLISHERS = ("సాక్షి", "Sakshi")  # the opposition-run outlet; not used as a source
+
+
+def is_positive(headline: str, summary: str = "") -> bool:
+    text = f"{headline} {summary}"
+    if any(x.casefold() in text.casefold() for x in EXCLUDE):
+        return False
+    return any(x in text for x in POSITIVE)
+
+
+def political_stories(niche: str, lang: str = "te") -> list[Story]:
+    """Telugu Google News search for the niche's subject: positive, non-opposition headlines, preferred outlets first."""
+    import urllib.parse
+
+    q = urllib.parse.quote(f"{POLITICAL_QUERY[niche]} when:2d")
+    url = f"https://news.google.com/rss/search?q={q}&hl=te&gl=IN&ceid=IN:te"
+    out = [s for s in parse_rss(_get(url)) if is_informative(s) and matches_language(s.headline, "te")
+           and not any(b in s.publisher for b in BLOCKED_PUBLISHERS)
+           and is_positive(s.headline)]
+    out.sort(key=lambda x: (0 if any(p in x.publisher for p in PREFERRED) else 1, x.rank))
+    for i, x in enumerate(out, start=1):
+        x.rank = i
+    return out
 
 
 @dataclass
@@ -134,6 +173,8 @@ def _get(url: str, timeout: int = 20) -> str:
 
 
 def news_stories(niche: str, lang: str) -> list[Story]:
+    if niche in POLITICAL_QUERY:
+        return political_stories(niche, lang)
     hl, gl, ceid = EDITIONS[lang]
     url = (f"https://news.google.com/rss/headlines/section/topic/{NEWS_TOPIC[niche]}"
            f"?hl={hl}&gl={gl}&ceid={ceid}")
@@ -217,14 +258,18 @@ def enrich(story: Story, lang: str) -> Story:
 
 
 def pick_story(niche: str, lang: str, used: set[str], yt=None, now: datetime | None = None,
-               fetch_news=news_stories, fetch_yt=youtube_stories) -> Story | None:
+               fetch_news=news_stories, fetch_yt=youtube_stories, fetch_bank=None) -> Story | None:
     """First unused, informative, recent story for this niche and language. Tries the niche's sources in order, then
     widens the freshness window from 8 to 30 hours. Returns None when nothing qualifies."""
     now = now or datetime.now(timezone.utc)
     pools: list[list[Story]] = []
-    for src in SOURCE_ORDER.get(niche, ("news", "yt")):
+    if fetch_bank is None:
+        from channels.trending.bank import bank_stories as fetch_bank
+    for src in SOURCE_ORDER.get(niche, DEFAULT_ORDER):
         try:
-            if src == "news":
+            if src == "bank":
+                pools.append(fetch_bank(niche))
+            elif src == "news":
                 pools.append(fetch_news(niche, lang))
             elif yt is not None:
                 pools.append(fetch_yt(yt, niche, lang))

@@ -88,6 +88,9 @@ class ChannelConfig:
     photo_shade_from: int = 900      # y where the dark scrim under the text starts fading in
     corner_field: str = ""          # row field drawn small and very faint in the bottom-right corner (e.g. a source credit)
     safe_top: int = 0                # 0 = default SAFE_TOP; lower lets a text-heavy card start higher
+    bg_overlay: object = None        # optional callable(bg_rgba, row) -> bg_rgba, drawn behind the text (portraits, badges)
+    scrim: bool = True               # False keeps a light gradient light (no dark vignette)
+    text_shadow: bool = True         # False on light backgrounds: no dark halo behind the letters
     photo_shade_alpha: float = 0.82  # peak darkness of that scrim (higher = easier to read the text)
 
 
@@ -189,6 +192,8 @@ def make_background(rng, date_key, cfg: ChannelConfig):
         ImageDraw.Draw(glow).ellipse((W // 2 - 420, 520, W // 2 + 420, 1360), fill=70)
         glow = glow.filter(ImageFilter.GaussianBlur(160))
         img = Image.composite(Image.new("RGB", (W, H), (255, 210, 140)), img, glow)
+    if not cfg.scrim:
+        return img
     scrim = Image.new("L", (W, H), 135)
     grad = Image.linear_gradient("L").resize((W, H))
     top_dark = grad.point(lambda v: max(0, 170 - v))
@@ -293,13 +298,13 @@ def make_text_layer(row, layout, cfg: ChannelConfig, label_primary="", label_sec
     if corner:
         kf = (_mixed_font(cfg.blocks[0].font, 26, cfg.telugu_font) if cfg.telugu_font
               and Path(cfg.blocks[0].font) != Path(cfg.telugu_font) else _font(cfg.blocks[0].font, 26))
-        d.text((930 - d.textlength(corner, font=kf), 1620), corner, font=kf, fill=(255, 255, 255, 70))
+        d.text((930 - d.textlength(corner, font=kf), 1620), corner, font=kf, fill=tuple(layout['secondary'][:3]) + (110,) if cfg.scrim is False else (255, 255, 255, 70))
 
     if channel:
         cf = _font(cfg.font_channel_label, 30)
-        d.text(((W - d.textlength(cfg.channel_name, font=cf)) / 2, 1560), cfg.channel_name, font=cf, fill=SOFT)
+        d.text(((W - d.textlength(cfg.channel_name, font=cf)) / 2, 1560), cfg.channel_name, font=cf, fill=layout['secondary'] if cfg.scrim is False else SOFT)
 
-    blur = shadow.filter(ImageFilter.GaussianBlur(10)).point(lambda v: int(v * 0.8))
+    blur = shadow.filter(ImageFilter.GaussianBlur(10)).point(lambda v: int(v * 0.8) if cfg.text_shadow else 0)
     shade = Image.new("RGBA", (W, H), (0, 0, 0, 255))
     shade.putalpha(blur)
     return Image.alpha_composite(shade, text_l)
@@ -345,7 +350,10 @@ def render(row, out_mp4, date_key, cfg: ChannelConfig, special=None, workdir="ou
     work = Path(workdir)
     work.mkdir(parents=True, exist_ok=True)
     bg_path, tx_path = work / "bg.png", work / "text.png"
-    _watermark(make_background(rng, date_key, cfg).convert("RGBA"), cfg.watermark_handle or cfg.channel_name, cfg.font_channel_label).convert("RGB").save(bg_path)
+    bg = _watermark(make_background(rng, date_key, cfg).convert("RGBA"), cfg.watermark_handle or cfg.channel_name, cfg.font_channel_label)
+    if cfg.bg_overlay:
+        bg = cfg.bg_overlay(bg, row)
+    bg.convert("RGB").save(bg_path)
     max_h, bottom, channel = None, None, True
     if cfg.text_anchor:
         layout = dict(layout, anchor=cfg.text_anchor)
