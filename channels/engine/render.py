@@ -86,6 +86,7 @@ class ChannelConfig:
     cta_text: str = ""               # optional call-to-action (e.g. subscribe line) drawn under the text block
     cta_size: int = 46
     photo_shade_from: int = 900      # y where the dark scrim under the text starts fading in
+    corner_field: str = ""          # row field drawn small and very faint in the bottom-right corner (e.g. a source credit)
     safe_top: int = 0                # 0 = default SAFE_TOP; lower lets a text-heavy card start higher
     photo_shade_alpha: float = 0.82  # peak darkness of that scrim (higher = easier to read the text)
 
@@ -287,6 +288,12 @@ def make_text_layer(row, layout, cfg: ChannelConfig, label_primary="", label_sec
                 xy = ((W - d.textlength(txt, font=f)) / 2, yy)
                 sd.text(xy, txt, font=f, fill=255, stroke_width=3)
                 d.text(xy, txt, font=f, fill=col)
+
+    corner = (row.get(cfg.corner_field) or "").strip() if cfg.corner_field else ""
+    if corner:
+        kf = (_mixed_font(cfg.blocks[0].font, 26, cfg.telugu_font) if cfg.telugu_font
+              and Path(cfg.blocks[0].font) != Path(cfg.telugu_font) else _font(cfg.blocks[0].font, 26))
+        d.text((930 - d.textlength(corner, font=kf), 1620), corner, font=kf, fill=(255, 255, 255, 70))
 
     if channel:
         cf = _font(cfg.font_channel_label, 30)
