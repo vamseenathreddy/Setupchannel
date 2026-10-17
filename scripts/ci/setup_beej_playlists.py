@@ -22,25 +22,34 @@ def main() -> int:
             print(f"::warning::{key}: token file {token} missing, skipped")
             rc = 1
             continue
+        try:
+            rc |= _one(key, cfg, token, apply)
+        except Exception as exc:  # noqa: BLE001  one channel failing must not hide the others
+            print(f"::error::{key}: {type(exc).__name__}: {str(exc)[:600]}")
+            rc = 1
+    return rc
+
+
+def _one(key: str, cfg: dict, token: Path, apply: bool) -> int:
+    if True:
         yt = upload.service(token)
         name = yt.channels().list(part="snippet", mine=True).execute()["items"][0]["snippet"]["title"]
         if cfg["expected"].lower() not in name.lower():
             print(f"::error::{key}: token acts as '{name}', expected '{cfg['expected']}'. Skipped.")
-            rc = 1
-            continue
+            return 1
         existing = bp.list_playlists(yt)
         listing = "; ".join(f"{t} ({n})" for _, t, n in existing) or "none"
         videos = bp.channel_beej_videos(yt)
         if not apply:
             print(f"::notice::{key} [{name}] playlists: {listing} | public beej Shorts: {len(videos)}")
-            continue
+            return 0
         pid = bp.ensure_playlist(yt, key)
         dead, dup = bp.clean_playlist(yt, pid)
         present = bp.playlist_video_ids(yt, pid)
         added = sum(1 for vid, _, _ in videos if bp.add_once(yt, vid, pid, present))
         print(f"::notice::{key} [{name}] playlist {pid}: removed {dead} dead + {dup} duplicate, "
               f"added {added}, now {len(present)} videos. Other playlists: {listing}")
-    return rc
+        return 0
 
 
 if __name__ == "__main__":
