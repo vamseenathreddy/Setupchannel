@@ -26,8 +26,8 @@ def _person(name: str, height: int) -> Image.Image:
     out.alpha_composite(im, (20, 20))
     fade = Image.new("L", out.size, 255)  # soft bottom edge, since the photos are cut at the shoulders
     fd = ImageDraw.Draw(fade)
-    for i in range(70):
-        fd.line((0, out.height - 1 - i, out.width, out.height - 1 - i), fill=int(255 * i / 70))
+    for i in range(130):
+        fd.line((0, out.height - 1 - i, out.width, out.height - 1 - i), fill=int(255 * i / 130))
     out.putalpha(Image.composite(out.getchannel("A"), Image.new("L", out.size, 0), fade))
     return out
 
@@ -71,11 +71,11 @@ def make_overlay(font_path: str):
     def overlay(bg: Image.Image, row: dict) -> Image.Image:
         bg = bg.convert("RGBA")
         a, b = WHO.get(row.get("category", ""), ("cbn", "lokesh"))
-        big, small = _person(a, 430), (_person(b, 340) if b else None)
+        big, small = _person(a, 330 if a == "pawan" else 430), (_person(b, 340) if b else None)  # Pawan's photo is landscape
         if b:  # NTR's round coin, top-right, on the TDP cards only
             ntr = _coin("ntr", 170)
             bg.alpha_composite(ntr, (W - ntr.width - 40, 150))
-        bg.alpha_composite(big, (-10, H - big.height - 150))
+        bg.alpha_composite(big, (0 if a == "pawan" else -10, H - big.height - 150))
         if small:
             bg.alpha_composite(small, (W - small.width + 10, H - small.height - 150))
         _badge(bg, font_path)

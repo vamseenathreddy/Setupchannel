@@ -9,7 +9,7 @@ JOBS = {  # name: (file, rect as fractions x0,y0,x1,y1 of the subject, max side)
     "cbn": ("5b583899-image.jpg", (0.05, 0.02, 0.97, 1.0)),
     "lokesh": ("caebb933-image.webp", (0.05, 0.02, 0.95, 1.0)),
     "ntr": ("8b9c2919-image.jpg", (0.52, 0.0, 1.0, 1.0)),
-    "pawan": ("244ed264-image.jpg", (0.28, 0.12, 0.99, 1.0)),
+    "pawan": ("7aaba330-image.jpg", (0.02, 0.02, 0.98, 0.98)),
     "me": ("cc2fb980-image.jpg", (0.12, 0.12, 0.98, 1.0)),
 }
 OUT = "channels/trending/assets/people/"
@@ -21,6 +21,9 @@ def cut(name, f, r):
         w, h = im.size
         im = im.crop((int(w * 0.5) + 4, 4, w - 2, h - 4))
         r = (0.04, 0.02, 0.96, 1.0)
+    if name == "pawan":  # speaker with the raised finger, above the podium
+        w, h = im.size
+        im = im.crop((int(w * 0.33), int(h * 0.06), int(w * 0.97), int(h * 0.80)))
     if name == "lokesh":  # head and shoulders only: leaves out the flags and the mic
         w, h = im.size
         im = im.crop((int(w * 0.22), 0, int(w * 0.76), h))

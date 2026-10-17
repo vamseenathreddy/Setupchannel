@@ -61,6 +61,8 @@ INK, RED, BROWN = (28, 8, 0), (150, 10, 20), (70, 30, 0)   # dark text on the TD
 _YELLOW = ((255, 222, 20), (250, 190, 0))
 PALETTES = {k: _YELLOW for k in NICHES}
 ACCENT = {k: RED for k in NICHES}
+PALETTES["janasena"] = ((120, 8, 20), (206, 28, 40))   # Janasena cards: red background, white text
+ACCENT["janasena"] = (255, 214, 0)
 
 
 def _fonts(lang: str):
@@ -83,6 +85,9 @@ def render_cfg(lang: str, niche: str) -> ChannelConfig:
     accent = ACCENT[niche]
     layouts = [dict(anchor=a, primary=p, secondary=BROWN, accent=accent, ornament=o)
                for a, p, o in ((0.44, INK, True), (0.42, (90, 0, 10), False), (0.46, INK, True))]
+    if niche == "janasena":
+        layouts = [dict(anchor=a, primary=WHITE, secondary=(255, 232, 232), accent=accent, ornament=o)
+                   for a, o in ((0.44, True), (0.42, False), (0.46, True))]
     return ChannelConfig(
         channel_name=BRAND,
         assets_dir=CHANNEL_DIR / "assets",
