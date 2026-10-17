@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont, ImageOps
 
 PEOPLE = Path(__file__).resolve().parent / "assets/people"
 W, H = 1080, 1920
@@ -76,29 +76,18 @@ def _badge(bg: Image.Image, font_path: str) -> None:
 
 
 def _face_mark(bg: Image.Image, font_path: str) -> None:
-    """Copyright watermark: the owner's face, very light, with the channel handle. A small one top-left and one large,
-    barely visible, behind the text."""
-    face = Image.open(PEOPLE / "me_face.png").convert("RGBA")
-
-    def disc(d: int, alpha: float, feather: int = 0) -> Image.Image:
-        im = face.resize((d, d), Image.LANCZOS)
-        m = Image.new("L", (d * 2, d * 2), 0)
-        ImageDraw.Draw(m).ellipse((feather, feather, d * 2 - 1 - feather, d * 2 - 1 - feather), fill=int(255 * alpha))
-        if feather:
-            m = m.filter(ImageFilter.GaussianBlur(feather / 2))
-        out = Image.new("RGBA", (d, d), (0, 0, 0, 0))
-        out.paste(im, (0, 0), m.resize((d, d), Image.LANCZOS))
-        return out
-
-    small = disc(112, 0.60)
-    ring = Image.new("RGBA", (120, 120), (0, 0, 0, 0))
-    ImageDraw.Draw(ring).ellipse((0, 0, 119, 119), outline=(255, 255, 255, 150), width=4)
-    bg.alpha_composite(small, (40, 154))
-    bg.alpha_composite(ring, (36, 150))
-    d = ImageDraw.Draw(bg)
-    f = ImageFont.truetype(font_path, 26)
-    d.text((166, 190), "@PulseBoosting", font=f, fill=(90, 30, 0, 150))
-    bg.alpha_composite(disc(760, 0.12, feather=150), ((W - 760) // 2, 600))
+    """Copyright watermark in the same style as the faint @PulseBoosting text: the owner's face, sharp (not blurred), drawn
+    as light white-grey strokes at low opacity behind the text, at the empty bottom-left."""
+    face = Image.open(PEOPLE / "me_face.png").convert("L")
+    d = 440
+    face = ImageOps.autocontrast(face.resize((d, d), Image.LANCZOS), cutoff=1)
+    alpha = face.point(lambda v: int(55 + v * 0.38))            # about 12% to 30% white, detail kept
+    circle = Image.new("L", (d * 2, d * 2), 0)
+    ImageDraw.Draw(circle).ellipse((0, 0, d * 2 - 1, d * 2 - 1), fill=255)
+    alpha = ImageChops.multiply(alpha, circle.resize((d, d), Image.LANCZOS))
+    layer = Image.new("RGBA", (d, d), (255, 255, 255, 0))
+    layer.putalpha(alpha)
+    bg.alpha_composite(layer, (50, 1400))  # the empty bottom-left, clear of text and Shorts buttons
 
 
 def make_overlay(font_path: str):
