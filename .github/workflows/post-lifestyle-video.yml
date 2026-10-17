@@ -1,0 +1,92 @@
+name: Weekly | Sunday Lifestyle Video (Telugu + Hindi)
+
+# Weekly 5+ minute scrolling video of 12 daily-life rules from the Puranas (theme rotates by ISO week, see
+# channels/lifestyle/topics.py). Telugu goes to Mahanavi Spirituals, Hindi to Divine Mantra Sangam.
+# Manual runs default to PRIVATE so the owner reviews before it goes live. The Sunday auto-run (gate) is wired later.
+on:
+  workflow_dispatch:
+    inputs:
+      lang:
+        description: "te (Mahanavi Spirituals), hi (Divine Mantra Sangam) or both"
+        required: true
+        default: te
+      privacy:
+        description: "private, unlisted or public"
+        required: false
+        default: private
+      render_only:
+        description: "true = render only, do not upload"
+        required: false
+        default: 'false'
+
+concurrency:
+  group: post-lifestyle-video
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  post-lifestyle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install minimal deps for state sync
+        run: pip install google-auth google-api-python-client
+
+      - name: Restore persistent state from Google Drive
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py pull
+
+      - name: Install ffmpeg + text shaping libs
+        run: bash scripts/ci/apt_install.sh ffmpeg libraqm0 libfribidi0 libharfbuzz0b
+
+      - name: Install full Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Render and upload
+        env:
+          MAHANAVI_TIMEZONE: Asia/Kolkata
+          MAHANAVI_OUTPUT_DIR: ./data/generated
+          MAHANAVI_DATABASE_PATH: ./data/mahanavi.db
+          MAHANAVI_LOG_DIR: ./data/logs
+          LANGS: ${{ inputs.lang }}
+          PRIVACY: ${{ inputs.privacy }}
+          RENDER_ONLY: ${{ inputs.render_only }}
+        run: |
+          set -o pipefail
+          EXTRA=""
+          if [ "$RENDER_ONLY" = "true" ]; then EXTRA="--render-only"; fi
+          if [ "$LANGS" = "both" ]; then LIST="te hi"; else LIST="$LANGS"; fi
+          for L in $LIST; do
+            if [ "$L" = "te" ]; then export STATE_FILE=data/lifestyle_state_te.json MAHANAVI_YOUTUBE_TOKEN_FILE=./data/youtube_token.json;
+            else export STATE_FILE=data/lifestyle_state_hi.json MAHANAVI_YOUTUBE_TOKEN_FILE=./data/youtube_token_mantra_sangam.json; fi
+            export POST_SLOT=lifestyle_$L
+            PYTHONPATH=src:. python3 -m channels.lifestyle.post --lang "$L" --privacy "$PRIVACY" $EXTRA
+          done
+
+      - name: Push state to Drive
+        if: always()
+        env:
+          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: python scripts/ci/drive_state_sync.py push
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/ci/notify_failure.py "Weekly | Sunday Lifestyle Video"
