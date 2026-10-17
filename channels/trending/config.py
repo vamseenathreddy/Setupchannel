@@ -17,22 +17,22 @@ FONTS = REPO_ROOT / "channels/engine/assets/fonts"
 BRAND = "Pulse Boosting"
 HANDLE = "@PulseBoosting"
 LANGS = ["te"]          # 2026-10-17: Telugu only (TDP-supportive channel)
-NICHES = ["chandrababu", "lokesh", "tdp", "nda", "development", "innovations", "join", "voice", "janasena"]
+NICHES = ["chandrababu", "lokesh", "tdp", "nda", "development", "innovations", "join", "voice"]   # Janasena is switched off: TDP-only channel
 # One day = 12 posts in this order (repeats every day, so every day has the same mix): 6 news and evergreen posts,
 # 2 "join the TDP" motivation posts, 2 "tell us the development in your constituency" posts, 2 Janasena posts.
-DAY_PATTERN = ["chandrababu", "join", "lokesh", "janasena", "development", "voice",
-               "tdp", "janasena", "innovations", "join", "voice", "nda"]
+DAY_PATTERN = ["chandrababu", "join", "lokesh", "chandrababu", "development", "voice",
+               "tdp", "lokesh", "innovations", "join", "voice", "nda"]
 
 LANG_EN = {"te": "Telugu", "hi": "Hindi", "en": "English", "ta": "Tamil", "kn": "Kannada", "ml": "Malayalam"}
 LANG_NATIVE = {"te": "తెలుగు", "hi": "हिन्दी", "en": "English", "ta": "தமிழ்", "kn": "ಕನ್ನಡ", "ml": "മലയാളം"}
 NICHE_EN = {"chandrababu": "Chandrababu Naidu", "lokesh": "Nara Lokesh", "tdp": "Telugu Desam Party",
             "nda": "NDA Alliance", "development": "AP Development", "innovations": "CM Innovations",
-            "join": "Join TDP", "voice": "Your Constituency", "janasena": "Janasena"}
+            "join": "Join TDP", "voice": "Your Constituency"}
 NICHE_TAG = {"chandrababu": "ChandrababuNaidu", "lokesh": "NaraLokesh", "tdp": "TDP", "nda": "NDAAlliance",
              "development": "APDevelopment", "innovations": "Innovations",
-             "join": "JoinTDP", "voice": "MyConstituency", "janasena": "Janasena"}
+             "join": "JoinTDP", "voice": "MyConstituency"}
 NICHE_NATIVE = {
-    "te": ["చంద్రబాబు", "నారా లోకేశ్", "తెలుగుదేశం", "కూటమి", "అభివృద్ధి", "ఆవిష్కరణలు", "టీడీపీలో చేరండి", "మీ నియోజకవర్గం", "జనసేన"],
+    "te": ["చంద్రబాబు", "నారా లోకేశ్", "తెలుగుదేశం", "కూటమి", "అభివృద్ధి", "ఆవిష్కరణలు", "టీడీపీలో చేరండి", "మీ నియోజకవర్గం"],
     "en": list(NICHE_EN.values()),
 }
 LANG_TAG = {"te": "TeluguNews", "en": "IndiaNews"}

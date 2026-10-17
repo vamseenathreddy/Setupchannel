@@ -232,12 +232,12 @@ def test_seo_covers_regions_and_stays_within_limits():
 def test_day_pattern_mix_and_new_banks():
     from channels.trending.bank import bank_stories
     day = [cfg.plan(i)[1] for i in range(12)]
-    assert day.count("join") == 2 and day.count("voice") == 2 and day.count("janasena") == 2
+    assert day.count("join") == 2 and day.count("voice") == 2 and "janasena" not in day and "janasena" not in cfg.NICHES
     assert [cfg.plan(i)[1] for i in range(12, 24)] == day and set(day) == set(cfg.NICHES)
-    for n in ("join", "voice", "janasena"):
+    for n in ("join", "voice"):
         b = bank_stories(n)
         assert b and len({s.key for s in b}) == len(b) and all(matches_language(s.headline, "te") for s in b)
-    assert len(bank_stories("join")) == 78 and "Janasena" in metadata.hashtags("te", "janasena")[0]
+    assert len(bank_stories("join")) == 78
     for n in cfg.NICHES:
         s = bank_stories(n)[0]
         m = metadata.bundle(s, "te", n)
