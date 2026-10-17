@@ -26,6 +26,25 @@ def _person(name: str, height: int) -> Image.Image:
     return out
 
 
+def _coin(name: str, d: int) -> Image.Image:
+    """The person as a round coin: white disc, the cut-out filling it, a white ring and a red rim."""
+    im = Image.open(PEOPLE / f"{name}.png").convert("RGBA")
+    k = d * 1.05 / im.width
+    im = im.resize((int(im.width * k), int(im.height * k)), Image.LANCZOS)
+    disc = Image.new("RGBA", (d, d), (255, 248, 225, 255))
+    disc.alpha_composite(im, ((d - im.width) // 2, 6))
+    mask = Image.new("L", (d * 4, d * 4), 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, d * 4 - 1, d * 4 - 1), fill=255)
+    mask = mask.resize((d, d), Image.LANCZOS)
+    pad = 14
+    out = Image.new("RGBA", (d + 2 * pad, d + 2 * pad), (0, 0, 0, 0))
+    od = ImageDraw.Draw(out)
+    od.ellipse((0, 0, out.width - 1, out.height - 1), fill=(190, 20, 30, 255))
+    od.ellipse((6, 6, out.width - 7, out.height - 7), fill=(255, 255, 255, 255))
+    out.paste(disc, (pad, pad), mask)
+    return out
+
+
 def _badge(bg: Image.Image, font_path: str) -> None:
     d = ImageDraw.Draw(bg)
     x, y, w, h = 30, 120, 360, 118
@@ -47,8 +66,8 @@ def make_overlay(font_path: str):
         bg = bg.convert("RGBA")
         a, b = WHO.get(row.get("category", ""), ("cbn", "lokesh"))
         big, small = _person(a, 520), _person(b, 400)
-        ntr = _person("ntr", 190)  # NTR, top-right corner on every card, mirroring the reporter badge
-        bg.alpha_composite(ntr, (W - ntr.width - 30, 215))
+        ntr = _coin("ntr", 170)  # NTR as a round coin, top-right corner on every card
+        bg.alpha_composite(ntr, (W - ntr.width - 40, 150))
         bg.alpha_composite(big, (-10, H - big.height + 30))
         bg.alpha_composite(small, (W - small.width + 10, H - small.height + 30))
         _badge(bg, font_path)
