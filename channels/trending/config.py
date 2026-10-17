@@ -35,7 +35,7 @@ WHATSAPP_URL = ""
 TELEGRAM_URL = ""
 # (subscribe line, join-groups line, comment line), drawn under the headline
 CTA = {
-    "te": ("రోజూ 12 తెలుగు వార్తలు. సబ్‌స్క్రైబ్ చేయండి", "వాట్సాప్, టెలిగ్రామ్ గ్రూపుల్లో చేరండి",
+    "te": ("ఛానెల్‌ను సబ్‌స్క్రైబ్ చేయండి", "వాట్సాప్, టెలిగ్రామ్ గ్రూపుల్లో చేరండి",
            "ఈ వార్తపై మీ అభిప్రాయం కామెంట్ చేయండి"),
     "en": ("12 Telugu updates daily. Subscribe", "Join our WhatsApp and Telegram groups",
            "Comment your opinion on this news"),
@@ -95,11 +95,11 @@ def render_cfg(lang: str, niche: str) -> ChannelConfig:
         music_rotate=True,
         logo_path=str(CHANNEL_DIR / "assets/logo.png"),
         watermark_handle=HANDLE,
-        safe_bottom=1385,
+        safe_bottom=1340,
         text_max_w=780,
         text_anchor=0.46,
-        cta_text="",  # no subscribe / join-groups lines on the card
-        cta_size=44,
+        cta_text=CTA[lang][0],  # subscribe line only (no join-groups line on the card)
+        cta_size=54,
         logo_width=170,
         logo_y=235,
         safe_top=350,
