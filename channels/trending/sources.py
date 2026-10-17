@@ -44,9 +44,10 @@ DEFAULT_ORDER = ("news", "bank")
 
 # TDP-supportive channel (2026-10-17): Telugu political search feeds, keyword-filtered.
 POLITICAL_QUERY = {
-    "chandrababu": "చంద్రబాబు నాయుడు", "lokesh": "నారా లోకేశ్", "tdp": "తెలుగుదేశం పార్టీ",
+    "chandrababu": ["చంద్రబాబు నాయుడు", "సీఎం చంద్రబాబు"], "lokesh": ["నారా లోకేశ్", "మంత్రి లోకేశ్"],
+    "tdp": ["తెలుగుదేశం పార్టీ", "టీడీపీ"],
     "nda": "కూటమి ప్రభుత్వం ఆంధ్రప్రదేశ్ జనసేన బీజేపీ టీడీపీ",
-    "janasena": "జనసేన పవన్ కళ్యాణ్ ఉప ముఖ్యమంత్రి",
+    "janasena": ["జనసేన పవన్ కళ్యాణ్", "డిప్యూటీ సీఎం పవన్ కళ్యాణ్"],
     "development": "ఆంధ్రప్రదేశ్ అభివృద్ధి పెట్టుబడులు", "innovations": "ఆంధ్రప్రదేశ్ ప్రభుత్వం కొత్త పథకం సాంకేతికత",
 }
 # Headlines that are about the opposition or about trouble are skipped: the channel only carries positive stories.
@@ -71,14 +72,26 @@ def political_stories(niche: str, lang: str = "te") -> list[Story]:
     """Telugu Google News search for the niche's subject: positive, non-opposition headlines, preferred outlets first."""
     import urllib.parse
 
-    q = urllib.parse.quote(f"{POLITICAL_QUERY[niche]} when:2d")
-    url = f"https://news.google.com/rss/search?q={q}&hl=te&gl=IN&ceid=IN:te"
-    out = [s for s in parse_rss(_get(url)) if is_informative(s) and matches_language(s.headline, "te")
+    queries = POLITICAL_QUERY[niche]
+    queries = [queries] if isinstance(queries, str) else queries
+    found, seen = [], set()
+    for text in queries:  # several searches per niche = a wider pool of the latest stories
+        q = urllib.parse.quote(f"{text} when:2d")
+        url = f"https://news.google.com/rss/search?q={q}&hl=te&gl=IN&ceid=IN:te"
+        try:
+            batch = parse_rss(_get(url))
+        except Exception as exc:  # noqa: BLE001 - one failing query must not lose the others
+            print(f"::warning::news query '{text}' failed: {type(exc).__name__}")
+            continue
+        for x in batch:
+            if x.link not in seen:
+                seen.add(x.link)
+                found.append(x)
+    out = [s for s in found if is_informative(s) and matches_language(s.headline, "te")
            and not any(b in s.publisher for b in BLOCKED_PUBLISHERS)
            and is_positive(s.headline)]
     from channels.trending.regions import mentioned
 
-    # Local stories (a named district) first: they pull in viewers from that part of the state. Then preferred outlets.
     out.sort(key=lambda x: (0 if mentioned(x.headline) else 1, 0 if any(p in x.publisher for p in PREFERRED) else 1, x.rank))
     for i, x in enumerate(out, start=1):
         x.rank = i

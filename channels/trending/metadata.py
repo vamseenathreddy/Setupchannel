@@ -38,6 +38,15 @@ ANGLE = {k: v[0] for k, v in ANGLES.items()}   # first line of each, for tests a
 SLOGAN = {"janasena": "జై జనసేన!"}
 
 
+HOOKS = ["జై తెలుగుదేశం!", "గర్వపడే వార్త!", "శుభవార్త!", "చూశారా!", "జై బాబు!"]
+HOOKS_JSP = ["జై జనసేన!", "జనసేన శ్రేణులకు శుభవార్త!", "జై పవన్ కళ్యాణ్!"]
+
+
+def hook(niche: str, key: str) -> str:
+    hooks = HOOKS_JSP if niche == "janasena" else HOOKS
+    return hooks[int(key[6:10] or "0", 16) % len(hooks)]
+
+
 def angle(niche: str, key: str = "") -> str:
     lines = ANGLES[niche]
     return lines[int(key[:6] or "0", 16) % len(lines)] if key else lines[0]
@@ -148,6 +157,8 @@ def bundle(story: Story, lang: str, niche: str) -> dict:
 def row_for(story: Story, lang: str, niche: str) -> dict:
     """The card: headline, the publisher's summary, related headlines, and a small source line."""
     head = story.headline
+    if story.kind == "news":  # a fan's reaction in front of the latest news headline
+        head = f"{hook(niche, story.key)} {head}"
     if len(head) > 110:
         head = head[:110].rsplit(" ", 1)[0].rstrip(",.:;-") + "…"
     kind = "Source"
