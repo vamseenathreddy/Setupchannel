@@ -48,7 +48,9 @@ def main() -> int:
     drop = [v for v in vids if guess(v["snippet"]) != "te"]
     print(f"::notice::{len(vids)} videos on the channel: keep {len(keep)} Telugu, {'deleting' if apply else 'would delete'} {len(drop)} others")
     for v in drop:
-        print(f"  {guess(v['snippet'])} {v['status']['privacyStatus']:8} {v['id']} {v['snippet']['title'][:70]}")
+        print(f"::notice::DELETE {guess(v['snippet'])} {v['status']['privacyStatus']} {v['id']} {v['snippet']['title'][:70]}")
+    for v in keep:
+        print(f"::notice::KEEP {guess(v['snippet'])} {v['status']['privacyStatus']} {v['id']} {v['snippet']['title'][:70]}")
     if not apply:
         return 0
     done = 0
