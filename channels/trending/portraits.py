@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 PEOPLE = Path(__file__).resolve().parent / "assets/people"
 W, H = 1080, 1920
-WHO = {"chandrababu": ("cbn", "ntr"), "lokesh": ("lokesh", "cbn"), "tdp": ("ntr", "cbn"),
+WHO = {"chandrababu": ("cbn", "lokesh"), "lokesh": ("lokesh", "cbn"), "tdp": ("ntr", "cbn"),
        "nda": ("cbn", "lokesh"), "development": ("cbn", "lokesh"), "innovations": ("lokesh", "cbn")}
 
 
