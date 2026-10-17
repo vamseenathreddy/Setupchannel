@@ -23,6 +23,11 @@ def _person(name: str, height: int) -> Image.Image:
     shadow.paste(Image.new("RGBA", im.size, (90, 40, 0, 150)), (28, 30), a.filter(ImageFilter.GaussianBlur(10)))
     out = Image.alpha_composite(Image.alpha_composite(out, shadow), glow)
     out.alpha_composite(im, (20, 20))
+    fade = Image.new("L", out.size, 255)  # soft bottom edge, since the photos are cut at the shoulders
+    fd = ImageDraw.Draw(fade)
+    for i in range(70):
+        fd.line((0, out.height - 1 - i, out.width, out.height - 1 - i), fill=int(255 * i / 70))
+    out.putalpha(Image.composite(out.getchannel("A"), Image.new("L", out.size, 0), fade))
     return out
 
 
@@ -65,11 +70,11 @@ def make_overlay(font_path: str):
     def overlay(bg: Image.Image, row: dict) -> Image.Image:
         bg = bg.convert("RGBA")
         a, b = WHO.get(row.get("category", ""), ("cbn", "lokesh"))
-        big, small = _person(a, 520), _person(b, 400)
+        big, small = _person(a, 430), _person(b, 340)
         ntr = _coin("ntr", 170)  # NTR as a round coin, top-right corner on every card
         bg.alpha_composite(ntr, (W - ntr.width - 40, 150))
-        bg.alpha_composite(big, (-10, H - big.height + 30))
-        bg.alpha_composite(small, (W - small.width + 10, H - small.height + 30))
+        bg.alpha_composite(big, (-10, H - big.height - 150))
+        bg.alpha_composite(small, (W - small.width + 10, H - small.height - 150))
         _badge(bg, font_path)
         return bg
     return overlay
