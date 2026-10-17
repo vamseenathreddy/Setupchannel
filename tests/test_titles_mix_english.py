@@ -49,3 +49,22 @@ def test_special_tithi_leads_the_title():
     d = date(2026, 10, 20)
     assert dated_title("rahu_kalam", d, "Shukla Ekadashi", d.toordinal()).startswith("శుద్ధ ఏకాదశి")
     assert dated_title("durmuhurtham", d, "Amavasya", d.toordinal()).startswith("అమావాస్య")
+
+
+def test_mantra_sangam_dated_titles_unique_and_carry_tithi():
+    import datetime as dt
+
+    from channels.mantra_sangam import metadata_timings as m
+
+    start = dt.date(2026, 10, 17)
+    for kind in ("rahu", "shubh", "durm"):
+        titles = set()
+        for i in range(60):
+            d = start + dt.timedelta(days=i)
+            row = {"category": kind, "date_iso": d.isoformat(), "tithi_hi": "शुक्ल सप्तमी", "tithi_special": False}
+            t = m.title(row)
+            assert len(t) <= 100 and "शुक्ल सप्तमी" in t
+            titles.add(t)
+        assert len(titles) == 60
+    special = m.title({"category": "rahu", "date_iso": "2026-10-22", "tithi_hi": "शुक्ल एकादशी", "tithi_special": True})
+    assert special.startswith("शुक्ल एकादशी")

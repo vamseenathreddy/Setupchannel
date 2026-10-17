@@ -42,6 +42,19 @@ CTA = {"rahu": "रोज़ राहु काल जानने के ल�
 OPINION = "इस वीडियो पर अपनी राय कमेंट करें"
 
 
+def tithi_hi(tithi: str) -> tuple[str, bool]:
+    """('शुक्ल सप्तमी', special?) from the provider's English sunrise tithi; special tithis lead the title."""
+    from mahanavi.content import beej_mantras as bm
+
+    paksha, key = bm.split_tithi(tithi)
+    if not key:
+        return "", False
+    name = bm.TITHI_NAME[key][1]
+    if key in ("purnima", "amavasya"):
+        return name, True
+    return f"{bm.PAKSHA[paksha][1]} {name}", key in ("ekadashi", "trayodashi", "chaturdashi")
+
+
 def date_hi(d: date) -> str:
     return f"{d.day} {MONTH_HI[d.month - 1]} {d.year}, {WEEKDAY_HI[d.weekday()]}"
 
@@ -66,6 +79,7 @@ def timing_row(kind: str, d: date) -> dict:
         "weekday_en": WEEKDAY_EN[d.weekday()], "date_iso": d.isoformat(),
         "rahu": p.rahu_kalam, "durm_times": p.durmuhurtham, "abhijit": p.abhijit_muhurtham,
         "brahma": prov.brahma_muhurta(d), "yamagandam": p.yamagandam, "gulika": p.gulika_kalam, "varjyam": p.varjyam,
+        "tithi_hi": tithi_hi(p.tithi)[0], "tithi_special": tithi_hi(p.tithi)[1],
     }
     if kind == "rahu":
         row.update(t_title="आज का राहु काल", t_label="समय", t_time=p.rahu_kalam,

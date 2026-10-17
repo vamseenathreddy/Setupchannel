@@ -9,13 +9,20 @@ NAMES = {  # (hindi, english)
     "shubh": ("शुभ मुहूर्त", "Shubh Muhurat"),
     "durm": ("दुर्मुहूर्त", "Durmuhurat"),
 }
+# 2026-10-17: titles carry the date, weekday and sunrise tithi plus one proven hook, so no two days share a title.
+# {d} "17 अक्टूबर", {wd} weekday, {t} tithi (may be empty). Special tithis (Ekadashi, Purnima, Amavasya...) lead.
 TITLE_FMT = {
-    "rahu": ["आज का राहु काल | Rahu Kaal Today {d}", "Rahu Kaal Today | आज राहु काल कब है? {d}",
-             "राहु काल आज | Rahu Kalam Timing {d}"],
-    "shubh": ["आज के शुभ मुहूर्त | Shubh Muhurat Today {d}", "Shubh Muhurat Today | अभिजीत मुहूर्त {d}",
-              "आज का शुभ समय | Abhijit Muhurat {d}"],
-    "durm": ["आज का दुर्मुहूर्त | Durmuhurat Today {d}", "Durmuhurat Today | आज कौन सा समय अशुभ? {d}",
-             "दुर्मुहूर्त आज | Inauspicious Time {d}"],
+    "rahu": ["{d} {wd}{t} - राहु काल | Avoid This Time", "राहु काल {d}{t} - Check Before You Start",
+             "{wd} {d}{t} - Rahu Kaal Today | आज राहु काल"],
+    "shubh": ["{d} {wd}{t} - शुभ मुहूर्त | Good Time Today", "शुभ मुहूर्त {d}{t} - Abhijit Muhurat Today",
+              "{wd} {d}{t} - Shubh Muhurat | अभिजीत मुहूर्त"],
+    "durm": ["{d} {wd}{t} - दुर्मुहूर्त | Avoid This Time", "दुर्मुहूर्त {d}{t} - Check Before You Start",
+             "{wd} {d}{t} - Durmuhurat Today | दुर्मुहूर्त"],
+}
+SPECIAL_FMT = {
+    "rahu": "{tt} {d} {wd} - राहु काल | Avoid This Time",
+    "shubh": "{tt} {d} {wd} - शुभ मुहूर्त | Good Time Today",
+    "durm": "{tt} {d} {wd} - दुर्मुहूर्त | Avoid This Time",
 }
 TAGS = {
     "rahu": ["#RahuKaal", "#RahuKalam", "#राहुकाल", "#Panchang"],
@@ -32,11 +39,16 @@ def _d(row):
 
 
 def title(row):
-    opts = TITLE_FMT[row["category"]]
     import datetime as dt
-    i = dt.date.fromisoformat(row["date_iso"]).toordinal() % len(opts)
-    t = opts[i].format(d=_d(row))
-    return t if len(t) <= 100 else opts[0].format(d=_d(row))[:100]
+    d = dt.date.fromisoformat(row["date_iso"])
+    date_s = f"{d.day} {timings.MONTH_HI[d.month - 1]}"
+    wd = timings.WEEKDAY_HI[d.weekday()]
+    tithi = row.get("tithi_hi", "")
+    if tithi and row.get("tithi_special"):
+        t = SPECIAL_FMT[row["category"]].format(tt=tithi, d=date_s, wd=wd)
+    else:
+        t = TITLE_FMT[row["category"]][d.toordinal() % 3].format(d=date_s, wd=wd, t=f", {tithi}" if tithi else "")
+    return t[:100]
 
 
 def hashtags(row):
