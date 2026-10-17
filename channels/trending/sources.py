@@ -199,17 +199,17 @@ def article_summary(link: str, lang: str, headline: str, timeout: int = 15) -> s
         if not text or not matches_language(text, lang) or text.casefold().startswith(headline.casefold()[:40]):
             print(f"::notice::no summary (page meta unusable: {text[:60]!r})")
             return ""
-        return trim(text, 200)
+        return trim(text, 260)
     except Exception as exc:  # noqa: BLE001
         print(f"::notice::no summary ({type(exc).__name__}: {exc})")
         return ""
 
 
 def enrich(story: Story, lang: str) -> Story:
-    """Add reading matter: the publisher's summary and up to two related headlines in the same language."""
+    """Add reading matter: the publisher's summary and up to four related headlines in the same language."""
     if story.kind == "news":
         story.summary = article_summary(story.link, lang, story.headline)
-    story.related = tuple((trim(h, 80), p) for h, p in story.related if matches_language(h, lang))[:2]
+    story.related = tuple((trim(h, 90), p) for h, p in story.related if matches_language(h, lang))[:4]
     return story
 
 

@@ -82,14 +82,12 @@ def bundle(story: Story, lang: str, niche: str) -> dict:
 
 
 def row_for(story: Story, lang: str, niche: str) -> dict:
-    """The card: label, headline, the publisher's summary, related headlines, and a small source line."""
+    """The card: headline, the publisher's summary, related headlines, and a small source line."""
     head = story.headline
     if len(head) > 110:
         head = head[:110].rsplit(" ", 1)[0].rstrip(",.:;-") + "…"
     kind = "YouTube" if story.kind == "yt" else "Source"
     related = "\n".join(f"• {h}" for h, _ in story.related)
     return {"id": story.key, "category": niche, "special": "",
-            "label": (f"TRENDING #{story.rank} • " if story.rank else "TRENDING • ") + (
-                cfg.NICHE_EN[niche].upper() if lang == "en" else cfg.niche_label(lang, niche)),
             "text_primary": head, "text_summary": story.summary, "text_related": related,
             "text_secondary": f"{kind}: {story.publisher}"}

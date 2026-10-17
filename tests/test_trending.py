@@ -71,10 +71,10 @@ def test_only_top_10_and_widest_coverage_first():
     assert pick_story("sports", "en", {plain.key, wide.key}, None, now, fetch_news=lambda n, l: [low, plain, wide]) is None
 
 
-def test_rank_shows_on_card_and_in_description():
+def test_rank_only_in_description_not_on_card():
     s = Story("Fresh short headline for today", "Eenadu", "l", None, rank=3)
     row = metadata.row_for(s, "en", "sports")
-    assert row["label"] == "TRENDING #3 • SPORTS"
+    assert "label" not in row and "TRENDING" not in "".join(str(v) for v in row.values())
     assert "Ranked #3 in today's top 10 trending sports stories" in metadata.description(s, "en", "sports")
     assert "Trending India" in metadata.title(s, "en", "sports")
 
@@ -144,7 +144,7 @@ def test_enrich_keeps_only_same_language_related_and_row_has_source_last():
     import channels.trending.sources as src
     src.article_summary = lambda *a, **k: "ఇది ప్రచురణకర్త సారాంశం"
     enrich(s, "te")
-    assert len(s.related) == 2 and all("India" not in h for h, _ in s.related)
+    assert len(s.related) == 3 and all("India" not in h for h, _ in s.related)
     row = metadata.row_for(s, "te", "sports")
     assert row["text_summary"] and row["text_related"].startswith("• ") and row["text_secondary"] == "Source: Eenadu"
     assert "Also reported:" in metadata.description(s, "te", "sports")
