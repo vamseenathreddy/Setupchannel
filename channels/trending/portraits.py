@@ -28,21 +28,18 @@ def _person(name: str, height: int) -> Image.Image:
 
 def _badge(bg: Image.Image, font_path: str) -> None:
     d = ImageDraw.Draw(bg)
-    x, y, w, h = 36, 232, 350, 118
+    x, y, w, h = 30, 120, 360, 118
     d.rounded_rectangle((x, y, x + w, y + h), 18, fill=(190, 20, 30, 255), outline=(255, 255, 255, 255), width=4)
     d.rectangle((x + 4, y + h - 30, x + w - 4, y + h - 8), fill=(255, 214, 0, 255))
-    me = Image.open(PEOPLE / "me.png").convert("RGBA")
-    # face crop: top 60% of the cut-out, square
-    side = min(me.width, int(me.height * 0.55))
-    me = me.crop(((me.width - side) // 2, 0, (me.width + side) // 2, side)).resize((88, 88), Image.LANCZOS)
-    ring = Image.new("RGBA", (96, 96), (255, 255, 255, 255))
-    mask = Image.new("L", (96, 96), 0)
-    ImageDraw.Draw(mask).ellipse((0, 0, 95, 95), fill=255)
+    me = Image.open(PEOPLE / "me_face.png").convert("RGBA").resize((104, 104), Image.LANCZOS)
+    ring = Image.new("RGBA", (112, 112), (255, 255, 255, 255))
+    mask = Image.new("L", (112, 112), 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, 111, 111), fill=255)
     ring.alpha_composite(me, (4, 4))
-    bg.paste(ring, (x + 12, y + 10), mask)
+    bg.paste(ring, (x + 8, y + 3), mask)
     f1, f2 = ImageFont.truetype(font_path, 27), ImageFont.truetype(font_path, 22)
-    d.text((x + 120, y + 18), "Pulse Boosting", font=f1, fill=(255, 255, 255, 255))
-    d.text((x + 120, y + 58), "తెలుగు వార్తలు", font=f2, fill=(255, 235, 150, 255))
+    d.text((x + 134, y + 18), "Pulse Boosting", font=f1, fill=(255, 255, 255, 255))
+    d.text((x + 134, y + 58), "తెలుగు వార్తలు", font=f2, fill=(255, 235, 150, 255))
 
 
 def make_overlay(font_path: str):
