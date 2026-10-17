@@ -130,19 +130,24 @@ def chapter_seconds(point_tops: list, strip_height: int, min_seconds: int = MIN_
 
 
 def render(lang: str, theme: dict, bg_path: Path, music_path: Path, out: Path, workdir: Path,
-           min_seconds: int = MIN_SECONDS, fps: int = 24, preview_seconds: int | None = None) -> float:
+           min_seconds: int = MIN_SECONDS, fps: int = 15, preview_seconds: int | None = None) -> float:
     workdir.mkdir(parents=True, exist_ok=True)
     strip = build_strip(lang, theme)
-    strip.save(workdir / "strip.png")
+    padded = Image.new("RGBA", (W, strip.height + 2 * H), (0, 0, 0, 0))  # room above and below so a plain crop can scroll
+    padded.paste(strip, (0, H))
+    padded.save(workdir / "strip.png")
     background(bg_path).save(workdir / "bg.png")
     fade_bands().save(workdir / "fade.png")
     duration, speed = timing(strip.height, min_seconds)
     run = float(preview_seconds) if preview_seconds else duration
-    fc = (f"[0:v][1:v]overlay=x=0:y='{H - 150}-t*{speed:.4f}':eval=frame[a];[a][2:v]overlay=0:0,format=yuv420p[v]")
+    # `loop` keeps each still in memory (an image input with -loop 1 re-decodes the PNG every frame, ~5x slower), and
+    # cropping a window out of the tall strip first keeps every frame cheap.
+    fc = (f"[0:v]loop=loop=-1:size=1[b];[1:v]loop=loop=-1:size=1,crop={W}:{H}:0:'150+t*{speed:.4f}'[s];"
+          f"[2:v]loop=loop=-1:size=1[f];[b][s]overlay=0:0[a];[a][f]overlay=0:0,format=yuv420p[v]")
     cmd = ["ffmpeg", "-y", "-v", "error",
-           "-loop", "1", "-framerate", str(fps), "-t", f"{run}", "-i", str(workdir / "bg.png"),
-           "-loop", "1", "-framerate", str(fps), "-t", f"{run}", "-i", str(workdir / "strip.png"),
-           "-loop", "1", "-framerate", str(fps), "-t", f"{run}", "-i", str(workdir / "fade.png"),
+           "-framerate", str(fps), "-i", str(workdir / "bg.png"),
+           "-framerate", str(fps), "-i", str(workdir / "strip.png"),
+           "-framerate", str(fps), "-i", str(workdir / "fade.png"),
            "-stream_loop", "-1", "-i", str(music_path),
            "-filter_complex", fc, "-map", "[v]", "-map", "3:a",
            "-t", f"{run}", "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-r", str(fps),
