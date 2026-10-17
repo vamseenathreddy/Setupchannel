@@ -32,9 +32,14 @@ def _person(name: str, height: int) -> Image.Image:
     return out
 
 
+FACE_BOX = {"pawan": (285, 35, 635, 385)}   # square around the face in the cut-out (it is a wide photo)
+
+
 def _coin(name: str, d: int) -> Image.Image:
-    """The person as a round coin: white disc, the cut-out filling it, a white ring and a red rim."""
+    """The person as a round coin: cream disc, the cut-out filling it, a white ring and a red rim."""
     im = Image.open(PEOPLE / f"{name}.png").convert("RGBA")
+    if name in FACE_BOX:
+        im = im.crop(FACE_BOX[name])
     k = d * 1.05 / im.width
     im = im.resize((int(im.width * k), int(im.height * k)), Image.LANCZOS)
     disc = Image.new("RGBA", (d, d), (255, 248, 225, 255))
@@ -72,9 +77,10 @@ def make_overlay(font_path: str):
         bg = bg.convert("RGBA")
         a, b = WHO.get(row.get("category", ""), ("cbn", "lokesh"))
         big, small = _person(a, 330 if a == "pawan" else 430), (_person(b, 340) if b else None)  # Pawan's photo is landscape
-        if b:  # NTR's round coin, top-right, on the TDP cards only
-            ntr = _coin("ntr", 170)
-            bg.alpha_composite(ntr, (W - ntr.width - 40, 150))
+        if b:  # TDP cards: NTR and Pawan Kalyan as round coins, top-right
+            ntr, pk = _coin("ntr", 150), _coin("pawan", 150)
+            bg.alpha_composite(ntr, (W - ntr.width - 36, 150))
+            bg.alpha_composite(pk, (W - ntr.width - pk.width - 46, 150))
         bg.alpha_composite(big, (0 if a == "pawan" else -10, H - big.height - 150))
         if small:
             bg.alpha_composite(small, (W - small.width + 10, H - small.height - 150))
