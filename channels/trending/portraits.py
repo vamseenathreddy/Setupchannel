@@ -34,7 +34,7 @@ def _person(name: str, height: int) -> Image.Image:
 
 # False = the red reporter badge top-left (live). True = the owner's face as a very light copyright watermark instead
 # (previewed 2026-10-17, awaiting approval).
-FACE_WATERMARK = False
+FACE_WATERMARK = True
 FACE_BOX = {"pawan": (255, 92, 595, 432), "pawan_front": (0, 0, 470, 470)}   # square around the face in the cut-out (it is a wide photo)
 
 
