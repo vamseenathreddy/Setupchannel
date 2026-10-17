@@ -74,7 +74,10 @@ def political_stories(niche: str, lang: str = "te") -> list[Story]:
     out = [s for s in parse_rss(_get(url)) if is_informative(s) and matches_language(s.headline, "te")
            and not any(b in s.publisher for b in BLOCKED_PUBLISHERS)
            and is_positive(s.headline)]
-    out.sort(key=lambda x: (0 if any(p in x.publisher for p in PREFERRED) else 1, x.rank))
+    from channels.trending.regions import mentioned
+
+    # Local stories (a named district) first: they pull in viewers from that part of the state. Then preferred outlets.
+    out.sort(key=lambda x: (0 if mentioned(x.headline) else 1, 0 if any(p in x.publisher for p in PREFERRED) else 1, x.rank))
     for i, x in enumerate(out, start=1):
         x.rank = i
     return out

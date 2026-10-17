@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from channels.trending import config as cfg
+from channels.trending import regions
 from channels.trending.sources import Story
 
 DISCLOSURE = ("ఈ ఛానెల్ తెలుగుదేశం పార్టీ అనుకూల దృక్పథంతో నడుస్తుంది. ఇందులోని విశ్లేషణ మా అభిప్రాయం; వార్తలు పేర్కొన్న "
@@ -28,12 +29,13 @@ def join_lines() -> list[str]:
     return out
 
 
-def hashtags(lang: str, niche: str) -> list[str]:
-    tags = ["#PulseBoosting", "#Shorts", f"#{cfg.NICHE_TAG[niche]}", f"#{cfg.LANG_TAG[lang]}", "#Trending",
-            "#TDP", "#TeluguDesam", "#ChandrababuNaidu", "#NaraLokesh", "#AndhraPradesh", "#TeluguNews"]
-    nat = cfg.niche_label(lang, niche).replace(" ", "")
-    if lang != "en":
-        tags.append("#" + nat)
+def hashtags(lang: str, niche: str, story: Story | None = None) -> list[str]:
+    """YouTube shows the first three above the title: keep those the strongest. Then the district tags for this post."""
+    tags = ["#TDP", "#AndhraPradesh", "#ChandrababuNaidu", "#PulseBoosting", "#Shorts", f"#{cfg.NICHE_TAG[niche]}",
+            "#NaraLokesh", "#TeluguNews", "#TeluguDesam"]
+    if story is not None:
+        for _te, en, region in regions.for_post(story.key, f"{story.headline} {story.summary}", 3):
+            tags += ["#" + en.replace(" ", ""), "#" + region]
     seen, out = set(), []
     for t in tags:
         if t.lower() not in seen:
@@ -51,15 +53,18 @@ def title(story: Story, lang: str, niche: str) -> str:
     return f"{cut}…{tail}"
 
 
-def tags(lang: str, niche: str) -> list[str]:
-    words = [cfg.BRAND, "Pulse Boosting news", cfg.NICHE_EN[niche], cfg.niche_label(lang, niche), cfg.LANG_EN[lang],
-             f"{cfg.LANG_EN[lang]} news", f"{cfg.NICHE_EN[niche]} news", "trending news", "TDP", "Telugu Desam Party",
-             "Chandrababu Naidu", "Nara Lokesh", "Andhra Pradesh", "Telugu news", "AP news", "shorts"]
+def tags(lang: str, niche: str, story: Story | None = None) -> list[str]:
+    words = [cfg.BRAND, cfg.NICHE_EN[niche], cfg.niche_label(lang, niche), "TDP", "తెలుగుదేశం పార్టీ", "Telugu Desam Party",
+             "Chandrababu Naidu", "చంద్రబాబు నాయుడు", "Nara Lokesh", "నారా లోకేశ్", "Andhra Pradesh", "ఆంధ్రప్రదేశ్",
+             "Telugu news", "తెలుగు వార్తలు", "AP news", "AP politics", "AP assembly constituencies", "అన్ని నియోజకవర్గాలు", "shorts"]
+    if story is not None:
+        for te, en, region in regions.for_post(story.key, f"{story.headline} {story.summary}", 5):
+            words += [en, te, f"{en} news"]
     out, total, seen = [], 0, set()
     for w in words:
         k = w.lower()
         cost = len(w) + (2 if " " in w else 0) + 1
-        if k in seen or total + cost > 480:
+        if k in seen or total + cost > 470:
             continue
         seen.add(k)
         out.append(w)
@@ -70,6 +75,14 @@ def tags(lang: str, niche: str) -> list[str]:
 def source_line(story: Story) -> str:
     kind = "Source"
     return f"{kind}: {story.publisher}\nLink: {story.link}"
+
+
+def area_lines(story: Story) -> list[str]:
+    """Where this matters: districts the story names, then a rotation, across all three regions of Andhra Pradesh."""
+    ds = regions.for_post(story.key, f"{story.headline} {story.summary}", 8)
+    return [
+        "ఈ వార్త ఆంధ్రప్రదేశ్‌లోని అన్ని జిల్లాలు, 175 నియోజకవర్గాల ప్రజల కోసం: " + ", ".join(d[0] for d in ds) + " మరియు ఉత్తరాంధ్ర, కోస్తాంధ్ర, రాయలసీమ ప్రాంతాలు.",
+        "For people across Andhra Pradesh: " + ", ".join(d[1] for d in ds) + " and all 175 assembly constituencies.", ""]
 
 
 def description(story: Story, lang: str, niche: str) -> str:
@@ -83,10 +96,11 @@ def description(story: Story, lang: str, niche: str) -> str:
         source_line(story), "",
         cfg.INTRO[lang],
         cfg.INTRO["en"], "",
+        *area_lines(story),
         *join_lines(), *([""] if join_lines() else []),
         DISCLOSURE, "",
         f"{cfg.BRAND}: like, share and subscribe.", "",
-        " ".join(hashtags(lang, niche)),
+        " ".join(hashtags(lang, niche, story)),
     ])
 
 
@@ -94,7 +108,7 @@ def bundle(story: Story, lang: str, niche: str) -> dict:
     return {
         "title": title(story, lang, niche),
         "description": description(story, lang, niche),
-        "tags": tags(lang, niche),
+        "tags": tags(lang, niche, story),
         "comment": f"{source_line(story)}\n{cfg.CTA[lang][2]}",
         "language": lang,
     }

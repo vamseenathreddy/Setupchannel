@@ -212,3 +212,18 @@ def test_bank_facts_are_complete_and_distinct():
     b = bank_stories()
     assert len(b) >= 12 and len({s.key for s in b}) == len(b)
     assert all(s.summary and s.link.startswith("https://") and matches_language(s.headline, "te") for s in b)
+
+
+def test_seo_covers_regions_and_stays_within_limits():
+    from channels.trending import regions
+    s = Story("గుంటూరులో కొత్త పరిశ్రమ ఒప్పందం, అభివృద్ధికి ఊతం", "Eenadu", "https://n/1", None, summary="కర్నూలు, విశాఖపట్నం ప్రస్తావన")
+    ds = regions.for_post(s.key, s.headline + s.summary, 8)
+    assert [d[1] for d in ds][:3] == ["Guntur", "Kurnool", "Visakhapatnam"] or {"Guntur", "Kurnool"} <= {d[1] for d in ds}
+    m = metadata.bundle(s, "te", "development")
+    assert len(m["description"]) < 5000 and len(m["title"]) <= 100
+    assert sum(len(t) + (2 if " " in t else 0) + 1 for t in m["tags"]) <= 500
+    assert "#Guntur" in metadata.hashtags("te", "development", s) and len(metadata.hashtags("te", "development", s)) <= 15
+    assert "175" in m["description"]
+    # a day of different stories reaches all three regions
+    seen = {d[2] for i in range(12) for d in regions.for_post(f"k{i}", "", 6)}
+    assert len(seen) == 3
