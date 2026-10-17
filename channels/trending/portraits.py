@@ -94,12 +94,12 @@ def make_overlay(font_path: str):
     def overlay(bg: Image.Image, row: dict) -> Image.Image:
         bg = bg.convert("RGBA")
         a, b = WHO.get(row.get("category", ""), ("cbn", "lokesh"))
-        if b:  # TDP cards: round coins (NTR, Chandrababu, Pawan) top-right; Lokesh alone at the bottom-right
+        if b:  # TDP cards: round coins (NTR, Chandrababu, Pawan, Modi) top-right; Lokesh alone at the bottom-right
             x = W - 24
-            for who in ("ntr", "cbn", "pawan_smile"):
-                c = _coin(who, 106)
+            for who in ("ntr", "cbn", "pawan_smile", "modi"):
+                c = _coin(who, 88)
                 x -= c.width
-                bg.alpha_composite(c, (x, 160))
+                bg.alpha_composite(c, (x, 118))
                 x -= 8
             lk = _person("lokesh", 400)
             bg.alpha_composite(lk, (W - lk.width + 10, H - lk.height - 150))

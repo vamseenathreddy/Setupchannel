@@ -11,6 +11,7 @@ JOBS = {  # name: (file, rect as fractions x0,y0,x1,y1 of the subject, max side)
     "ntr": ("8b9c2919-image.jpg", (0.52, 0.0, 1.0, 1.0)),
     "pawan_front": ("244ed264-image.jpg", (0.28, 0.12, 0.99, 1.0)),   # front-facing photo, used for the round coins
     "pawan": ("7aaba330-image.jpg", (0.02, 0.02, 0.98, 0.98)),
+    "modi": ("7032352a-image.jpg", (0.04, 0.02, 0.96, 1.0)),
     "me": ("cc2fb980-image.jpg", (0.12, 0.12, 0.98, 1.0)),
 }
 OUT = "channels/trending/assets/people/"
