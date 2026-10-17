@@ -35,14 +35,14 @@ WHATSAPP_URL = ""
 TELEGRAM_URL = ""
 # (subscribe line, join-groups line, comment line), drawn under the headline
 CTA = {
-    "te": ("రోజూ 12 సానుకూల వార్తలు. సబ్‌స్క్రైబ్ చేయండి", "వాట్సాప్, టెలిగ్రామ్ గ్రూపుల్లో చేరండి",
+    "te": ("రోజూ 12 తెలుగు వార్తలు. సబ్‌స్క్రైబ్ చేయండి", "వాట్సాప్, టెలిగ్రామ్ గ్రూపుల్లో చేరండి",
            "ఈ వార్తపై మీ అభిప్రాయం కామెంట్ చేయండి"),
-    "en": ("12 positive updates daily. Subscribe", "Join our WhatsApp and Telegram groups",
+    "en": ("12 Telugu updates daily. Subscribe", "Join our WhatsApp and Telegram groups",
            "Comment your opinion on this news"),
 }
 INTRO = {
-    "te": "తెలుగుదేశం, చంద్రబాబు, లోకేశ్ గారి పాలన, అభివృద్ధిపై సానుకూల వార్తలు. రోజుకు 12 షార్ట్స్.",
-    "en": "Positive news on TDP, Chandrababu Naidu, Nara Lokesh and Andhra Pradesh development. 12 Shorts a day.",
+    "te": "తెలుగుదేశం, చంద్రబాబు, లోకేశ్ గారి పాలన, అభివృద్ధిపై వార్తలు. రోజుకు 12 షార్ట్స్.",
+    "en": "News on TDP, Chandrababu Naidu, Nara Lokesh and Andhra Pradesh development. 12 Shorts a day.",
 }
 
 # (window start hour IST, slot id): one post every 2 hours from midnight, at a random minute inside the first
@@ -120,7 +120,7 @@ def plan(seq: int) -> tuple[str, str]:
 def playlist_for(lang: str, niche: str) -> tuple[str, str]:
     nat, en = niche_label(lang, niche), NICHE_EN[niche]
     title = f"{en} | {nat} (Telugu) - {BRAND}"[:150]
-    desc = (f"{INTRO[lang]}\n\nSourced, positive coverage of {en} in Telugu. Every Short names its source and links "
+    desc = (f"{INTRO[lang]}\n\nSourced coverage of {en} in Telugu. Every Short names its source and links "
             f"the original story. Subscribe to {BRAND}.\n\n"
             f"#{NICHE_TAG[niche]} #{LANG_TAG[lang]} #TDP #Shorts #PulseBoosting")
     return title, desc

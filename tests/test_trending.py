@@ -74,7 +74,7 @@ def test_only_top_10_and_widest_coverage_first():
 def test_card_has_positive_angle_and_description_has_disclosure():
     s = Story("అమరావతిలో కొత్త ఐటీ పార్క్ ప్రారంభం", "Eenadu", "l", None, rank=3)
     row = metadata.row_for(s, "te", "development")
-    assert "TRENDING" not in "".join(str(v) for v in row.values()) and "సానుకూల కోణం" in row["text_related"]
+    assert "TRENDING" not in "".join(str(v) for v in row.values()) and row["text_related"].startswith(metadata.ANGLE["development"])
     d = metadata.description(s, "te", "development")
     assert "pro-TDP" in d and "Source: Eenadu" in d and "#TDP" in d
     assert "| TDP |" in metadata.title(s, "te", "development")

@@ -42,7 +42,7 @@ def _badge(bg: Image.Image, font_path: str) -> None:
     bg.paste(ring, (x + 12, y + 10), mask)
     f1, f2 = ImageFont.truetype(font_path, 27), ImageFont.truetype(font_path, 22)
     d.text((x + 120, y + 18), "Pulse Boosting", font=f1, fill=(255, 255, 255, 255))
-    d.text((x + 120, y + 58), "TDP సపోర్టర్", font=f2, fill=(255, 235, 150, 255))
+    d.text((x + 120, y + 58), "తెలుగు వార్తలు", font=f2, fill=(255, 235, 150, 255))
 
 
 def make_overlay(font_path: str):
