@@ -16,17 +16,31 @@ DISCLOSURE_JSP = ("ఈ పోస్ట్ జనసేన పార్టీ ద
                   "sources named above. All rights belong to the original publishers.")
 INTRO_JSP = "జనసేన, పవన్ కళ్యాణ్ గారి కార్యక్రమాలు, ప్రజా సమస్యలపై వార్తలు."
 
-ANGLE = {  # one positive-angle line per niche, shown on the card and in the description (opinion, labelled as such)
-    "chandrababu": "దూరదృష్టితో కూడిన పాలనకు ఇది మరో ఉదాహరణ",
-    "lokesh": "యువతకు అవకాశాలు పెంచే దిశగా ఒక అడుగు",
-    "tdp": "ప్రజాసేవలో పార్టీ చూపుతున్న నిబద్ధత",
-    "nda": "డబుల్ ఇంజిన్ సహకారంతో రాష్ట్రానికి లాభం",
-    "development": "రాష్ట్ర అభివృద్ధికి, ఉపాధికి ఊతం",
-    "innovations": "సాంకేతికతతో పాలనలో కొత్త ఒరవడి",
-    "join": "తెలుగుదేశంతో కలిసి అడుగేయండి",
-    "voice": "మీ నియోజకవర్గం, మీ గళం",
-    "janasena": "ప్రజల పక్షాన జనసేన గళం",
+# The channel speaks as a hardcore fan: passionate slogans, never attacks on anyone, never a claim the story does not
+# support. One line per post, chosen by the story key. No emoji on the card (the card font would draw boxes).
+ANGLES = {
+    "chandrababu": ["అభివృద్ధికి అసలైన చిరునామా మన బాబు గారే! జై చంద్రబాబు!", "విజన్ ఉన్న నాయకుడు అంటే మన బాబు గారే! జై తెలుగుదేశం!",
+                    "మన సీబీఎన్, మన గర్వం! జై బాబు!", "బాబు గారు అంటే బ్రాండ్! జై టీడీపీ!"],
+    "lokesh": ["యువ నాయకుడు లోకేశ్ గారు దూసుకెళ్తున్నారు! జై లోకేశ్!", "చినబాబు స్పీడ్ మామూలుగా లేదు! జై తెలుగుదేశం!",
+               "యువతకు భరోసా మన లోకేశ్ అన్న! జై టీడీపీ!"],
+    "tdp": ["ఎన్టీఆర్ గారు వేసిన బాట, చంద్రబాబు గారి నడక! జై తెలుగుదేశం!", "పసుపు జెండా ఎగరాల్సిందే! జై తెలుగుదేశం!",
+            "తెలుగువాడి ఆత్మగౌరవం మన తెలుగుదేశం! జై టీడీపీ!"],
+    "nda": ["కూటమితో కలిసి రాష్ట్రాన్ని ముందుకు నడిపిద్దాం! జై తెలుగుదేశం!", "అభివృద్ధి కోసం అందరం ఒక్కటిగా! జై టీడీపీ!"],
+    "development": ["చూశారా మన అభివృద్ధి! జై చంద్రబాబు!", "ఇదీ మన తెలుగుదేశం స్పీడ్! జై టీడీపీ!",
+                    "అభివృద్ధి అంటే ఇదే! పసుపు సైన్యం గర్వపడే క్షణం!"],
+    "innovations": ["టెక్నాలజీ అంటే మన బాబు గారే! జై సీబీఎన్!", "కొత్త ఆలోచనలకు కేరాఫ్ మన తెలుగుదేశం! జై టీడీపీ!"],
+    "join": ["పసుపు సైనికులారా, కదలిరండి! జై తెలుగుదేశం!", "మన పార్టీ, మన బాధ్యత! తెలుగుదేశంలో చేరండి!",
+             "తెలుగుదేశం కుటుంబంలో మీరూ ఒకరు కండి! జై టీడీపీ!"],
+    "voice": ["మీ ఊరి అభివృద్ధి గళం వినిపించండి! జై తెలుగుదేశం!", "మీ నియోజకవర్గం, మీ గళం! కామెంట్ చేయండి!"],
+    "janasena": ["జనసేనాని అంటే జనం గుండె చప్పుడు! జై జనసేన!", "జై పవన్ కళ్యాణ్! జై జనసేన!", "ప్రజల పక్షాన జనసేన గళం! జై జనసేన!"],
 }
+ANGLE = {k: v[0] for k, v in ANGLES.items()}   # first line of each, for tests and fallbacks
+SLOGAN = {"janasena": "జై జనసేన!"}
+
+
+def angle(niche: str, key: str = "") -> str:
+    lines = ANGLES[niche]
+    return lines[int(key[:6] or "0", 16) % len(lines)] if key else lines[0]
 
 
 def join_lines() -> list[str]:
@@ -103,7 +117,7 @@ def area_lines(story: Story) -> list[str]:
 
 
 def description(story: Story, lang: str, niche: str) -> str:
-    more = [ANGLE[niche], ""]
+    more = [angle(niche, story.key), ""]
     more += [story.summary, ""] if story.summary else []
     if story.related:
         more += ["Also reported:"] + [f"- {h} ({p})" for h, p in story.related] + [""]
@@ -126,7 +140,7 @@ def bundle(story: Story, lang: str, niche: str) -> dict:
         "title": title(story, lang, niche),
         "description": description(story, lang, niche),
         "tags": tags(lang, niche, story),
-        "comment": f"{source_line(story)}\n{cfg.CTA[lang][2]}",
+        "comment": f"{source_line(story)}\n{cfg.CTA[lang][2]} {SLOGAN.get(niche, 'జై తెలుగుదేశం!')}",
         "language": lang,
     }
 
@@ -137,7 +151,7 @@ def row_for(story: Story, lang: str, niche: str) -> dict:
     if len(head) > 110:
         head = head[:110].rsplit(" ", 1)[0].rstrip(",.:;-") + "…"
     kind = "Source"
-    related = "\n".join([ANGLE[niche]] + [f"• {h}" for h, _ in story.related[:2]])
+    related = "\n".join([angle(niche, story.key)] + [f"• {h}" for h, _ in story.related[:2]])
     return {"id": story.key, "category": niche, "special": "",
             "text_primary": head, "text_summary": trim(story.summary, 190), "text_related": related,
             "text_secondary": f"{kind}: {story.publisher}"}
