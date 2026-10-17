@@ -137,7 +137,9 @@ def news_stories(niche: str, lang: str) -> list[Story]:
     hl, gl, ceid = EDITIONS[lang]
     url = (f"https://news.google.com/rss/headlines/section/topic/{NEWS_TOPIC[niche]}"
            f"?hl={hl}&gl={gl}&ceid={ceid}")
-    return [s for s in parse_rss(_get(url)) if is_informative(s)]
+    # Google sometimes serves another language's outlet in an edition (a Hindi story in the kn feed): drop those,
+    # otherwise the card shows glyphs the language's font lacks (boxes).
+    return [s for s in parse_rss(_get(url)) if is_informative(s) and matches_language(s.headline, lang)]
 
 
 def youtube_stories(yt, niche: str, lang: str) -> list[Story]:

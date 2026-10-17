@@ -148,3 +148,14 @@ def test_enrich_keeps_only_same_language_related_and_row_has_source_last():
     row = metadata.row_for(s, "te", "sports")
     assert row["text_summary"] and row["text_related"].startswith("• ") and row["text_secondary"] == "Source: Eenadu"
     assert "Also reported:" in metadata.description(s, "te", "sports")
+
+
+def test_news_stories_drops_other_language_headlines(monkeypatch):
+    import channels.trending.sources as src
+    xml = ("<rss><channel>"
+           "<item><title>ಭಾರತ ತಂಡ ನ್ಯೂಜಿಲೆಂಡ್ ಪ್ರವಾಸಕ್ಕೆ ಆಯ್ಕೆ ಘೋಷಣೆ - ಪ್ರಜಾವಾಣಿ</title><link>a</link><source>ಪ್ರಜಾವಾಣಿ</source></item>"
+           "<item><title>टेस्ला ने उड़ने वाली कार दिखाई, हवा में पलटी - दैनिक भास्कर</title><link>b</link><source>दैनिक भास्कर</source></item>"
+           "</channel></rss>")
+    monkeypatch.setattr(src, "_get", lambda *a, **k: xml)
+    got = src.news_stories("breaking", "kn")
+    assert [s.link for s in got] == ["a"]
