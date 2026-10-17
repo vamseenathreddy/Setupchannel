@@ -52,7 +52,13 @@ POLITICAL_QUERY = {
 }
 # Headlines that are about the opposition or about trouble are skipped: the channel only carries positive stories.
 EXCLUDE = ("వైఎస్ఆర్సీపీ", "వైసీపీ", "జగన్", "YSRCP", "YCP", "Jagan", "అరెస్ట్", "హత్య", "మృతి", "ప్రమాదం", "దాడి",
-           "అత్యాచారం", "విమర్శ", "ఆరోపణ", "కుంభకోణం", "వివాదం", "మరణ", "ఆత్మహత్య", "కేసు", "దుర్ఘటన", "నిరసన")
+           "అత్యాచారం", "విమర్శ", "ఆరోపణ", "కుంభకోణం", "వివాదం", "మరణ", "ఆత్మహత్య", "కేసు", "దుర్ఘటన", "నిరసన", "సమాధి", "గల్లంతు", "విషాదం", "దుర్మరణం", "బలి", "హతం", "అగ్నిప్రమాదం",
+           "వరద", "భూకంపం", "సినిమా", "చిత్రం", "నటన", "హీరో", "మూవీ", "ట్రైలర్", "బాక్సాఫీస్", "ఓజీ")
+SUBJECT = {  # the headline must actually be about the niche's subject
+    "chandrababu": ("చంద్రబాబు", "సీఎం", "బాబు"), "lokesh": ("లోకేశ్", "లోకేష్"), "tdp": ("టీడీపీ", "తెలుగుదేశం", "తెదేపా"),
+    "nda": ("కూటమి", "ఎన్డీఏ", "జనసేన", "బీజేపీ"), "janasena": ("జనసేన", "పవన్"),
+    "development": ("ఆంధ్రప్రదేశ్", "ఏపీ", "అమరావతి", "రాష్ట్ర", "విశాఖ"),
+}
 POSITIVE = ("అభివృద్ధి", "పెట్టుబడ", "ఉద్యోగ", "ప్రారంభ", "శంకుస్థాపన", "ఒప్పందం", "పథకం", "నిధులు", "ప్రశంస",
             "హర్షం", "శుభవార్త", "అమరావతి", "ఐటీ", "డేటా సెంటర్", "ఏఐ", "పరిశ్రమ", "రైతు", "మహిళ", "విద్య",
             "అవార్డు", "కృషి", "ఆవిష్కరణ", "సాంకేతిక", "మంజూరు", "పెంపు", "భరోసా", "సంక్షేమ", "లక్ష")
@@ -89,7 +95,8 @@ def political_stories(niche: str, lang: str = "te") -> list[Story]:
                 found.append(x)
     out = [s for s in found if is_informative(s) and matches_language(s.headline, "te")
            and not any(b in s.publisher for b in BLOCKED_PUBLISHERS)
-           and is_positive(s.headline)]
+           and is_positive(s.headline)
+           and (niche not in SUBJECT or any(w in s.headline for w in SUBJECT[niche]))]
     from channels.trending.regions import mentioned
 
     out.sort(key=lambda x: (0 if mentioned(x.headline) else 1, 0 if any(p in x.publisher for p in PREFERRED) else 1, x.rank))
