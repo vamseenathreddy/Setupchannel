@@ -21,7 +21,9 @@ from mahanavi.video.watermark import bake_watermark
 W, H = 1080, 1920
 SAFE_L, SAFE_R, SAFE_TOP, SAFE_BOTTOM = 150, 930, 230, 1385
 TEXT_W = SAFE_R - SAFE_L
-GOLD, CREAM, SOFT = (240, 196, 92), (255, 246, 226), (214, 206, 224)
+# 2026-10-17: only pure white and gold; the old cream and grey-lilac were hard to read on phones.
+GOLD, CREAM, SOFT = (240, 196, 92), (255, 255, 255), (255, 255, 255)
+BENEFITS_HEADING = {"te": "మంత్ర జపం వల్ల లాభాలు", "hi": "मंत्र जाप के लाभ"}
 STACK_TOP, STACK_H = 560, 700   # mantra / transliteration / meaning band (ends well above the footer tag at 1318)
 ENGINE_FONTS = Path(__file__).resolve().parents[3] / "channels" / "engine" / "assets" / "fonts"
 
@@ -210,7 +212,8 @@ class RequestCardRenderer:
         elif slide.kind == "mantra":
             mantra_idx = sum(1 for x in spec.slides[:index] if x.kind == "mantra")
             total = sum(1 for x in spec.slides if x.kind == "mantra")
-            if spec.header:
+            compact = bool(slide.benefits)  # benefits card: tighter top so six big lines fit above the footer
+            if spec.header and not compact:  # the benefits card drops the date line (date stays in title + description)
                 if self._probe.textlength(spec.header, font=self._font(40)) <= TEXT_W:
                     self._line(layer, boxes, spec.header, self._font(40), 262, SOFT)
                 else:  # long header (festival name): wrap onto two lines instead of overflowing the safe zone
@@ -218,12 +221,11 @@ class RequestCardRenderer:
                     self._block(layer, boxes, lines, font, lh, 250, SOFT)
             if total > 1:
                 self._dots(layer, mantra_idx, total, 345)
-            compact = bool(slide.benefits)  # benefits card: tighter top so six big lines fit above the footer
             lines, font, lh = self._fit(slide.label, 70 if compact else 76, 50 if compact else 52, 110)
-            self._block(layer, boxes, lines, font, lh, 330 if compact else 420, GOLD)
+            self._block(layer, boxes, lines, font, lh, 240 if compact else 420, GOLD)
             # Fit the three blocks into the band between the heading and the footer tag: shrink the mantra a
             # little at a time until the whole stack fits, so a long verse never crowds the footer.
-            stack_top, stack_h = (430, 330) if compact else (STACK_TOP, STACK_H)
+            stack_top, stack_h = (330, 320) if compact else (STACK_TOP, STACK_H)
             budget = 240 if compact else 430
             while True:
                 m_lines, m_font, m_lh = self._fit(slide.text, 80 if compact else 92, 44, budget)
@@ -240,7 +242,10 @@ class RequestCardRenderer:
             y = self._block(layer, boxes, n_lines, n_font, n_lh, y + 40, GOLD)
             if compact:
                 self._ornament(layer, y + 30)
-                self._benefit_lines(layer, boxes, list(slide.benefits), y + 70, 1285)
+                head = BENEFITS_HEADING["hi" if spec.lang == "hi" else "te"]
+                h_lines, h_font, h_lh = self._fit(head, 54, 40, 90)
+                y = self._block(layer, boxes, h_lines, h_font, h_lh, y + 50, GOLD)
+                self._benefit_lines(layer, boxes, list(slide.benefits), y + 18, 1290)
             if spec.tag_footer:
                 lines, font, lh = self._fit(spec.tag_footer, 38, 24, 60)
                 self._block(layer, boxes, lines, font, lh, 1318, SOFT)
