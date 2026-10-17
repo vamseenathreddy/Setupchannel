@@ -78,7 +78,7 @@ def make_overlay(font_path: str):
         a, b = WHO.get(row.get("category", ""), ("cbn", "lokesh"))
         if b:  # TDP cards: round coins (NTR, Chandrababu, Pawan) top-right; Lokesh alone at the bottom-right
             x = W - 24
-            for who in ("ntr", "cbn", "pawan_front"):
+            for who in ("ntr", "cbn", "pawan_smile"):
                 c = _coin(who, 106)
                 x -= c.width
                 bg.alpha_composite(c, (x, 160))
