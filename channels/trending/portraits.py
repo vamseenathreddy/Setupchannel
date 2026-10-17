@@ -32,7 +32,7 @@ def _person(name: str, height: int) -> Image.Image:
     return out
 
 
-FACE_BOX = {"pawan": (255, 92, 595, 432), "pawan_front": (0, 0, 452, 452)}   # square around the face in the cut-out (it is a wide photo)
+FACE_BOX = {"pawan": (255, 92, 595, 432), "pawan_front": (0, 0, 470, 470)}   # square around the face in the cut-out (it is a wide photo)
 
 
 def _coin(name: str, d: int) -> Image.Image:
@@ -76,17 +76,18 @@ def make_overlay(font_path: str):
     def overlay(bg: Image.Image, row: dict) -> Image.Image:
         bg = bg.convert("RGBA")
         a, b = WHO.get(row.get("category", ""), ("cbn", "lokesh"))
-        big, small = _person(a, 330 if a == "pawan" else 430), (_person(b, 340) if b else None)  # Pawan's photo is landscape
-        if b:  # TDP cards: NTR and Pawan Kalyan as round coins, top-right
+        if b:  # TDP cards: round coins (NTR, Chandrababu, Pawan) top-right; Lokesh alone at the bottom-right
             x = W - 24
-            for who in ("ntr", "cbn", "pawan_front"):  # right to left: NTR, Chandrababu, Pawan Kalyan
+            for who in ("ntr", "cbn", "pawan_front"):
                 c = _coin(who, 106)
                 x -= c.width
                 bg.alpha_composite(c, (x, 160))
                 x -= 8
-        bg.alpha_composite(big, (0 if a == "pawan" else -10, H - big.height - 150))
-        if small:
-            bg.alpha_composite(small, (W - small.width + 10, H - small.height - 150))
+            lk = _person("lokesh", 400)
+            bg.alpha_composite(lk, (W - lk.width + 10, H - lk.height - 150))
+        else:  # Janasena cards: Pawan Kalyan only, bottom-left
+            pk = _person(a, 330)
+            bg.alpha_composite(pk, (0, H - pk.height - 150))
         _badge(bg, font_path)
         return bg
     return overlay
